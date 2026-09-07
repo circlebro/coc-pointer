@@ -1,7 +1,7 @@
 # coc-pointer 설계 문서
 
 작성일: 2026-09-07
-상태: 승인됨 (사용자 검토 대기)
+상태: 승인됨 (2026-09-07, 사용자 검토 완료)
 
 ## 1. 목적
 
@@ -12,6 +12,7 @@
 - 일반 클랜전과 리그전(CWL) 결과를 CoC 공식 API에서 자동 수집한다.
 - 엑셀과 동일한 공식으로 월별 점수와 30인 선발 명단을 계산한다.
 - 결과를 정적 웹 페이지(GitHub Pages)로 공개한다.
+- 현재 클랜원 목록(플레이어 태그 포함)을 함께 공개해, 관리자가 설정 파일에 넣을 태그를 바로 찾을 수 있게 한다.
 - 관리자 설정(정예 멤버, 부캐, 제외, 경고)은 저장소 안의 설정 파일로 관리한다.
 
 첫 버전에서 하지 않는 것:
@@ -41,7 +42,9 @@ CoC API ──(RoyaleAPI 프록시)──▶ [수집기 collect] ──▶ data/
 ### 2.1 수집기 (collect)
 
 - CoC 공식 API를 RoyaleAPI 프록시(`https://cocproxy.royaleapi.dev`)를 거쳐 호출한다. 프록시를 쓰는 이유는 API 토큰이 IP에 묶이기 때문이며, 프록시의 고정 IP(`45.79.218.79`)를 토큰에 등록하면 GitHub Actions처럼 IP가 바뀌는 환경에서도 동작한다.
+- 프록시 앞단(Cloudflare)은 일반적인 `User-Agent` 헤더가 없는 요청을 403으로 거부한다(파이썬 기본 값이 차단됨을 확인). 클라이언트는 `User-Agent: coc-pointer/<버전>`을 항상 붙인다.
 - 호출하는 엔드포인트:
+  - `GET /v1/clans/{clanTag}`: 클랜 정보와 현재 멤버 목록. 매 실행마다 `data/clan.json`에 덮어쓴다.
   - `GET /v1/clans/{clanTag}/currentwar`: 진행 중이거나 막 끝난 일반 클랜전
   - `GET /v1/clans/{clanTag}/currentwar/leaguegroup`: 이번 시즌 리그전 그룹과 전투 태그 목록
   - `GET /v1/clanwarleagues/wars/{warTag}`: 리그전 전투 하나의 상세
@@ -54,7 +57,7 @@ CoC API ──(RoyaleAPI 프록시)──▶ [수집기 collect] ──▶ data/
 
 ### 2.2 계산기 (scoring)
 
-- `data/wars/*.json`과 `config/clan.yaml`만 읽는다. 외부 호출이 없는 순수 계산이다.
+- `data/wars/*.json`, `data/clan.json`, `config/clan.yaml`만 읽는다. 외부 호출이 없는 순수 계산이다.
 - 월별로 멤버당 공격 횟수, 미공격 횟수, 별 총합, 별 평균, 점수를 집계하고 커트라인과 30인 선발 명단을 만든다.
 - 점수 규칙 문구는 이 모듈의 docstring과 상수 한 곳에만 정의하고, 렌더러가 그것을 읽어 페이지 상단에 표시한다. 코드와 화면의 규칙이 어긋나지 않게 하기 위함이다.
 - 나중에 서버 방식으로 옮기더라도 이 모듈은 그대로 재사용한다.
@@ -95,7 +98,25 @@ API 응답을 그대로 저장하지 않고 필요한 것만 정리한다.
 - `stars`는 그 공격에서 딴 별 수(0~3)다. API의 `attacks[].stars` 값을 쓴다.
 - 파일은 한 번 저장되면 수정하지 않는다.
 
-### 3.2 관리자 설정 파일 (`config/clan.yaml`)
+### 3.2 클랜원 스냅샷 (`data/clan.json`)
+
+매 실행마다 덮어쓰는 현재 클랜원 목록이다. 클랜전 파일과 달리 이력은 남기지 않는다(git 이력으로는 남는다).
+
+```json
+{
+  "fetched_at": "2026-09-07T09:00:00Z",
+  "name": "미니언즈",
+  "tag": "#2C8L822LQ",
+  "members": [
+    {"tag": "#ABC123", "name": "도토리", "role": "coLeader", "townhall": 18,
+     "trophies": 5200, "donations": 1200, "donations_received": 900}
+  ]
+}
+```
+
+`role`은 API 값(`leader`, `coLeader`, `admin`, `member`)을 그대로 두고, 화면에서 대표/공동 대표/장로/멤버로 바꿔 보여 준다.
+
+### 3.3 관리자 설정 파일 (`config/clan.yaml`)
 
 ```yaml
 clan_tag: "#XXXXXXX"
@@ -112,7 +133,7 @@ warnings:                   # 경고 횟수 (표시용)
 - 관리자는 GitHub 웹에서 이 파일을 고치고 저장한다. 다음 실행 때 반영된다.
 - 태그는 `#`으로 시작하고 영문 대문자와 숫자로 이루어져야 한다. 형식이 틀리면 계산 단계에서 어느 항목이 잘못됐는지 알려주고 멈춘다.
 
-### 3.3 멤버 식별
+### 3.4 멤버 식별
 
 멤버는 닉네임이 아니라 **플레이어 태그**로 식별한다. 닉네임은 바뀔 수 있지만 태그는 영구적이다. 화면에는 그 멤버가 참가한 가장 최근 클랜전에 기록된 닉네임과 홀 레벨을 보여 준다. 클랜을 떠난 멤버도 참가했던 달의 표에는 그대로 남는다.
 
@@ -187,6 +208,10 @@ GitHub Pages 주소는 `https://circlebro.github.io/coc-pointer/`이다. 주소�
 
 모든 표는 점수 순으로 미리 정렬한다. 정렬 버튼은 없다. 그 달에 클랜전이 하나도 없으면 "기록 없음"을 표시한다.
 
+### 5.3 클랜원 목록 페이지 (`/members/`)
+
+`data/clan.json`을 표로 보여 준다. 열: 닉네임, **플레이어 태그**, 역할, 홀 레벨, 트로피, 기부, 수령. 설정 파일에 등록된 정예·부캐·제외 여부도 열로 표시해서, 관리자가 설정이 제대로 반영됐는지 한눈에 볼 수 있게 한다. 역할 순(대표 → 공동 대표 → 장로 → 멤버), 같은 역할 안에서는 트로피 순으로 정렬한다. 첫 페이지에서 이 페이지로 가는 링크를 둔다.
+
 ## 6. 자동 실행 (GitHub Actions)
 
 `.github/workflows/collect.yml` 하나가 두 계기로 실행된다.
@@ -237,18 +262,19 @@ src/coc_pointer/
 - **집계**: 일반 클랜전과 리그전이 섞인 달, 미참가 클랜전, 미공격, 월 경계(8월 31일 시작·9월 1일 종료)를 각각 검증한다.
 - **선발**: 커트라인, 30인 제한, 정예 우선, 부캐의 정예 불가, 제외, 동점 처리를 각각 작은 테스트로 검증한다.
 - **수집기**: 실제 API 응답을 흉내 낸 샘플 JSON으로 파싱과 파일 이름 생성, 중복 저장 방지를 검증한다. 테스트 중 실제 API를 부르지 않는다.
-- **렌더러**: 생성된 HTML에 기대한 닉네임, 점수, 규칙 문구가 들어 있는지 확인한다.
+- **렌더러**: 생성된 HTML에 기대한 닉네임, 점수, 규칙 문구가 들어 있는지 확인한다. 클랜원 목록 페이지에 태그와 역할이 표시되는지 확인한다.
 
 ## 10. 가동 전 준비 목록 (사용자)
 
 구현 중에는 필요 없고, 실제 가동 직전에 필요하다.
 
-- [ ] **클랜 전적 공개**: 게임 → 클랜 → 설정에서 "전적 공개"를 켠다. 꺼져 있으면 API가 클랜전 정보를 주지 않는다.
-- [ ] **API 키 발급**: https://developer.clashofclans.com 에서 계정을 만들고 "Create New Key"를 누른다. 허용 IP(Allowed IP addresses)에 `45.79.218.79`를 넣는다. 발급된 긴 문자열이 토큰이다.
-- [ ] **GitHub Secrets 등록**: 저장소 → Settings → Secrets and variables → Actions → New repository secret. 이름은 `COC_API_TOKEN`, 값은 위 토큰.
+- [x] **클랜 전적 공개**: 2026-09-07 API 조회로 이미 공개 상태(`isWarLogPublic: true`)임을 확인했다.
+- [x] **API 키 발급**: https://developer.clashofclans.com 에서 계정을 만들고 "Create New Key"를 누른다. 허용 IP(Allowed IP addresses)에 `45.79.218.79`를 넣는다. 발급된 긴 문자열이 토큰이다.
+- [x] **GitHub Secrets 등록**: 저장소 → Settings → Secrets and variables → Actions → New repository secret. 이름은 `COC_API_TOKEN`, 값은 위 토큰.
 - [ ] **GitHub Pages 켜기**: 저장소 → Settings → Pages → Source를 "GitHub Actions"로 선택.
-- [ ] **클랜 태그**: 게임 안 클랜 정보에 있는 `#`으로 시작하는 문자열. `config/clan.yaml`의 `clan_tag`에 넣는다.
-- [ ] **플레이어 태그 목록**: 정예 멤버, 부캐, 제외 멤버의 플레이어 태그. 각 멤버 프로필에서 확인할 수 있다. `config/clan.yaml`에 넣는다.
+- [x] **클랜 태그**: `#2C8L822LQ` (미니언즈). `config/clan.yaml`의 `clan_tag`에 넣는다.
+- [ ] **플레이어 태그 목록**: 정예 멤버, 부캐, 제외 멤버의 플레이어 태그. 클랜원 목록 페이지(5.3절)에서 복사해 `config/clan.yaml`에 넣는다.
+- [ ] **로컬 개발용 토큰**: 워크트리의 `.env`(git 제외)에 `COC_API_TOKEN=...` 형태로 두었다. 실제 API로 확인하며 개발할 때 쓴다.
 
 ## 11. 나중에 확장할 때
 
