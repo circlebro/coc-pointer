@@ -74,6 +74,7 @@ def test_build_site_writes_pages(tmp_path):
     assert "커트라인을 넘은 멤버가 없습니다" in month
     assert "도토리" in month and "제니" in month and "3/3" in month and "리그상대" in month
     assert "●" in month, "elite mark in score table"
+    assert "신입" in month, "clan members without wars still appear in the score table"
 
     members = (out / "members" / "index.html").read_text(encoding="utf-8")
     assert "#P9" in members and "신입" in members and "공동 대표" in members

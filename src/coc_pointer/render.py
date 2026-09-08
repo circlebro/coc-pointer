@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import shutil
+from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from importlib import resources
@@ -52,8 +53,10 @@ def month_label(key: str) -> str:
     return f"{year}년 {int(month)}월"
 
 
-def build_month_view(key: str, wars: list[War], config: ClanConfig) -> MonthView:
-    ranked = rank_month(aggregate_month(wars), config)
+def build_month_view(
+    key: str, wars: list[War], config: ClanConfig, clan_members: Iterable[ClanMember] = ()
+) -> MonthView:
+    ranked = rank_month(aggregate_month(wars, clan_members), config)
     grid = [(r, [war_cell(w, r.member.tag) for w in wars]) for r in ranked]
     return MonthView(
         key=key, label=month_label(key), wars=wars, ranked=ranked, roster=roster(ranked), grid=grid
@@ -87,7 +90,10 @@ def build_site(
 ) -> list[Path]:
     wars = load_wars(data_dir)
     snapshot = load_clan_snapshot(data_dir)
-    months = [build_month_view(k, ws, config) for k, ws in group_wars_by_month(wars).items()]
+    clan_members = snapshot.members if snapshot else ()
+    months = [
+        build_month_view(k, ws, config, clan_members) for k, ws in group_wars_by_month(wars).items()
+    ]
     latest = months[-1] if months else None
     generated_at = _kst(now or datetime.now(UTC), "%Y-%m-%d %H:%M")
     clan_name = snapshot.name if snapshot else "클랜"
