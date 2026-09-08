@@ -20,11 +20,11 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 from zoneinfo import ZoneInfo
 
 from coc_pointer.config import ClanConfig
-from coc_pointer.models import War
+from coc_pointer.models import ClanMember, War
 
 BASE_POINTS = 5
 MAX_POINTS_PER_ATTACK = 8
@@ -88,8 +88,15 @@ def group_wars_by_month(wars: Iterable[War]) -> dict[str, list[War]]:
     return dict(sorted(grouped.items()))
 
 
-def aggregate_month(wars: Iterable[War]) -> list[MemberMonth]:
-    """Sum attacks/opportunities/stars per member across ``wars`` (assumed same month)."""
+def aggregate_month(
+    wars: Iterable[War], clan_members: Iterable[ClanMember] = ()
+) -> list[MemberMonth]:
+    """Sum attacks/opportunities/stars per member across ``wars`` (assumed same month).
+
+    ``clan_members`` (usually the current clan snapshot) adds a zero row for every clan member
+    who took part in none of the wars, so the monthly table lists the whole clan.
+    Names and townhalls seen in a war take precedence over the snapshot's.
+    """
     attacks: dict[str, int] = {}
     opportunities: dict[str, int] = {}
     stars: dict[str, int] = {}
@@ -101,6 +108,10 @@ def aggregate_month(wars: Iterable[War]) -> list[MemberMonth]:
             stars[m.tag] = stars.get(m.tag, 0) + sum(a.stars for a in m.attacks)
             if m.tag not in latest or w.end_time > latest[m.tag][0]:
                 latest[m.tag] = (w.end_time, m.name, m.townhall)
+    for cm in clan_members:
+        if cm.tag not in attacks:
+            attacks[cm.tag] = opportunities[cm.tag] = stars[cm.tag] = 0
+            latest[cm.tag] = (datetime.min.replace(tzinfo=UTC), cm.name, cm.townhall)
     return [
         MemberMonth(
             tag=tag,

@@ -4,6 +4,7 @@ import pytest
 from helpers import member, war
 
 from coc_pointer.config import ClanConfig
+from coc_pointer.models import ClanMember
 from coc_pointer.scoring import (
     ROSTER_SIZE,
     RULES,
@@ -171,3 +172,18 @@ def test_roster_puts_elite_first_and_renumbers():
     assert [r.member.tag for r in final] == ["#E1", "#M1"]
     assert [r.rank for r in final] == [1, 2]
     assert [r.selection for r in final] == ["정예", "선발"]
+
+
+def test_aggregate_adds_zero_rows_for_roster_members_without_wars():
+    w = war([member("#P1", "도토리", (3, 2))])
+    roster_members = [
+        ClanMember("#P1", "도토리(현재)", "member", 18, 5000, 0, 0),
+        ClanMember("#P9", "신입", "member", 12, 1000, 0, 0),
+    ]
+    rows = by_tag(aggregate_month([w], roster_members))
+    assert rows["#P1"].name == "도토리", "war-time name wins over the snapshot name"
+    assert rows["#P1"].attacks == 2
+    new = rows["#P9"]
+    assert (new.name, new.townhall) == ("신입", 12)
+    assert (new.attacks, new.opportunities, new.stars) == (0, 0, 0)
+    assert new.score == 0.0 and new.missed == 0
