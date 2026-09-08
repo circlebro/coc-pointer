@@ -27,9 +27,19 @@ uv add --dev <pkg>               # add a dev-only dependency
 - `tests/`: pytest suite. Test discovery is limited to this directory via `[tool.pytest.ini_options]`.
 - `pyproject.toml`: single source of truth for metadata, dependencies, ruff, and pytest config. `uv.lock` is committed.
 
+## Data flow
+
+`coc-pointer collect` (src/coc_pointer/collect.py) fetches finished wars from the CoC API through the RoyaleAPI proxy and writes one JSON per war to `data/wars/` plus `data/clan.json`. `coc-pointer build` (render.py) reads `data/` and `config/clan.yaml`, scores each month with the pure functions in `scoring.py`, and writes static HTML to `site/` (gitignored). `.github/workflows/collect.yml` runs both every 30 minutes and on manual dispatch, commits new `data/` files, and deploys `site/` to GitHub Pages.
+
+- Scoring rules live only in `scoring.py` (module docstring + `RULES`); templates display `RULES` verbatim. Change rules there and nowhere else.
+- Members are keyed by player tag, never by name.
+- `config/clan.yaml` is the admin surface: tags must be quoted (`#` is a YAML comment).
+- The API token comes from `COC_API_TOKEN` (local `.env`, gitignored; Actions secret). The proxy rejects requests without a User-Agent.
+- Spec: `docs/superpowers/specs/2026-09-07-coc-pointer-design.md`.
+
 ## Current state
 
-Only the scaffold exists: `main()` prints a placeholder and there is one smoke test. No CoC API client, scoring logic, or storage yet. When those are added, extend this file with how clan/player data is fetched, scored, and stored, and where the CoC API token is expected to come from.
+Pipeline is implemented end to end. Historical Excel data is not imported; only wars collected by the workflow exist in `data/`.
 
 ## Git
 
