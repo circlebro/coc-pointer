@@ -35,7 +35,10 @@ class MonthView:
     wars: list[War]
     ranked: list[RankedMember]
     roster: list[RankedMember]
-    grid: list[tuple[RankedMember, list[str]]]
+    regular_wars: list[War]
+    cwl_wars: list[War]
+    regular_grid: list[tuple[RankedMember, list[str]]]  # participants only
+    cwl_grid: list[tuple[RankedMember, list[str]]]  # participants only
 
 
 def war_cell(war: War, tag: str) -> str:
@@ -57,10 +60,31 @@ def build_month_view(
     key: str, wars: list[War], config: ClanConfig, clan_members: Iterable[ClanMember] = ()
 ) -> MonthView:
     ranked = rank_month(aggregate_month(wars, clan_members), config)
-    grid = [(r, [war_cell(w, r.member.tag) for w in wars]) for r in ranked]
+    regular_wars = [w for w in wars if w.war_type == "regular"]
+    cwl_wars = [w for w in wars if w.war_type == "cwl"]
     return MonthView(
-        key=key, label=month_label(key), wars=wars, ranked=ranked, roster=roster(ranked), grid=grid
+        key=key,
+        label=month_label(key),
+        wars=wars,
+        ranked=ranked,
+        roster=roster(ranked),
+        regular_wars=regular_wars,
+        cwl_wars=cwl_wars,
+        regular_grid=_participant_grid(ranked, regular_wars),
+        cwl_grid=_participant_grid(ranked, cwl_wars),
     )
+
+
+def _participant_grid(
+    ranked: list[RankedMember], wars: list[War]
+) -> list[tuple[RankedMember, list[str]]]:
+    """One row per member who was on the roster of at least one of ``wars``."""
+    rows = []
+    for r in ranked:
+        cells = [war_cell(w, r.member.tag) for w in wars]
+        if any(cells):
+            rows.append((r, cells))
+    return rows
 
 
 def _kst(dt: datetime, fmt: str) -> str:

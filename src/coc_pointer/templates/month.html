@@ -12,7 +12,13 @@
   {{ score_table(view.ranked) }}
 </section>
 <section>
-  <h2>{{ view.label }} 클랜전별 기록 (칸: 공격별 별 수, x = 미공격, 빈칸 = 미참가, 회색 열 = 리그전·점수 미반영)</h2>
-  {{ war_grid(view) }}
+  <h2>{{ view.label }} 일반 클랜전 기록 ({{ view.regular_wars|length }}경기 · 참가자 {{ view.regular_grid|length }}명)</h2>
+  <p class="hint">칸: 공격별 별 수, x = 미공격. 참가한 멤버만 표시.</p>
+  {% if view.regular_grid %}{{ war_grid(view.regular_wars, view.regular_grid, "regular") }}{% else %}<p class="empty">기록 없음.</p>{% endif %}
+</section>
+<section>
+  <h2>{{ view.label }} 리그전 기록 ({{ view.cwl_wars|length }}경기 · 참가자 {{ view.cwl_grid|length }}명 · 점수 미반영)</h2>
+  <p class="hint">칸: 공격 별 수, x = 미공격. 리그전에 참가한 멤버만 표시.</p>
+  {% if view.cwl_grid %}{{ war_grid(view.cwl_wars, view.cwl_grid, "cwl") }}{% else %}<p class="empty">기록 없음.</p>{% endif %}
 </section>
 {% endblock %}

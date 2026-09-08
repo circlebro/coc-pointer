@@ -20,12 +20,19 @@ def test_war_cell_formats():
     assert war_cell(cwl, "#P1") == "3"
 
 
-def test_build_month_view_label_and_grid():
-    w = war([member("#P1", "도토리", (3, 3)), member("#P2", "제니", (2, 1))])
-    view = build_month_view("2026-09", [w], CFG)
+def test_build_month_view_grids_list_participants_only():
+    regular = war([member("#P1", "도토리", (3, 3)), member("#P2", "제니", (2, 1))])
+    cwl = war([member("#P1", "도토리", (3,))], war_type="cwl", end="2026-09-06T10:00:00Z")
+    newcomer = ClanMember("#P9", "신입", "member", 12, 1000, 0, 0)
+    view = build_month_view("2026-09", [regular, cwl], CFG, [newcomer])
     assert view.label == "2026년 9월"
-    assert [r.member.name for r in view.ranked] == ["도토리", "제니"]
-    assert view.grid[0][1] == ["3/3"]
+    assert [r.member.name for r in view.ranked] == ["도토리", "제니", "신입"]  # everyone
+    assert [r.member.name for r, _ in view.regular_grid] == ["도토리", "제니"]
+    assert [cells for _, cells in view.regular_grid] == [["3/3"], ["2/1"]]
+    assert [r.member.name for r, _ in view.cwl_grid] == ["도토리"]  # CWL participants only
+    assert [cells for _, cells in view.cwl_grid] == [["3"]]
+    assert [w.war_type for w in view.regular_wars] == ["regular"]
+    assert [w.war_type for w in view.cwl_wars] == ["cwl"]
 
 
 def seed(tmp_path):
@@ -76,7 +83,7 @@ def test_build_site_writes_pages(tmp_path):
     assert "도토리" in month and "제니" in month and "3/3" in month and "리그상대" in month
     assert "●" in month, "elite mark in score table"
     assert "신입" in month, "clan members without wars still appear in the score table"
-    assert 'class="cwl"' in month, "CWL columns are marked in the war grid"
+    assert "일반 클랜전 기록" in month and "리그전 기록" in month, "two separate grids"
 
     members = (out / "members" / "index.html").read_text(encoding="utf-8")
     assert "#P9" in members and "신입" in members and "공동 대표" in members
