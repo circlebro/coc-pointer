@@ -8,7 +8,10 @@
 </head>
 <body>
 <header>
-  <h1><a href="{{ root }}">{{ clan_name }} 클랜전 점수</a></h1>
+  <div class="bar">
+    <h1><a href="{{ root }}">{{ clan_name }} 클랜전 점수</a></h1>
+    <div class="updated" title="30분마다 자동 수집·갱신. 끝난 클랜전만 반영">마지막 갱신 <time>{{ generated_at }}</time><br><small>한국 시간 · 30분마다 자동 갱신</small></div>
+  </div>
   <nav>
     {% for m in months %}<a href="{{ root }}{{ m.key }}/">{{ m.label }}</a>{% endfor %}
     <a href="{{ root }}members/">클랜원 목록</a>
@@ -17,6 +20,6 @@
 <main>
 {% block content %}{% endblock %}
 </main>
-<footer>마지막 갱신: {{ generated_at }} (한국 시간)</footer>
+<footer>마지막 갱신: {{ generated_at }} (한국 시간) · 30분마다 자동 갱신, 끝난 클랜전만 반영</footer>
 </body>
 </html>

@@ -85,6 +85,7 @@ def test_build_site_writes_pages(tmp_path):
     assert "2026년 9월 리그전 참가 명단 (1명)" in index, "actual CWL participants shown first"
     assert "2026년 10월 리그전 선발 명단" in index, "selection is for next month"
     assert "2026-09-07 12:00" in index, "generated time shown in KST"
+    assert index.index('class="updated"') < index.index("<main>"), "last-updated sits in the header"
 
     # 3 attacks < MIN_ATTACKS, so nobody is selected; the full score table still lists everyone.
     month = (out / "2026-09" / "index.html").read_text(encoding="utf-8")
