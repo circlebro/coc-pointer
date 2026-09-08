@@ -1,0 +1,343 @@
+{
+  "war_type": "cwl",
+  "start_time": "2026-09-02T08:44:04Z",
+  "end_time": "2026-09-03T09:38:29Z",
+  "team_size": 30,
+  "attacks_per_member": 1,
+  "opponent": {
+    "tag": "#2RYRJRGGU",
+    "name": "BENGAL WARRIORS"
+  },
+  "members": [
+    {
+      "tag": "#GGPVQYPRV",
+      "name": "Luckyky",
+      "townhall": 16,
+      "attacks": [
+        {
+          "order": 35,
+          "stars": 3
+        }
+      ]
+    },
+    {
+      "tag": "#8J09V0828",
+      "name": "킬러왕짱킹",
+      "townhall": 16,
+      "attacks": [
+        {
+          "order": 18,
+          "stars": 3
+        }
+      ]
+    },
+    {
+      "tag": "#LQY0G90U0",
+      "name": "Love2",
+      "townhall": 17,
+      "attacks": [
+        {
+          "order": 21,
+          "stars": 3
+        }
+      ]
+    },
+    {
+      "tag": "#GVJPU90U9",
+      "name": "에스프리",
+      "townhall": 15,
+      "attacks": [
+        {
+          "order": 55,
+          "stars": 3
+        }
+      ]
+    },
+    {
+      "tag": "#GVVPR2GQJ",
+      "name": "따뚜",
+      "townhall": 17,
+      "attacks": [
+        {
+          "order": 23,
+          "stars": 3
+        }
+      ]
+    },
+    {
+      "tag": "#GJP8RGY9Q",
+      "name": "짜노리",
+      "townhall": 16,
+      "attacks": [
+        {
+          "order": 37,
+          "stars": 3
+        }
+      ]
+    },
+    {
+      "tag": "#R029PG2G8",
+      "name": "물정령",
+      "townhall": 17,
+      "attacks": [
+        {
+          "order": 31,
+          "stars": 3
+        }
+      ]
+    },
+    {
+      "tag": "#L9RYGLJRP",
+      "name": "치느님",
+      "townhall": 17,
+      "attacks": [
+        {
+          "order": 47,
+          "stars": 3
+        }
+      ]
+    },
+    {
+      "tag": "#GUGCV2LLR",
+      "name": "조운",
+      "townhall": 18,
+      "attacks": [
+        {
+          "order": 49,
+          "stars": 3
+        }
+      ]
+    },
+    {
+      "tag": "#GCVGV992U",
+      "name": "완두콩",
+      "townhall": 18,
+      "attacks": [
+        {
+          "order": 30,
+          "stars": 3
+        }
+      ]
+    },
+    {
+      "tag": "#R2LLCUUL",
+      "name": "히로",
+      "townhall": 18,
+      "attacks": [
+        {
+          "order": 50,
+          "stars": 3
+        }
+      ]
+    },
+    {
+      "tag": "#2YP22YJGL",
+      "name": "p.j.h",
+      "townhall": 18,
+      "attacks": [
+        {
+          "order": 7,
+          "stars": 3
+        }
+      ]
+    },
+    {
+      "tag": "#9Q90UL29",
+      "name": "군밤",
+      "townhall": 18,
+      "attacks": [
+        {
+          "order": 26,
+          "stars": 3
+        }
+      ]
+    },
+    {
+      "tag": "#Q2R82VYG0",
+      "name": "미친개",
+      "townhall": 18,
+      "attacks": [
+        {
+          "order": 25,
+          "stars": 3
+        }
+      ]
+    },
+    {
+      "tag": "#UJCV02GJ",
+      "name": "원형",
+      "townhall": 17,
+      "attacks": [
+        {
+          "order": 41,
+          "stars": 3
+        }
+      ]
+    },
+    {
+      "tag": "#GCCLLUPCG",
+      "name": "제니남편",
+      "townhall": 16,
+      "attacks": [
+        {
+          "order": 42,
+          "stars": 3
+        }
+      ]
+    },
+    {
+      "tag": "#GQGCCV8RR",
+      "name": "빡곰",
+      "townhall": 18,
+      "attacks": [
+        {
+          "order": 58,
+          "stars": 3
+        }
+      ]
+    },
+    {
+      "tag": "#GR9UGPQVJ",
+      "name": "청사과",
+      "townhall": 18,
+      "attacks": [
+        {
+          "order": 45,
+          "stars": 3
+        }
+      ]
+    },
+    {
+      "tag": "#GV2JJ08JG",
+      "name": "미르",
+      "townhall": 18,
+      "attacks": [
+        {
+          "order": 36,
+          "stars": 3
+        }
+      ]
+    },
+    {
+      "tag": "#R929LVJRP",
+      "name": "라이프세이버",
+      "townhall": 18,
+      "attacks": [
+        {
+          "order": 14,
+          "stars": 3
+        }
+      ]
+    },
+    {
+      "tag": "#GVJU0G8GC",
+      "name": "띵수",
+      "townhall": 16,
+      "attacks": [
+        {
+          "order": 2,
+          "stars": 3
+        }
+      ]
+    },
+    {
+      "tag": "#LGVL8L2JC",
+      "name": "✨Mad✨",
+      "townhall": 18,
+      "attacks": [
+        {
+          "order": 3,
+          "stars": 3
+        }
+      ]
+    },
+    {
+      "tag": "#QJPCRCG2L",
+      "name": "삐삐",
+      "townhall": 16,
+      "attacks": [
+        {
+          "order": 20,
+          "stars": 1
+        }
+      ]
+    },
+    {
+      "tag": "#22VR8LP99",
+      "name": "0000000000",
+      "townhall": 18,
+      "attacks": [
+        {
+          "order": 43,
+          "stars": 3
+        }
+      ]
+    },
+    {
+      "tag": "#RR28RJQU",
+      "name": "영국물리치료사",
+      "townhall": 16,
+      "attacks": [
+        {
+          "order": 8,
+          "stars": 3
+        }
+      ]
+    },
+    {
+      "tag": "#GURVCV0CU",
+      "name": "Taimanin",
+      "townhall": 17,
+      "attacks": [
+        {
+          "order": 19,
+          "stars": 3
+        }
+      ]
+    },
+    {
+      "tag": "#GJ0QYQY0Y",
+      "name": "제니",
+      "townhall": 16,
+      "attacks": [
+        {
+          "order": 54,
+          "stars": 3
+        }
+      ]
+    },
+    {
+      "tag": "#GRG8GCGRV",
+      "name": "도토리",
+      "townhall": 18,
+      "attacks": [
+        {
+          "order": 29,
+          "stars": 3
+        }
+      ]
+    },
+    {
+      "tag": "#P2QJQ8PQ8",
+      "name": "뚱냥이",
+      "townhall": 17,
+      "attacks": [
+        {
+          "order": 22,
+          "stars": 3
+        }
+      ]
+    },
+    {
+      "tag": "#GRGQCPP2Q",
+      "name": "Jelfish",
+      "townhall": 18,
+      "attacks": [
+        {
+          "order": 16,
+          "stars": 3
+        }
+      ]
+    }
+  ]
+}
