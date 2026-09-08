@@ -3,7 +3,8 @@
 점수 규칙 (엑셀 "클랜 리그전 30인 선발 기준 안내" 그대로):
 
 1. 공격 1회 = 기본 5점 + 그 공격에서 딴 별 수 (최대 8점). 미공격 = 0점.
-2. 공격 기회 = 참가한 클랜전마다 일반 클랜전 2회, 리그전 1회. 명단에 없으면 기회 없음.
+2. 점수에는 일반 클랜전만 반영한다. 공격 기회 = 참가한 일반 클랜전마다 2회. 명단에 없으면
+   기회 없음. 리그전(CWL)은 수집하고 기록표에 보여 주되 점수·선발에는 포함하지 않는다.
 3. 월 점수 = (5 × 공격 횟수 + 별 총합) ÷ (8 × 공격 기회) × 100.
    별 평균 = 별 총합 ÷ 공격 기회.
 4. 월 귀속 = 클랜전 종료 시각을 한국 시간(Asia/Seoul)으로 바꾼 달.
@@ -31,12 +32,14 @@ MAX_POINTS_PER_ATTACK = 8
 MIN_ATTACKS = 10
 MIN_SCORE = 70.0
 ROSTER_SIZE = 30
+SCORED_WAR_TYPES = frozenset({"regular"})  # CWL is recorded but never scored
 KST = ZoneInfo("Asia/Seoul")
 
 RULES: tuple[str, ...] = (
     "공격 1회 = 기본 5점 + 획득한 별 수 (최대 8점). 미공격 = 0점.",
     "월 점수 = (5 × 공격 횟수 + 별 총합) ÷ (8 × 공격 기회) × 100. "
-    "공격 기회는 일반 클랜전 2회, 리그전 1회.",
+    "일반 클랜전만 반영하며 공격 기회는 클랜전당 2회. "
+    "리그전은 기록표에만 표시하고 점수에 넣지 않음.",
     "커트라인: 해당 월 공격 10회 이상, 점수 70점 이상. 정예 멤버에게도 동일하게 적용.",
     "선발 순서: 커트라인을 넘은 정예 멤버를 먼저 넣고, 남은 자리를 점수 높은 순으로 채워 총 30명.",
     "부캐는 정예 멤버가 될 수 없음. 제외 멤버는 표에 보이지만 선발되지 않음. "
@@ -93,6 +96,8 @@ def aggregate_month(
 ) -> list[MemberMonth]:
     """Sum attacks/opportunities/stars per member across ``wars`` (assumed same month).
 
+    Only wars whose type is in ``SCORED_WAR_TYPES`` count; CWL wars are ignored here.
+
     ``clan_members`` (usually the current clan snapshot) adds a zero row for every clan member
     who took part in none of the wars, so the monthly table lists the whole clan.
     Names and townhalls seen in a war take precedence over the snapshot's.
@@ -102,6 +107,8 @@ def aggregate_month(
     stars: dict[str, int] = {}
     latest: dict[str, tuple[datetime, str, int]] = {}
     for w in wars:
+        if w.war_type not in SCORED_WAR_TYPES:
+            continue
         for m in w.members:
             attacks[m.tag] = attacks.get(m.tag, 0) + len(m.attacks)
             opportunities[m.tag] = opportunities.get(m.tag, 0) + w.attacks_per_member
