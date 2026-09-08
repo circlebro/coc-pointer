@@ -82,13 +82,25 @@ def by_tag(rows):
     return {r.tag: r for r in rows}
 
 
-def test_aggregate_counts_opportunities_per_war_type():
-    w1 = war([member("#P1", "도토리", (3, 2)), member("#P2", "제니", (1,))], war_type="regular")
-    w2 = war([member("#P1", "도토리", (3,))], war_type="cwl", end="2026-09-06T10:00:00Z")
-    rows = by_tag(aggregate_month([w1, w2]))
-    assert rows["#P1"].attacks == 3 and rows["#P1"].opportunities == 3 and rows["#P1"].stars == 8
+def test_aggregate_scores_regular_wars_only():
+    regular = war(
+        [member("#P1", "도토리", (3, 2)), member("#P2", "제니", (1,))], war_type="regular"
+    )
+    cwl = war(
+        [member("#P1", "도토리", (3,)), member("#P3", "리그만", (3,))],
+        war_type="cwl",
+        end="2026-09-06T10:00:00Z",
+    )
+    rows = by_tag(aggregate_month([regular, cwl]))
+    assert rows["#P1"].attacks == 2 and rows["#P1"].opportunities == 2 and rows["#P1"].stars == 5
     assert rows["#P2"].attacks == 1 and rows["#P2"].opportunities == 2 and rows["#P2"].missed == 1
-    assert "#P3" not in rows
+    assert "#P3" not in rows, "a member seen only in CWL gets no row from wars alone"
+
+
+def test_cwl_only_member_gets_zero_row_when_on_clan_roster():
+    cwl = war([member("#P3", "리그만", (3,))], war_type="cwl")
+    rows = by_tag(aggregate_month([cwl], [ClanMember("#P3", "리그만", "member", 15, 1, 0, 0)]))
+    assert (rows["#P3"].attacks, rows["#P3"].opportunities, rows["#P3"].score) == (0, 0, 0.0)
 
 
 def test_aggregate_uses_latest_name_and_townhall():

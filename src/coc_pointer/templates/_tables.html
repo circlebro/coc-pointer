@@ -40,11 +40,11 @@
 {% macro war_grid(view) %}
 <div class="scroll"><table class="grid">
 <thead><tr><th>닉네임</th>
-{% for w in view.wars %}<th><span class="date">{{ w.end_time|kst("%m/%d") }}</span><br><span class="type">{{ "리그" if w.war_type == "cwl" else "일반" }}</span><br><span class="opp">{{ w.opponent_name }}</span></th>{% endfor %}
+{% for w in view.wars %}<th{% if w.war_type == "cwl" %} class="cwl"{% endif %}><span class="date">{{ w.end_time|kst("%m/%d") }}</span><br><span class="type">{{ "리그" if w.war_type == "cwl" else "일반" }}</span><br><span class="opp">{{ w.opponent_name }}</span></th>{% endfor %}
 </tr></thead>
 <tbody>
 {% for r, cells in view.grid %}
-<tr class="{{ 'elite' if r.is_elite else '' }}"><td>{{ r.member.name }}</td>{% for c in cells %}<td class="cell">{{ c }}</td>{% endfor %}</tr>
+<tr class="{{ 'elite' if r.is_elite else '' }}"><td>{{ r.member.name }}</td>{% for c in cells %}<td class="cell{% if view.wars[loop.index0].war_type == "cwl" %} cwl{% endif %}">{{ c }}</td>{% endfor %}</tr>
 {% endfor %}
 </tbody></table></div>
 {% endmacro %}

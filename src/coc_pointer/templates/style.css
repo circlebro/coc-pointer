@@ -22,3 +22,5 @@ table.grid th .type, table.grid th .opp { font-weight: normal; font-size: 12px; 
 .cell { font-variant-numeric: tabular-nums; }
 .empty { color: var(--muted); }
 footer { padding: 16px; color: var(--muted); font-size: 12px; text-align: center; }
+th.cwl, td.cwl { background: #f3f3f3; color: #666; }
+tr.elite td.cwl { background: #f7efd0; }

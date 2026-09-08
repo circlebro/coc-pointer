@@ -67,6 +67,7 @@ def test_build_site_writes_pages(tmp_path):
     index = (out / "index.html").read_text(encoding="utf-8")
     assert "미니언즈" in index and "2026년 9월" in index
     assert "기본 5점" in index, "rules text must be shown"
+    assert "반영된 일반 클랜전 1개" in index
     assert "2026-09-07 12:00" in index, "generated time shown in KST"
 
     # 3 attacks < MIN_ATTACKS, so nobody is selected; the full score table still lists everyone.
@@ -75,6 +76,7 @@ def test_build_site_writes_pages(tmp_path):
     assert "도토리" in month and "제니" in month and "3/3" in month and "리그상대" in month
     assert "●" in month, "elite mark in score table"
     assert "신입" in month, "clan members without wars still appear in the score table"
+    assert 'class="cwl"' in month, "CWL columns are marked in the war grid"
 
     members = (out / "members" / "index.html").read_text(encoding="utf-8")
     assert "#P9" in members and "신입" in members and "공동 대표" in members
