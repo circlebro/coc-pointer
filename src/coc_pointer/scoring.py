@@ -18,9 +18,12 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import datetime
 from zoneinfo import ZoneInfo
+
+from coc_pointer.models import War
 
 BASE_POINTS = 5
 MAX_POINTS_PER_ATTACK = 8
@@ -75,3 +78,36 @@ class MemberMonth:
 
 def passes_cutline(m: MemberMonth) -> bool:
     return m.attacks >= MIN_ATTACKS and m.score >= MIN_SCORE
+
+
+def group_wars_by_month(wars: Iterable[War]) -> dict[str, list[War]]:
+    grouped: dict[str, list[War]] = {}
+    for w in sorted(wars, key=lambda w: w.end_time):
+        grouped.setdefault(month_key(w.end_time), []).append(w)
+    return dict(sorted(grouped.items()))
+
+
+def aggregate_month(wars: Iterable[War]) -> list[MemberMonth]:
+    """Sum attacks/opportunities/stars per member across ``wars`` (assumed same month)."""
+    attacks: dict[str, int] = {}
+    opportunities: dict[str, int] = {}
+    stars: dict[str, int] = {}
+    latest: dict[str, tuple[datetime, str, int]] = {}
+    for w in wars:
+        for m in w.members:
+            attacks[m.tag] = attacks.get(m.tag, 0) + len(m.attacks)
+            opportunities[m.tag] = opportunities.get(m.tag, 0) + w.attacks_per_member
+            stars[m.tag] = stars.get(m.tag, 0) + sum(a.stars for a in m.attacks)
+            if m.tag not in latest or w.end_time > latest[m.tag][0]:
+                latest[m.tag] = (w.end_time, m.name, m.townhall)
+    return [
+        MemberMonth(
+            tag=tag,
+            name=latest[tag][1],
+            townhall=latest[tag][2],
+            attacks=attacks[tag],
+            opportunities=opportunities[tag],
+            stars=stars[tag],
+        )
+        for tag in sorted(attacks)
+    ]
