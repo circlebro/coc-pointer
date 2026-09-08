@@ -546,7 +546,9 @@ from coc_pointer.scoring import RULES, MemberMonth, month_key, passes_cutline
 
 
 def mm(attacks: int, opportunities: int, stars: int, tag="#P", name="x") -> MemberMonth:
-    return MemberMonth(tag=tag, name=name, townhall=16, attacks=attacks, opportunities=opportunities, stars=stars)
+    return MemberMonth(
+        tag=tag, name=name, townhall=16, attacks=attacks, opportunities=opportunities, stars=stars
+    )
 
 
 # Rows taken from the clan's real August 2026 sheet; the formula must reproduce them.
@@ -591,7 +593,9 @@ def test_month_key_uses_korea_time():
 
 def test_rules_text_mentions_formula_and_cutline():
     joined = " ".join(RULES)
-    assert "5" in joined and "8" in joined and "10회" in joined and "70점" in joined and "30" in joined
+    assert (
+        "5" in joined and "8" in joined and "10회" in joined and "70점" in joined and "30" in joined
+    )
 ```
 
 - [ ] **Step 2: 테스트 실패 확인**
@@ -1232,7 +1236,9 @@ def test_404_returns_none_for_league_group():
 
 def test_403_raises_with_reason_and_message():
     def handler(request):
-        return httpx.Response(403, json={"reason": "accessDenied", "message": "Invalid authorization"})
+        return httpx.Response(
+            403, json={"reason": "accessDenied", "message": "Invalid authorization"}
+        )
 
     with make_api(handler) as api, pytest.raises(CocApiError) as exc:
         api.current_war("#2C8L822LQ")
@@ -1427,7 +1433,14 @@ def m(tag, name, th, attacks=None):
 
 
 def atk(order, stars):
-    return {"attackerTag": "#X", "defenderTag": "#Y", "stars": stars, "destructionPercentage": 50, "order": order, "duration": 100}
+    return {
+        "attackerTag": "#X",
+        "defenderTag": "#Y",
+        "stars": stars,
+        "destructionPercentage": 50,
+        "order": order,
+        "duration": 100,
+    }
 
 
 REGULAR_ENDED = {
@@ -1437,7 +1450,9 @@ REGULAR_ENDED = {
     "preparationStartTime": "20260903T140000.000Z",
     "startTime": "20260904T140000.000Z",
     "endTime": "20260905T140000.000Z",
-    "clan": side(OUR, "미니언즈", [m("#P1", "도토리", 18, [atk(2, 3), atk(1, 2)]), m("#P2", "제니", 16)]),
+    "clan": side(
+        OUR, "미니언즈", [m("#P1", "도토리", 18, [atk(2, 3), atk(1, 2)]), m("#P2", "제니", 16)]
+    ),
     "opponent": side("#OPP1", "상대클랜", []),
 }
 
@@ -1456,7 +1471,15 @@ CLAN_PAYLOAD = {
     "tag": OUR,
     "name": "미니언즈",
     "memberList": [
-        {"tag": "#P1", "name": "도토리", "role": "coLeader", "townHallLevel": 18, "trophies": 5200, "donations": 1200, "donationsReceived": 900},
+        {
+            "tag": "#P1",
+            "name": "도토리",
+            "role": "coLeader",
+            "townHallLevel": 18,
+            "trophies": 5200,
+            "donations": 1200,
+            "donationsReceived": 900,
+        },
     ],
 }
 
@@ -1541,9 +1564,15 @@ def test_collect_skips_war_in_progress(tmp_path):
 
 
 def test_collect_saves_only_our_ended_cwl_wars(tmp_path):
-    group = {"state": "inWar", "season": "2026-09", "rounds": [{"warTags": ["#W1", "#W2"]}, {"warTags": ["#0", "#0"]}]}
+    group = {
+        "state": "inWar",
+        "season": "2026-09",
+        "rounds": [{"warTags": ["#W1", "#W2"]}, {"warTags": ["#0", "#0"]}],
+    }
     in_progress = {**CWL_ENDED_WE_ARE_OPPONENT, "state": "inWar"}
-    api = FakeApi(league_group=group, cwl_wars={"#W1": CWL_ENDED_WE_ARE_OPPONENT, "#W2": in_progress})
+    api = FakeApi(
+        league_group=group, cwl_wars={"#W1": CWL_ENDED_WE_ARE_OPPONENT, "#W2": in_progress}
+    )
     new = collect(api, CFG, tmp_path, log=lambda s: None)
     assert len(new) == 1 and "_cwl_OTHER.json" in new[0].name
     assert "cwl:#0" not in api.calls
@@ -1788,8 +1817,19 @@ def test_build_month_view_label_and_grid():
 
 
 def seed(tmp_path):
-    save_war(war([member("#P1", "도토리", (3, 3), townhall=18), member("#P2", "제니", (2, 1))]), tmp_path)
-    save_war(war([member("#P1", "도토리", (3,))], war_type="cwl", end="2026-09-06T10:00:00Z", opponent_tag="#OPP2", opponent_name="리그상대"), tmp_path)
+    save_war(
+        war([member("#P1", "도토리", (3, 3), townhall=18), member("#P2", "제니", (2, 1))]), tmp_path
+    )
+    save_war(
+        war(
+            [member("#P1", "도토리", (3,))],
+            war_type="cwl",
+            end="2026-09-06T10:00:00Z",
+            opponent_tag="#OPP2",
+            opponent_name="리그상대",
+        ),
+        tmp_path,
+    )
     save_clan_snapshot(
         ClanSnapshot(
             fetched_at=datetime(2026, 9, 7, tzinfo=UTC),
@@ -2117,7 +2157,12 @@ def build_site(
     clan_name = snapshot.name if snapshot else "클랜"
 
     env = _env()
-    common = {"months": months, "rules": RULES, "generated_at": generated_at, "clan_name": clan_name}
+    common = {
+        "months": months,
+        "rules": RULES,
+        "generated_at": generated_at,
+        "clan_name": clan_name,
+    }
     written: list[Path] = []
 
     def write(rel: str, template: str, **ctx: object) -> None:
@@ -2225,7 +2270,15 @@ def write_config(tmp_path: Path) -> Path:
 def test_build_command_writes_site(tmp_path, capsys):
     save_war(war([member("#P1", "도토리", (3, 3))]), tmp_path / "data")
     code = cli.main(
-        ["build", "--data-dir", str(tmp_path / "data"), "--config", str(write_config(tmp_path)), "--out", str(tmp_path / "site")]
+        [
+            "build",
+            "--data-dir",
+            str(tmp_path / "data"),
+            "--config",
+            str(write_config(tmp_path)),
+            "--out",
+            str(tmp_path / "site"),
+        ]
     )
     assert code == 0
     assert (tmp_path / "site" / "index.html").exists()
@@ -2235,7 +2288,9 @@ def test_build_command_writes_site(tmp_path, capsys):
 def test_collect_requires_token(tmp_path, monkeypatch, capsys):
     monkeypatch.delenv("COC_API_TOKEN", raising=False)
     monkeypatch.chdir(tmp_path)  # no .env here
-    code = cli.main(["collect", "--data-dir", str(tmp_path / "data"), "--config", str(write_config(tmp_path))])
+    code = cli.main(
+        ["collect", "--data-dir", str(tmp_path / "data"), "--config", str(write_config(tmp_path))]
+    )
     assert code == 2
     assert "COC_API_TOKEN" in capsys.readouterr().err
 
@@ -2243,7 +2298,17 @@ def test_collect_requires_token(tmp_path, monkeypatch, capsys):
 def test_bad_config_reports_and_fails(tmp_path, capsys):
     bad = tmp_path / "clan.yaml"
     bad.write_text('clan_tag: "#2C8L822LQ"\nelite:\n  - "#bad"\n', encoding="utf-8")
-    code = cli.main(["build", "--data-dir", str(tmp_path), "--config", str(bad), "--out", str(tmp_path / "site")])
+    code = cli.main(
+        [
+            "build",
+            "--data-dir",
+            str(tmp_path),
+            "--config",
+            str(bad),
+            "--out",
+            str(tmp_path / "site"),
+        ]
+    )
     assert code == 2
     assert "elite[0]" in capsys.readouterr().err
 
@@ -2302,7 +2367,10 @@ def load_dotenv(path: Path) -> None:
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="coc-pointer", description="클랜전 점수 자동 집계")
     sub = parser.add_subparsers(dest="command", required=True)
-    for name, help_ in (("collect", "API에서 끝난 클랜전을 저장"), ("build", "점수를 계산해 site/ 생성")):
+    for name, help_ in (
+        ("collect", "API에서 끝난 클랜전을 저장"),
+        ("build", "점수를 계산해 site/ 생성"),
+    ):
         p = sub.add_parser(name, help=help_)
         p.add_argument("--data-dir", default="data", type=Path)
         p.add_argument("--config", default="config/clan.yaml", type=Path)
@@ -2327,7 +2395,9 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "collect":
         token = os.environ.get(TOKEN_ENV)
         if not token:
-            return _fail(f"환경 변수 {TOKEN_ENV}이 없습니다. .env 파일이나 GitHub Secrets를 확인하세요.")
+            return _fail(
+                f"환경 변수 {TOKEN_ENV}이 없습니다. .env 파일이나 GitHub Secrets를 확인하세요."
+            )
         try:
             with CocApi(token) as api:
                 saved = collect(api, config, args.data_dir)
