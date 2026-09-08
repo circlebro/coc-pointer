@@ -23,6 +23,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
+from coc_pointer.config import ClanConfig
 from coc_pointer.models import War
 
 BASE_POINTS = 5
@@ -110,4 +111,71 @@ def aggregate_month(wars: Iterable[War]) -> list[MemberMonth]:
             stars=stars[tag],
         )
         for tag in sorted(attacks)
+    ]
+
+
+@dataclass(frozen=True)
+class RankedMember:
+    rank: int
+    member: MemberMonth
+    is_elite: bool
+    is_alt: bool
+    is_excluded: bool
+    warnings: int
+    meets_cutline: bool
+    selection: str | None  # "정예" | "선발" | None
+
+
+def sort_key(m: MemberMonth) -> tuple[float, int, int, str]:
+    return (-m.score, -m.stars, -m.attacks, m.name)
+
+
+def rank_month(members: Iterable[MemberMonth], config: ClanConfig) -> list[RankedMember]:
+    """Order members by score and mark who is selected for the CWL roster."""
+    ordered = sorted(members, key=sort_key)
+
+    def eligible(m: MemberMonth) -> bool:
+        return passes_cutline(m) and not config.is_excluded(m.tag)
+
+    selection: dict[str, str] = {}
+    for m in ordered:
+        if config.is_elite(m.tag) and eligible(m) and len(selection) < ROSTER_SIZE:
+            selection[m.tag] = "정예"
+    for m in ordered:
+        if len(selection) >= ROSTER_SIZE:
+            break
+        if m.tag not in selection and eligible(m):
+            selection[m.tag] = "선발"
+
+    return [
+        RankedMember(
+            rank=i,
+            member=m,
+            is_elite=config.is_elite(m.tag),
+            is_alt=config.is_alt(m.tag),
+            is_excluded=config.is_excluded(m.tag),
+            warnings=config.warning_count(m.tag),
+            meets_cutline=passes_cutline(m),
+            selection=selection.get(m.tag),
+        )
+        for i, m in enumerate(ordered, start=1)
+    ]
+
+
+def roster(ranked: Iterable[RankedMember]) -> list[RankedMember]:
+    """Final roster: elite first, then selected, each in score order, ranks renumbered."""
+    rows = list(ranked)
+    chosen = [r for r in rows if r.selection == "정예"] + [r for r in rows if r.selection == "선발"]
+    return [
+        RankedMember(
+            rank=i,
+            member=r.member,
+            is_elite=r.is_elite,
+            is_alt=r.is_alt,
+            is_excluded=r.is_excluded,
+            warnings=r.warnings,
+            meets_cutline=r.meets_cutline,
+            selection=r.selection,
+        )
+        for i, r in enumerate(chosen, start=1)
     ]

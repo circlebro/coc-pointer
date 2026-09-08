@@ -3,13 +3,17 @@ from datetime import UTC, datetime
 import pytest
 from helpers import member, war
 
+from coc_pointer.config import ClanConfig
 from coc_pointer.scoring import (
+    ROSTER_SIZE,
     RULES,
     MemberMonth,
     aggregate_month,
     group_wars_by_month,
     month_key,
     passes_cutline,
+    rank_month,
+    roster,
 )
 
 
@@ -100,3 +104,70 @@ def test_group_wars_by_month_uses_korea_time_and_sorts():
     grouped = group_wars_by_month([later, sep, aug])
     assert list(grouped) == ["2026-08", "2026-09"]
     assert grouped["2026-09"] == [sep, later]
+
+
+def strong(tag, name="m", score_stars=3):
+    # 12 attacks, all made, star avg configurable -> score >= 70
+    return mm(12, 12, 12 * score_stars, tag=tag, name=name)
+
+
+def test_rank_orders_by_score_then_stars_then_attacks_then_name():
+    a = mm(10, 10, 20, tag="#A", name="가")  # 87.5
+    b = mm(11, 11, 22, tag="#B", name="나")  # 87.5, more stars & attacks
+    c = mm(10, 10, 20, tag="#C", name="다")  # 87.5, same as a, later name
+    ranked = rank_month([c, a, b], ClanConfig(clan_tag="#X"))
+    assert [r.member.tag for r in ranked] == ["#B", "#A", "#C"]
+    assert [r.rank for r in ranked] == [1, 2, 3]
+
+
+def test_selection_elite_first_then_by_score_up_to_roster_size():
+    cfg = ClanConfig(clan_tag="#X", elite=frozenset({"#E1", "#E2"}))
+    members = [strong(f"#M{i:02d}", name=f"m{i:02d}", score_stars=2) for i in range(35)]
+    members += [strong("#E1", "e1", score_stars=1), strong("#E2", "e2", score_stars=1)]
+    ranked = rank_month(members, cfg)
+    sel = {r.member.tag: r.selection for r in ranked}
+    assert sel["#E1"] == "정예" and sel["#E2"] == "정예"
+    assert sum(1 for v in sel.values() if v is not None) == ROSTER_SIZE
+    assert sum(1 for v in sel.values() if v == "선발") == ROSTER_SIZE - 2
+    # the 28 selected regulars are the top-scoring ones; the 7 weakest get None
+    unselected = sorted(t for t, v in sel.items() if v is None)
+    assert len(unselected) == 7
+
+
+def test_elite_below_cutline_is_not_selected_as_elite():
+    cfg = ClanConfig(clan_tag="#X", elite=frozenset({"#E1"}))
+    weak_elite = mm(9, 12, 27, tag="#E1", name="e1")  # 9 attacks < 10
+    ranked = rank_month([weak_elite, strong("#M1")], cfg)
+    by = {r.member.tag: r for r in ranked}
+    assert by["#E1"].is_elite and not by["#E1"].meets_cutline and by["#E1"].selection is None
+    assert by["#M1"].selection == "선발"
+
+
+def test_alt_is_never_elite_but_can_be_selected():
+    cfg = ClanConfig(clan_tag="#X", elite=frozenset({"#A1"}), alts=frozenset({"#A1"}))
+    ranked = rank_month([strong("#A1")], cfg)
+    r = ranked[0]
+    assert r.is_alt and not r.is_elite and r.selection == "선발"
+
+
+def test_excluded_member_is_listed_but_never_selected():
+    cfg = ClanConfig(clan_tag="#X", elite=frozenset({"#X1"}), excluded=frozenset({"#X1"}))
+    ranked = rank_month([strong("#X1"), strong("#M1")], cfg)
+    by = {r.member.tag: r for r in ranked}
+    assert by["#X1"].is_excluded and by["#X1"].selection is None
+    assert by["#M1"].selection == "선발"
+
+
+def test_warnings_are_carried_but_do_not_affect_score():
+    cfg = ClanConfig(clan_tag="#X", warnings={"#M1": 2})
+    r = rank_month([strong("#M1")], cfg)[0]
+    assert r.warnings == 2 and r.selection == "선발"
+
+
+def test_roster_puts_elite_first_and_renumbers():
+    cfg = ClanConfig(clan_tag="#X", elite=frozenset({"#E1"}))
+    ranked = rank_month([strong("#M1", score_stars=3), strong("#E1", score_stars=1)], cfg)
+    final = roster(ranked)
+    assert [r.member.tag for r in final] == ["#E1", "#M1"]
+    assert [r.rank for r in final] == [1, 2]
+    assert [r.selection for r in final] == ["정예", "선발"]
