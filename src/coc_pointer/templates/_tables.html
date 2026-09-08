@@ -21,6 +21,17 @@
 </tbody></table></div>
 {% endmacro %}
 
+{% macro cwl_table(rows) %}
+<div class="scroll"><table>
+<thead><tr><th>순위</th><th>닉네임</th><th>홀</th><th>공격</th><th>미공격</th><th>별 총합</th><th>별 평균</th></tr></thead>
+<tbody>
+{% for m in rows %}
+<tr><td>{{ loop.index }}</td><td>{{ m.name }}</td><td>{{ m.townhall }}</td>
+  <td>{{ m.attacks }}</td><td>{{ m.missed }}</td><td>{{ m.stars }}</td><td>{{ "%.2f"|format(m.star_avg) }}</td></tr>
+{% endfor %}
+</tbody></table></div>
+{% endmacro %}
+
 {% macro score_table(rows) %}
 <div class="scroll"><table>
 <thead><tr><th>순위</th><th>닉네임</th><th>홀</th><th>공격</th><th>미공격</th><th>별 총합</th><th>별 평균</th><th>점수</th><th>정예</th><th>부캐</th><th>경고</th><th>선발</th></tr></thead>

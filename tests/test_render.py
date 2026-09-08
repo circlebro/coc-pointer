@@ -4,7 +4,7 @@ from helpers import member, war
 
 from coc_pointer.config import ClanConfig
 from coc_pointer.models import ClanMember, ClanSnapshot
-from coc_pointer.render import build_month_view, build_site, war_cell
+from coc_pointer.render import build_month_view, build_site, next_month_label, war_cell
 from coc_pointer.storage import save_clan_snapshot, save_war
 
 CFG = ClanConfig(clan_tag="#2C8L822LQ", elite=frozenset({"#P1"}), warnings={"#P2": 1})
@@ -33,6 +33,13 @@ def test_build_month_view_grids_list_participants_only():
     assert [cells for _, cells in view.cwl_grid] == [["3"]]
     assert [w.war_type for w in view.regular_wars] == ["regular"]
     assert [w.war_type for w in view.cwl_wars] == ["cwl"]
+    assert [m.name for m in view.cwl_participants] == ["도토리"], "actual CWL roster this month"
+    assert view.next_label == "2026년 10월"
+
+
+def test_next_month_label_wraps_year():
+    assert next_month_label("2026-12") == "2027년 1월"
+    assert next_month_label("2026-01") == "2026년 2월"
 
 
 def seed(tmp_path):
@@ -75,6 +82,8 @@ def test_build_site_writes_pages(tmp_path):
     assert "미니언즈" in index and "2026년 9월" in index
     assert "기본 5점" in index, "rules text must be shown"
     assert "반영된 일반 클랜전 1개" in index
+    assert "2026년 9월 리그전 참가 명단 (1명)" in index, "actual CWL participants shown first"
+    assert "2026년 10월 리그전 선발 명단" in index, "selection is for next month"
     assert "2026-09-07 12:00" in index, "generated time shown in KST"
 
     # 3 attacks < MIN_ATTACKS, so nobody is selected; the full score table still lists everyone.

@@ -199,3 +199,14 @@ def test_aggregate_adds_zero_rows_for_roster_members_without_wars():
     assert (new.name, new.townhall) == ("신입", 12)
     assert (new.attacks, new.opportunities, new.stars) == (0, 0, 0)
     assert new.score == 0.0 and new.missed == 0
+
+
+def test_aggregate_can_target_cwl_wars_explicitly():
+    cwl = war([member("#P1", "도토리", (3,)), member("#P2", "제니", ())], war_type="cwl")
+    rows = by_tag(aggregate_month([cwl], war_types=frozenset({"cwl"})))
+    assert (rows["#P1"].attacks, rows["#P1"].opportunities, rows["#P1"].stars) == (1, 1, 3)
+    assert (rows["#P2"].attacks, rows["#P2"].opportunities, rows["#P2"].missed) == (0, 1, 1)
+
+
+def test_rules_mention_next_month_roster():
+    assert any("다음 달" in r for r in RULES)
