@@ -16,11 +16,13 @@ from coc_pointer.models import ClanMember, ClanSnapshot, War
 from coc_pointer.scoring import (
     KST,
     RULES,
+    MemberMonth,
     RankedMember,
     aggregate_month,
     group_wars_by_month,
     rank_month,
     roster,
+    sort_key,
 )
 from coc_pointer.storage import load_clan_snapshot, load_wars
 
@@ -39,6 +41,8 @@ class MonthView:
     cwl_wars: list[War]
     regular_grid: list[tuple[RankedMember, list[str]]]  # participants only
     cwl_grid: list[tuple[RankedMember, list[str]]]  # participants only
+    cwl_participants: list[MemberMonth]  # actual CWL roster this month, CWL record only
+    next_label: str  # month whose CWL roster this month's scores decide
 
 
 def war_cell(war: War, tag: str) -> str:
@@ -54,6 +58,15 @@ def war_cell(war: War, tag: str) -> str:
 def month_label(key: str) -> str:
     year, month = key.split("-")
     return f"{year}년 {int(month)}월"
+
+
+def next_month_label(key: str) -> str:
+    year, month = (int(x) for x in key.split("-"))
+    if month == 12:
+        year, month = year + 1, 1
+    else:
+        month += 1
+    return f"{year}년 {month}월"
 
 
 def build_month_view(
@@ -72,6 +85,10 @@ def build_month_view(
         cwl_wars=cwl_wars,
         regular_grid=_participant_grid(ranked, regular_wars),
         cwl_grid=_participant_grid(ranked, cwl_wars),
+        cwl_participants=sorted(
+            aggregate_month(cwl_wars, war_types=frozenset({"cwl"})), key=sort_key
+        ),
+        next_label=next_month_label(key),
     )
 
 

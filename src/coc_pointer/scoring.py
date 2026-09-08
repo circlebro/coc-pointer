@@ -11,6 +11,7 @@
 5. 커트라인 = 해당 월 공격 10회 이상 그리고 점수 70점 이상. 정예에게도 동일 적용.
 6. 선발 = 커트라인을 넘은 정예 멤버(점수순) 먼저, 남은 자리를 커트라인을 넘은
    일반 멤버 점수순으로 채워 총 30명. 동점은 별 총합 → 공격 횟수 → 닉네임 순.
+   해당 월 점수로 뽑은 명단이 **다음 달** 리그전에 참가한다.
 7. 부캐(alts)는 정예가 될 수 없다. 제외(excluded) 멤버는 표시되지만 선발되지 않는다.
    경고(warnings)는 표시만 하고 점수에 영향이 없다.
 
@@ -41,7 +42,8 @@ RULES: tuple[str, ...] = (
     "일반 클랜전만 반영하며 공격 기회는 클랜전당 2회. "
     "리그전은 기록표에만 표시하고 점수에 넣지 않음.",
     "커트라인: 해당 월 공격 10회 이상, 점수 70점 이상. 정예 멤버에게도 동일하게 적용.",
-    "선발 순서: 커트라인을 넘은 정예 멤버를 먼저 넣고, 남은 자리를 점수 높은 순으로 채워 총 30명.",
+    "선발 순서: 커트라인을 넘은 정예 멤버를 먼저 넣고, 남은 자리를 점수 높은 순으로 채워 총 30명. "
+    "이렇게 뽑은 명단은 다음 달 리그전에 참가한다.",
     "부캐는 정예 멤버가 될 수 없음. 제외 멤버는 표에 보이지만 선발되지 않음. "
     "경고 횟수는 표시만 하고 점수에 영향 없음.",
     "클랜전의 월 귀속은 종료 시각(한국 시간) 기준.",
@@ -92,11 +94,14 @@ def group_wars_by_month(wars: Iterable[War]) -> dict[str, list[War]]:
 
 
 def aggregate_month(
-    wars: Iterable[War], clan_members: Iterable[ClanMember] = ()
+    wars: Iterable[War],
+    clan_members: Iterable[ClanMember] = (),
+    war_types: frozenset[str] = SCORED_WAR_TYPES,
 ) -> list[MemberMonth]:
     """Sum attacks/opportunities/stars per member across ``wars`` (assumed same month).
 
-    Only wars whose type is in ``SCORED_WAR_TYPES`` count; CWL wars are ignored here.
+    Only wars whose type is in ``war_types`` count (default: scored types, i.e. regular
+    wars). Pass ``frozenset({"cwl"})`` to tally the CWL record instead.
 
     ``clan_members`` (usually the current clan snapshot) adds a zero row for every clan member
     who took part in none of the wars, so the monthly table lists the whole clan.
@@ -107,7 +112,7 @@ def aggregate_month(
     stars: dict[str, int] = {}
     latest: dict[str, tuple[datetime, str, int]] = {}
     for w in wars:
-        if w.war_type not in SCORED_WAR_TYPES:
+        if w.war_type not in war_types:
             continue
         for m in w.members:
             attacks[m.tag] = attacks.get(m.tag, 0) + len(m.attacks)

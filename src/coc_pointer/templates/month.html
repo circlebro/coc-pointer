@@ -1,11 +1,15 @@
 {% extends "base.html" %}
-{% from "_tables.html" import rules_box, roster_table, score_table, war_grid with context %}
+{% from "_tables.html" import rules_box, roster_table, score_table, war_grid, cwl_table with context %}
 {% block title %}{{ view.label }} · {{ clan_name }}{% endblock %}
 {% block content %}
 {{ rules_box() }}
 <section>
-  <h2>{{ view.label }} 최종 선발 명단 ({{ view.roster|length }}명)</h2>
-  {% if view.roster %}{{ roster_table(view.roster) }}{% else %}<p class="empty">커트라인을 넘은 멤버가 없습니다.</p>{% endif %}
+  <h2>{{ view.label }} 리그전 참가 명단 ({{ view.cwl_participants|length }}명)</h2>
+  {% if view.cwl_participants %}{{ cwl_table(view.cwl_participants) }}{% else %}<p class="empty">이번 달 리그전 기록이 아직 없습니다.</p>{% endif %}
+</section>
+<section>
+  <h2>{{ view.next_label }} 리그전 선발 명단 ({{ view.label }} 점수 기준, {{ view.roster|length }}명)</h2>
+  {% if view.roster %}{{ roster_table(view.roster) }}{% else %}<p class="empty">커트라인을 넘은 멤버가 없습니다. {{ view.label }} 일반 클랜전 점수가 쌓이면 채워집니다.</p>{% endif %}
 </section>
 <section>
   <h2>{{ view.label }} 월 점수표 (전원)</h2>
