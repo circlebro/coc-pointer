@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% from "_tables.html" import rules_box, roster_table, score_table, war_grid with context %}
+{% block title %}{{ view.label }} · {{ clan_name }}{% endblock %}
+{% block content %}
+{{ rules_box() }}
+<section>
+  <h2>{{ view.label }} 최종 선발 명단 ({{ view.roster|length }}명)</h2>
+  {% if view.roster %}{{ roster_table(view.roster) }}{% else %}<p class="empty">커트라인을 넘은 멤버가 없습니다.</p>{% endif %}
+</section>
+<section>
+  <h2>{{ view.label }} 월 점수표 (전원)</h2>
+  {{ score_table(view.ranked) }}
+</section>
+<section>
+  <h2>{{ view.label }} 클랜전별 기록 (칸: 공격별 별 수, x = 미공격, 빈칸 = 미참가)</h2>
+  {{ war_grid(view) }}
+</section>
+{% endblock %}

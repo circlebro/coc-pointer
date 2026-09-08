@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}{{ clan_name }} 클랜전 점수{% endblock %}</title>
+<link rel="stylesheet" href="{{ root }}style.css">
+</head>
+<body>
+<header>
+  <h1><a href="{{ root }}">{{ clan_name }} 클랜전 점수</a></h1>
+  <nav>
+    {% for m in months %}<a href="{{ root }}{{ m.key }}/">{{ m.label }}</a>{% endfor %}
+    <a href="{{ root }}members/">클랜원 목록</a>
+  </nav>
+</header>
+<main>
+{% block content %}{% endblock %}
+</main>
+<footer>마지막 갱신: {{ generated_at }} (한국 시간)</footer>
+</body>
+</html>
