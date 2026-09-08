@@ -1,0 +1,50 @@
+{# 매크로는 기본적으로 바깥 변수를 못 보므로, 호출하는 템플릿에서 "with context"로 import한다. #}
+{% macro rules_box() %}
+<section class="rules">
+  <h2>선발 규칙</h2>
+  <ol>{% for r in rules %}<li>{{ r }}</li>{% endfor %}</ol>
+</section>
+{% endmacro %}
+
+{% macro roster_table(rows) %}
+<div class="scroll"><table>
+<thead><tr><th>순위</th><th>닉네임</th><th>홀</th><th>공격</th><th>미공격</th><th>별 평균</th><th>점수</th><th>선발 근거</th></tr></thead>
+<tbody>
+{% for r in rows %}
+<tr class="{{ 'elite' if r.selection == '정예' else '' }}">
+  <td>{{ r.rank }}</td><td>{{ r.member.name }}</td><td>{{ r.member.townhall }}</td>
+  <td>{{ r.member.attacks }}</td><td>{{ r.member.missed }}</td>
+  <td>{{ "%.2f"|format(r.member.star_avg) }}</td><td>{{ "%.1f"|format(r.member.score) }}</td>
+  <td>{{ r.selection }} 멤버</td>
+</tr>
+{% endfor %}
+</tbody></table></div>
+{% endmacro %}
+
+{% macro score_table(rows) %}
+<div class="scroll"><table>
+<thead><tr><th>순위</th><th>닉네임</th><th>홀</th><th>공격</th><th>미공격</th><th>별 총합</th><th>별 평균</th><th>점수</th><th>정예</th><th>부캐</th><th>경고</th><th>선발</th></tr></thead>
+<tbody>
+{% for r in rows %}
+<tr class="{{ 'elite' if r.is_elite else '' }} {{ 'below' if not r.meets_cutline else '' }} {{ 'excluded' if r.is_excluded else '' }}">
+  <td>{{ r.rank }}</td><td>{{ r.member.name }}</td><td>{{ r.member.townhall }}</td>
+  <td>{{ r.member.attacks }}</td><td>{{ r.member.missed }}</td><td>{{ r.member.stars }}</td>
+  <td>{{ "%.2f"|format(r.member.star_avg) }}</td><td>{{ "%.1f"|format(r.member.score) }}</td>
+  <td>{{ "●" if r.is_elite else "" }}</td><td>{{ "부캐" if r.is_alt else "" }}</td>
+  <td>{{ r.warnings if r.warnings else "" }}</td><td>{{ r.selection or ("제외" if r.is_excluded else "미달" if not r.meets_cutline else "") }}</td>
+</tr>
+{% endfor %}
+</tbody></table></div>
+{% endmacro %}
+
+{% macro war_grid(view) %}
+<div class="scroll"><table class="grid">
+<thead><tr><th>닉네임</th>
+{% for w in view.wars %}<th><span class="date">{{ w.end_time|kst("%m/%d") }}</span><br><span class="type">{{ "리그" if w.war_type == "cwl" else "일반" }}</span><br><span class="opp">{{ w.opponent_name }}</span></th>{% endfor %}
+</tr></thead>
+<tbody>
+{% for r, cells in view.grid %}
+<tr class="{{ 'elite' if r.is_elite else '' }}"><td>{{ r.member.name }}</td>{% for c in cells %}<td class="cell">{{ c }}</td>{% endfor %}</tr>
+{% endfor %}
+</tbody></table></div>
+{% endmacro %}

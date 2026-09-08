@@ -1,0 +1,24 @@
+:root { --elite: #fff3c4; --muted: #999; --line: #ddd; }
+* { box-sizing: border-box; }
+body { margin: 0; font-family: -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; font-size: 14px; color: #222; background: #fafafa; }
+header { padding: 12px 16px; background: #2b2d42; color: #fff; }
+header h1 { margin: 0 0 6px; font-size: 18px; }
+header a { color: #fff; text-decoration: none; }
+nav a { display: inline-block; margin-right: 12px; opacity: .9; }
+main { padding: 12px 16px; max-width: 1200px; margin: 0 auto; }
+section { margin-bottom: 28px; }
+h2 { font-size: 16px; margin: 0 0 8px; }
+.rules { background: #fff; border: 1px solid var(--line); padding: 8px 12px; }
+.rules ol { margin: 0; padding-left: 20px; }
+.scroll { overflow-x: auto; }
+table { border-collapse: collapse; background: #fff; white-space: nowrap; }
+th, td { border: 1px solid var(--line); padding: 4px 8px; text-align: center; }
+th { background: #f0f0f0; position: sticky; top: 0; }
+tr.elite { background: var(--elite); }
+tr.below { color: var(--muted); }
+tr.excluded td { text-decoration: line-through; }
+table.grid th .date { font-weight: bold; }
+table.grid th .type, table.grid th .opp { font-weight: normal; font-size: 12px; color: #555; }
+.cell { font-variant-numeric: tabular-nums; }
+.empty { color: var(--muted); }
+footer { padding: 16px; color: var(--muted); font-size: 12px; text-align: center; }

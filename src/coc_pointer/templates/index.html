@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% from "_tables.html" import rules_box, roster_table with context %}
+{% block content %}
+{{ rules_box() }}
+{% if latest %}
+<section>
+  <h2>{{ latest.label }} 최종 선발 명단 ({{ latest.roster|length }}명)</h2>
+  {{ roster_table(latest.roster) }}
+  <p><a href="{{ latest.key }}/">{{ latest.label }} 전체 점수표 보기 →</a> · 반영된 클랜전 {{ latest.wars|length }}개</p>
+</section>
+{% else %}
+<p class="empty">기록 없음. 아직 저장된 클랜전이 없습니다.</p>
+{% endif %}
+{% endblock %}
