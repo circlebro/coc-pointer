@@ -9,7 +9,7 @@ from pathlib import Path
 
 from coc_pointer.api import CocApi, CocApiError
 from coc_pointer.collect import WarLogPrivateError, collect
-from coc_pointer.config import ConfigError, load_config
+from coc_pointer.config import ClanConfig, ConfigError, load_clan_tag, load_config
 from coc_pointer.render import build_site
 
 TOKEN_ENV = "COC_API_TOKEN"
@@ -50,12 +50,13 @@ def _fail(message: str) -> int:
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     load_dotenv(Path(".env"))
-    try:
-        config = load_config(args.config)
-    except (ConfigError, FileNotFoundError) as err:
-        return _fail(str(err))
 
     if args.command == "collect":
+        try:
+            clan_tag = load_clan_tag(args.config)
+        except (ConfigError, FileNotFoundError) as err:
+            return _fail(str(err))
+        config = ClanConfig(clan_tag=clan_tag)
         token = os.environ.get(TOKEN_ENV)
         if not token:
             return _fail(
@@ -71,6 +72,10 @@ def main(argv: list[str] | None = None) -> int:
         print(f"완료: 새 클랜전 {len(saved)}개")
         return 0
 
+    try:
+        config = load_config(args.config)
+    except (ConfigError, FileNotFoundError) as err:
+        return _fail(str(err))
     written = build_site(args.data_dir, config, args.out)
     print(f"생성: {len(written)}개 파일 → {args.out}")
     return 0

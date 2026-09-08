@@ -40,6 +40,17 @@ def test_collect_requires_token(tmp_path, monkeypatch, capsys):
     assert "COC_API_TOKEN" in capsys.readouterr().err
 
 
+def test_collect_ignores_malformed_elite(tmp_path, monkeypatch, capsys):
+    """collect only validates clan_tag, so a bad elite entry must not fail config parsing."""
+    monkeypatch.delenv("COC_API_TOKEN", raising=False)
+    monkeypatch.chdir(tmp_path)  # no .env here
+    bad = tmp_path / "clan.yaml"
+    bad.write_text('clan_tag: "#2C8L822LQ"\nelite:\n  - "#bad"\n', encoding="utf-8")
+    code = cli.main(["collect", "--data-dir", str(tmp_path / "data"), "--config", str(bad)])
+    assert code == 2
+    assert "COC_API_TOKEN" in capsys.readouterr().err
+
+
 def test_bad_config_reports_and_fails(tmp_path, capsys):
     bad = tmp_path / "clan.yaml"
     bad.write_text('clan_tag: "#2C8L822LQ"\nelite:\n  - "#bad"\n', encoding="utf-8")

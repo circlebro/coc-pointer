@@ -35,20 +35,21 @@ jobs:
           COC_API_TOKEN: ${{ secrets.COC_API_TOKEN }}
         run: uv run coc-pointer collect
 
-      - name: Build site
-        run: uv run coc-pointer build
-
       - name: Commit new data
+        if: ${{ !cancelled() }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data
-          if git diff --cached --quiet; then
-            echo "no new data"
-          else
+          if [ -n "$(git status --porcelain data/wars)" ]; then
+            git add data/wars data/clan.json
             git commit -m "data: 클랜전 수집 $(date -u +%Y-%m-%dT%H:%MZ)"
             git push
+          else
+            echo "no new wars"
           fi
+
+      - name: Build site
+        run: uv run coc-pointer build
 
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3

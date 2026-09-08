@@ -84,3 +84,31 @@ def test_build_site_with_no_data(tmp_path):
     build_site(tmp_path, CFG, out)
     index = (out / "index.html").read_text(encoding="utf-8")
     assert "기록 없음" in index
+
+
+def test_build_site_with_member_passing_cutline(tmp_path):
+    """A member with >=10 attacks and score >=70 must show up in the roster tables."""
+    cfg = ClanConfig(clan_tag="#2C8L822LQ", elite=frozenset({"#P1"}))
+    opponents = ["#OPP1", "#OPP2", "#OPP3", "#OPP4", "#OPP5"]
+    for day, opponent_tag in enumerate(opponents, start=1):
+        save_war(
+            war(
+                [member("#P1", "도토리", (3, 3))],
+                end=f"2026-09-0{day}T14:30:00Z",
+                opponent_tag=opponent_tag,
+            ),
+            tmp_path,
+        )
+
+    out = tmp_path / "site"
+    build_site(tmp_path, cfg, out, now=datetime(2026, 9, 7, 3, 0, tzinfo=UTC))
+
+    index = (out / "index.html").read_text(encoding="utf-8")
+    assert "도토리" in index
+    assert "100.0" in index
+    assert "정예 멤버" in index
+
+    month = (out / "2026-09" / "index.html").read_text(encoding="utf-8")
+    assert "도토리" in month
+    assert "100.0" in month
+    assert "선발" in month

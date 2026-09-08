@@ -5,7 +5,7 @@
 {% if latest %}
 <section>
   <h2>{{ latest.label }} 최종 선발 명단 ({{ latest.roster|length }}명)</h2>
-  {{ roster_table(latest.roster) }}
+  {% if latest.roster %}{{ roster_table(latest.roster) }}{% else %}<p class="empty">커트라인을 넘은 멤버가 없습니다.</p>{% endif %}
   <p><a href="{{ latest.key }}/">{{ latest.label }} 전체 점수표 보기 →</a> · 반영된 클랜전 {{ latest.wars|length }}개</p>
 </section>
 {% else %}
