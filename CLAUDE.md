@@ -41,6 +41,25 @@ uv add --dev <pkg>               # add a dev-only dependency
 
 Pipeline is implemented end to end. Historical Excel data is not imported; only wars collected by the workflow exist in `data/`.
 
+## Commit convention
+
+Commit subjects use a Conventional Commits type in ASCII, followed by a Korean summary.
+
+| Type | 쓰임 |
+|---|---|
+| `feat` | 새 기능 |
+| `fix` | 버그 수정 |
+| `chore` | 설정, 빌드, 잡무 |
+| `docs` | 문서 |
+| `refactor` | 동작 변경 없는 구조 개선 |
+| `test` | 테스트만 추가·수정 |
+
+Example: `feat: 진행 중 클랜전을 실시간으로 반영`
+
+The body explains what changed and why, as Korean bullets, so `git log` alone shows which
+feature was built. PRs are squash-merged, so the PR title follows the same format — it
+becomes the commit on `main`. Keep the `Co-Authored-By` and `Claude-Session` trailers.
+
 ## Git
 
 - Default branch: `main`. Open PRs against it.
