@@ -44,3 +44,22 @@ def test_clan_snapshot_round_trip_overwrites(tmp_path):
     newer = ClanSnapshot(snap.fetched_at, snap.name, snap.tag, ())
     save_clan_snapshot(newer, tmp_path)
     assert load_clan_snapshot(tmp_path) == newer
+
+
+def test_in_progress_war_is_kept_apart_and_refreshed(tmp_path):
+    first = war([member("#P1", "도토리", (3,))], in_progress=True)
+    path = save_war(first, tmp_path)
+    assert path == tmp_path / "in-progress" / first.file_name
+    assert not (tmp_path / "wars" / first.file_name).exists()
+
+    second = war([member("#P1", "도토리", (3, 2))], in_progress=True)
+    assert save_war(second, tmp_path) == path, "an unfinished war is rewritten every run"
+    assert load_wars(tmp_path) == [second]
+
+
+def test_finished_record_replaces_the_in_progress_copy(tmp_path):
+    save_war(war([member("#P1", "도토리", (3,))], in_progress=True), tmp_path)
+    final = war([member("#P1", "도토리", (3, 3))])
+    assert save_war(final, tmp_path) == tmp_path / "wars" / final.file_name
+    assert not (tmp_path / "in-progress" / final.file_name).exists()
+    assert load_wars(tmp_path) == [final]

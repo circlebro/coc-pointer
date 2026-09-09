@@ -45,6 +45,17 @@ class War:
     opponent_tag: str
     opponent_name: str
     members: tuple[WarMember, ...]
+    in_progress: bool = False
+
+    @property
+    def attacks_made(self) -> int:
+        """Attacks our members have actually used so far."""
+        return sum(len(m.attacks) for m in self.members)
+
+    @property
+    def attack_slots(self) -> int:
+        """Attacks our roster could use in total."""
+        return len(self.members) * self.attacks_per_member
 
     @property
     def file_name(self) -> str:
@@ -58,6 +69,7 @@ class War:
             "end_time": to_iso(self.end_time),
             "team_size": self.team_size,
             "attacks_per_member": self.attacks_per_member,
+            "in_progress": self.in_progress,
             "opponent": {"tag": self.opponent_tag, "name": self.opponent_name},
             "members": [
                 {
@@ -78,6 +90,7 @@ class War:
             end_time=from_iso(d["end_time"]),
             team_size=d["team_size"],
             attacks_per_member=d["attacks_per_member"],
+            in_progress=d.get("in_progress", False),
             opponent_tag=d["opponent"]["tag"],
             opponent_name=d["opponent"]["name"],
             members=tuple(

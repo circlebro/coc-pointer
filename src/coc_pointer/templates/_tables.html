@@ -23,11 +23,12 @@
 
 {% macro cwl_table(rows) %}
 <div class="scroll"><table>
-<thead><tr><th>순위</th><th>닉네임</th><th>홀</th><th>공격</th><th>미공격</th><th>별 총합</th><th>별 평균</th></tr></thead>
+<thead><tr><th>순위</th><th>닉네임</th><th>홀</th><th>공격</th><th>미공격</th><th>별 총합</th><th>별 평균</th><th>점수</th></tr></thead>
 <tbody>
 {% for m in rows %}
 <tr><td>{{ loop.index }}</td><td>{{ m.name }}</td><td>{{ m.townhall }}</td>
-  <td>{{ m.attacks }}</td><td>{{ m.missed }}</td><td>{{ m.stars }}</td><td>{{ "%.2f"|format(m.star_avg) }}</td></tr>
+  <td>{{ m.attacks }}</td><td>{{ m.missed }}</td><td>{{ m.stars }}</td><td>{{ "%.2f"|format(m.star_avg) }}</td>
+  <td>{{ "%.1f"|format(m.score) }}</td></tr>
 {% endfor %}
 </tbody></table></div>
 {% endmacro %}
@@ -51,11 +52,11 @@
 {% macro war_grid(wars, grid, kind) %}
 <div class="scroll"><table class="grid {{ kind }}">
 <thead><tr><th>닉네임</th>
-{% for w in wars %}<th>{% if kind == "cwl" %}<span class="day">Day {{ loop.index }}</span><br>{% endif %}<span class="date">{{ w.end_time|kst("%m/%d") }}</span><br><span class="opp">{{ w.opponent_name }}</span></th>{% endfor %}
+{% for w in wars %}<th class="{{ 'running' if w.in_progress else '' }}">{% if kind == "cwl" %}<span class="day">Day {{ loop.index }}</span><br>{% endif %}<span class="date">{{ w.end_time|kst("%m/%d") }}</span><br><span class="opp">{{ w.opponent_name }}</span>{% if w|war_status %}<br><span class="status">({{ w|war_status }})</span>{% endif %}</th>{% endfor %}
 </tr></thead>
 <tbody>
 {% for r, cells in grid %}
-<tr class="{{ 'elite' if r.is_elite else '' }}"><td>{{ r.member.name }}</td>{% for c in cells %}<td class="cell">{{ c }}</td>{% endfor %}</tr>
+<tr><td>{{ r.member.name }}</td>{% for c in cells %}<td class="cell">{{ c }}</td>{% endfor %}</tr>
 {% endfor %}
 </tbody></table></div>
 {% endmacro %}

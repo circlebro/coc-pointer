@@ -210,3 +210,12 @@ def test_aggregate_can_target_cwl_wars_explicitly():
 
 def test_rules_mention_next_month_roster():
     assert any("다음 달" in r for r in RULES)
+
+
+def test_running_regular_war_counts_toward_the_score():
+    running = war([member("#P1", "도토리", (3, 3)), member("#P2", "제니", ())], in_progress=True)
+    rows = by_tag(aggregate_month([running]))
+    assert (rows["#P1"].attacks, rows["#P1"].opportunities, rows["#P1"].stars) == (2, 2, 6)
+    assert rows["#P1"].score == 100.0
+    assert (rows["#P2"].attacks, rows["#P2"].opportunities) == (0, 2), "not attacked yet"
+    assert rows["#P2"].score == 0.0

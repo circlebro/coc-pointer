@@ -4,7 +4,13 @@ from helpers import member, war
 
 from coc_pointer.config import ClanConfig
 from coc_pointer.models import ClanMember, ClanSnapshot
-from coc_pointer.render import build_month_view, build_site, next_month_label, war_cell
+from coc_pointer.render import (
+    build_month_view,
+    build_site,
+    next_month_label,
+    war_cell,
+    war_status,
+)
 from coc_pointer.storage import save_clan_snapshot, save_war
 
 CFG = ClanConfig(clan_tag="#2C8L822LQ", elite=frozenset({"#P1"}), warnings={"#P2": 1})
@@ -169,3 +175,34 @@ def test_current_month_page_exists_without_data(tmp_path):
     assert "기록 없음" in index, "current month without wars"
     august = (out / "2026-08" / "index.html").read_text(encoding="utf-8")
     assert '<option value="../2026-08/" selected>2026/08</option>' in august
+
+
+def test_war_status_marks_running_wars():
+    assert war_status(war([member("#P1", "a", (3, 3))])) == ""
+    partly = war([member("#P1", "a", (3,)), member("#P2", "b", ())], in_progress=True)
+    assert war_status(partly) == "진행중", "2 of 4 attacks used"
+    done = war([member("#P1", "a", (3, 3)), member("#P2", "b", (2, 1))], in_progress=True)
+    assert war_status(done) == "완료 대기", "all 4 attacks used but the war is still open"
+
+
+def test_running_war_is_labelled_and_counted_in_the_score(tmp_path):
+    running = war([member("#P1", "도토리", (3,)), member("#P2", "제니", ())], in_progress=True)
+    save_war(running, tmp_path)
+    out = tmp_path / "site"
+    build_site(tmp_path, CFG, out, now=datetime(2026, 9, 7, 3, 0, tzinfo=UTC))
+    index = (out / "index.html").read_text(encoding="utf-8")
+    assert "(진행중)" in index
+    # the scoreboard warns that the score can still rise
+    assert "진행 중인 클랜전 1개가 포함되어" in index
+    scores = index[index.index('id="panel-scores"') : index.index('id="panel-roster"')]
+    assert "50.0" in scores, "도토리: (5x1 + 3) / (8x2) x 100"
+
+
+def test_cwl_table_shows_a_score_column(tmp_path):
+    save_war(war([member("#P1", "도토리", (3,))], war_type="cwl"), tmp_path)
+    out = tmp_path / "site"
+    build_site(tmp_path, CFG, out, now=datetime(2026, 9, 7, 3, 0, tzinfo=UTC))
+    index = (out / "index.html").read_text(encoding="utf-8")
+    cwl = index[index.index('id="panel-cwl"') :]
+    assert "100.0" in cwl, "3 stars on the single CWL attack"
+    assert "점수판과 선발에는 반영되지 않습니다" in cwl
