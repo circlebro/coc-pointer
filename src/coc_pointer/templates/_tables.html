@@ -59,3 +59,21 @@
 {% endfor %}
 </tbody></table></div>
 {% endmacro %}
+
+{% macro members_table(snapshot, members, config) %}
+<section>
+  <h2>길드원 목록{% if snapshot %} ({{ snapshot.members|length }}명, {{ snapshot.fetched_at|kst("%Y-%m-%d %H:%M") }} 기준){% endif %}</h2>
+  <p class="hint">플레이어 태그를 복사해 <code>config/clan.yaml</code>의 정예·부캐·제외 목록에 넣으세요. 태그는 따옴표로 감싸야 합니다.</p>
+  {% if snapshot %}
+  <div class="scroll"><table>
+  <thead><tr><th>닉네임</th><th>플레이어 태그</th><th>역할</th><th>홀</th><th>트로피</th><th>기부</th><th>수령</th><th>설정</th></tr></thead>
+  <tbody>
+  {% for m in members %}
+  <tr class="{{ 'elite' if config.is_elite(m.tag) else '' }}"><td>{{ m.name }}</td><td><code>{{ m.tag }}</code></td><td>{{ m.role|role_ko }}</td><td>{{ m.townhall }}</td>
+      <td>{{ m.trophies }}</td><td>{{ m.donations }}</td><td>{{ m.donations_received }}</td>
+      <td>{{ "정예 " if config.is_elite(m.tag) }}{{ "부캐 " if config.is_alt(m.tag) }}{{ "제외 " if config.is_excluded(m.tag) }}{{ "경고%d"|format(config.warning_count(m.tag)) if config.warning_count(m.tag) }}</td></tr>
+  {% endfor %}
+  </tbody></table></div>
+  {% else %}<p class="empty">기록 없음. 아직 클랜원 목록을 가져오지 못했습니다.</p>{% endif %}
+</section>
+{% endmacro %}

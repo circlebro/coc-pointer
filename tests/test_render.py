@@ -134,3 +134,29 @@ def test_build_site_with_member_passing_cutline(tmp_path):
     assert "도토리" in month
     assert "100.0" in month
     assert "선발" in month
+
+
+def test_tabs_and_month_select(tmp_path):
+    seed(tmp_path)
+    out = tmp_path / "site"
+    build_site(tmp_path, CFG, out, now=datetime(2026, 9, 7, 3, 0, tzinfo=UTC))
+    index = (out / "index.html").read_text(encoding="utf-8")
+    assert '<option value="2026-09/" selected>2026/09</option>' in index, "YYYY/MM, current month"
+    tabs = ("길드원", "점수판", "선발 명단", "일반 클랜전", "리그전", "규칙")
+    labels = [index.index(f">{t}<") for t in tabs]
+    assert labels == sorted(labels), "tab order: 길드원 first"
+    assert 'id="tab-members" checked' in index, "길드원 tab opens by default"
+
+
+def test_current_month_page_exists_without_data(tmp_path):
+    save_war(war([member("#P1", "도토리", (3, 3))], end="2026-08-20T10:00:00Z"), tmp_path)
+    out = tmp_path / "site"
+    written = build_site(tmp_path, CFG, out, now=datetime(2026, 9, 7, tzinfo=UTC))
+    files = {str(p.relative_to(out)) for p in written}
+    assert {"2026-08/index.html", "2026-09/index.html"} <= files
+    index = (out / "index.html").read_text(encoding="utf-8")
+    assert '<option value="2026-09/" selected>2026/09</option>' in index
+    assert '<option value="2026-08/">2026/08</option>' in index
+    assert "기록 없음" in index, "current month without wars"
+    august = (out / "2026-08" / "index.html").read_text(encoding="utf-8")
+    assert '<option value="../2026-08/" selected>2026/08</option>' in august
