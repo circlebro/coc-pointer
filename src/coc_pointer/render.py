@@ -20,6 +20,7 @@ from coc_pointer.scoring import (
     RankedMember,
     aggregate_month,
     group_wars_by_month,
+    month_key,
     rank_month,
     roster,
     sort_key,
@@ -129,22 +130,29 @@ def _sorted_members(snapshot: ClanSnapshot | None) -> list[ClanMember]:
 def build_site(
     data_dir: Path, config: ClanConfig, out_dir: Path, now: datetime | None = None
 ) -> list[Path]:
+    """Render one tabbed page per month (data months plus the current month) and members."""
+    now = now or datetime.now(UTC)
     wars = load_wars(data_dir)
     snapshot = load_clan_snapshot(data_dir)
     clan_members = snapshot.members if snapshot else ()
-    months = [
-        build_month_view(k, ws, config, clan_members) for k, ws in group_wars_by_month(wars).items()
-    ]
-    latest = months[-1] if months else None
-    generated_at = _kst(now or datetime.now(UTC), "%Y-%m-%d %H:%M")
+    grouped = group_wars_by_month(wars)
+    current_key = month_key(now)
+    keys = sorted(set(grouped) | {current_key})
+    months = [build_month_view(k, grouped.get(k, []), config, clan_members) for k in keys]
+    by_key = {m.key: m for m in months}
+    generated_at = _kst(now, "%Y-%m-%d %H:%M")
     clan_name = snapshot.name if snapshot else "클랜"
 
     env = _env()
     common = {
         "months": months,
+        "months_desc": list(reversed(months)),
         "rules": RULES,
         "generated_at": generated_at,
         "clan_name": clan_name,
+        "snapshot": snapshot,
+        "members": _sorted_members(snapshot),
+        "config": config,
     }
     written: list[Path] = []
 
@@ -154,17 +162,11 @@ def build_site(
         path.write_text(env.get_template(template).render(**common, **ctx), encoding="utf-8")
         written.append(path)
 
-    write("index.html", "index.html", root="", latest=latest)
+    # The root page is the current month, so "/" always opens on today's data.
+    write("index.html", "month.html", root="", view=by_key[current_key], current_key=current_key)
     for view in months:
-        write(f"{view.key}/index.html", "month.html", root="../", view=view)
-    write(
-        "members/index.html",
-        "members.html",
-        root="../",
-        snapshot=snapshot,
-        members=_sorted_members(snapshot),
-        config=config,
-    )
+        write(f"{view.key}/index.html", "month.html", root="../", view=view, current_key=view.key)
+    write("members/index.html", "members.html", root="../", current_key=current_key)
     css_src = resources.files("coc_pointer").joinpath("templates/style.css")
     css_dst = out_dir / "style.css"
     with resources.as_file(css_src) as src:

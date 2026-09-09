@@ -1,28 +1,54 @@
 {% extends "base.html" %}
-{% from "_tables.html" import rules_box, roster_table, score_table, war_grid, cwl_table with context %}
+{% from "_tables.html" import rules_box, roster_table, score_table, war_grid, cwl_table, members_table with context %}
 {% block title %}{{ view.label }} · {{ clan_name }}{% endblock %}
 {% block content %}
-{{ rules_box() }}
-<section>
-  <h2>{{ view.label }} 리그전 참가 명단 ({{ view.cwl_participants|length }}명)</h2>
-  {% if view.cwl_participants %}{{ cwl_table(view.cwl_participants) }}{% else %}<p class="empty">이번 달 리그전 기록이 아직 없습니다.</p>{% endif %}
-</section>
-<section>
-  <h2>{{ view.next_label }} 리그전 선발 명단 ({{ view.label }} 점수 기준, {{ view.roster|length }}명)</h2>
-  {% if view.roster %}{{ roster_table(view.roster) }}{% else %}<p class="empty">커트라인을 넘은 멤버가 없습니다. {{ view.label }} 일반 클랜전 점수가 쌓이면 채워집니다.</p>{% endif %}
-</section>
-<section>
-  <h2>{{ view.label }} 월 점수표 (전원)</h2>
-  {{ score_table(view.ranked) }}
-</section>
-<section>
-  <h2>{{ view.label }} 일반 클랜전 기록 ({{ view.regular_wars|length }}경기 · 참가자 {{ view.regular_grid|length }}명)</h2>
-  <p class="hint">칸: 공격별 별 수, x = 미공격. 참가한 멤버만 표시.</p>
-  {% if view.regular_grid %}{{ war_grid(view.regular_wars, view.regular_grid, "regular") }}{% else %}<p class="empty">기록 없음.</p>{% endif %}
-</section>
-<section>
-  <h2>{{ view.label }} 리그전 기록 ({{ view.cwl_wars|length }}경기 · 참가자 {{ view.cwl_grid|length }}명 · 점수 미반영)</h2>
-  <p class="hint">칸: 공격 별 수, x = 미공격. 리그전에 참가한 멤버만 표시.</p>
-  {% if view.cwl_grid %}{{ war_grid(view.cwl_wars, view.cwl_grid, "cwl") }}{% else %}<p class="empty">기록 없음.</p>{% endif %}
-</section>
+<div class="tabs">
+  <input type="radio" name="tab" id="tab-members" checked>
+  <input type="radio" name="tab" id="tab-scores">
+  <input type="radio" name="tab" id="tab-roster">
+  <input type="radio" name="tab" id="tab-regular">
+  <input type="radio" name="tab" id="tab-cwl">
+  <input type="radio" name="tab" id="tab-rules">
+  <div class="tab-bar">
+    <label for="tab-members">길드원</label>
+    <label for="tab-scores">점수판</label>
+    <label for="tab-roster">선발 명단</label>
+    <label for="tab-regular">일반 클랜전</label>
+    <label for="tab-cwl">리그전</label>
+    <label for="tab-rules">규칙</label>
+  </div>
+
+  <section class="panel" id="panel-members">
+    {{ members_table(snapshot, members, config) }}
+  </section>
+
+  <section class="panel" id="panel-scores">
+    <h2>{{ view.label }} 점수판 (전체 클랜원)</h2>
+    <p class="hint">반영된 일반 클랜전 {{ view.regular_wars|length }}개 · 리그전 기록 {{ view.cwl_wars|length }}개 (점수 미반영)</p>
+    {% if view.ranked %}{{ score_table(view.ranked) }}{% else %}<p class="empty">기록 없음. 아직 저장된 클랜전이 없습니다.</p>{% endif %}
+  </section>
+
+  <section class="panel" id="panel-roster">
+    <h2>{{ view.next_label }} 리그전 선발 명단 ({{ view.label }} 점수 기준, {{ view.roster|length }}명)</h2>
+    {% if view.roster %}{{ roster_table(view.roster) }}{% else %}<p class="empty">커트라인을 넘은 멤버가 없습니다. {{ view.label }} 일반 클랜전 점수가 쌓이면 채워집니다.</p>{% endif %}
+  </section>
+
+  <section class="panel" id="panel-regular">
+    <h2>{{ view.label }} 일반 클랜전 기록 ({{ view.regular_wars|length }}경기 · 참가자 {{ view.regular_grid|length }}명)</h2>
+    <p class="hint">칸: 공격별 별 수, x = 미공격. 참가한 멤버만 표시.</p>
+    {% if view.regular_grid %}{{ war_grid(view.regular_wars, view.regular_grid, "regular") }}{% else %}<p class="empty">기록 없음.</p>{% endif %}
+  </section>
+
+  <section class="panel" id="panel-cwl">
+    <h2>{{ view.label }} 리그전 참가 명단 ({{ view.cwl_participants|length }}명)</h2>
+    {% if view.cwl_participants %}{{ cwl_table(view.cwl_participants) }}{% else %}<p class="empty">이번 달 리그전 기록이 아직 없습니다.</p>{% endif %}
+    <h2>{{ view.label }} 리그전 기록 ({{ view.cwl_wars|length }}경기 · 참가자 {{ view.cwl_grid|length }}명 · 점수 미반영)</h2>
+    <p class="hint">칸: 공격 별 수, x = 미공격. 리그전에 참가한 멤버만 표시.</p>
+    {% if view.cwl_grid %}{{ war_grid(view.cwl_wars, view.cwl_grid, "cwl") }}{% else %}<p class="empty">기록 없음.</p>{% endif %}
+  </section>
+
+  <section class="panel" id="panel-rules">
+    {{ rules_box() }}
+  </section>
+</div>
 {% endblock %}
