@@ -51,7 +51,7 @@
 {% macro war_grid(wars, grid, kind) %}
 <div class="scroll"><table class="grid {{ kind }}">
 <thead><tr><th>닉네임</th>
-{% for w in wars %}<th><span class="date">{{ w.end_time|kst("%m/%d") }}</span><br><span class="opp">{{ w.opponent_name }}</span></th>{% endfor %}
+{% for w in wars %}<th>{% if kind == "cwl" %}<span class="day">Day {{ loop.index }}</span><br>{% endif %}<span class="date">{{ w.end_time|kst("%m/%d") }}</span><br><span class="opp">{{ w.opponent_name }}</span></th>{% endfor %}
 </tr></thead>
 <tbody>
 {% for r, cells in grid %}

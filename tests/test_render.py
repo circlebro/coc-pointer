@@ -94,6 +94,8 @@ def test_build_site_writes_pages(tmp_path):
     assert "●" in month, "elite mark in score table"
     assert "신입" in month, "clan members without wars still appear in the score table"
     assert "일반 클랜전 기록" in month and "리그전 기록" in month, "two separate grids"
+    assert "Day 1" in month, "CWL columns are numbered by round"
+    assert "Day 2" not in month, "only one CWL war seeded"
 
     members = (out / "members" / "index.html").read_text(encoding="utf-8")
     assert "#P9" in members and "신입" in members and "공동 대표" in members
