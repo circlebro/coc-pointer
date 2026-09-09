@@ -1,6 +1,7 @@
 """Fetch finished wars from the API and persist them under ``data/``.
 
-Only ``warEnded`` wars are saved. Regular-war member attacks disappear from the API
+Finished (``warEnded``) and running (``inWar``) wars are saved; a running war is marked
+``in_progress`` and refreshed each run. Regular-war member attacks disappear from the API
 as soon as the next war's preparation starts, which is why this runs on a schedule.
 """
 
@@ -20,6 +21,7 @@ _API_TIME = "%Y%m%dT%H%M%S.%fZ"
 REGULAR_ATTACKS = 2
 CWL_ATTACKS = 1
 EMPTY_WAR_TAG = "#0"
+SAVED_STATES = ("warEnded", "inWar")
 
 
 class WarLogPrivateError(Exception):
@@ -59,6 +61,7 @@ def _build_war(
         opponent_tag=theirs["tag"],
         opponent_name=theirs["name"],
         members=tuple(_member(m) for m in ours.get("members", [])),
+        in_progress=payload.get("state") != "warEnded",
     )
 
 
@@ -103,10 +106,15 @@ def collect(
     now: datetime | None = None,
     log: Callable[[str], None] = print,
 ) -> list[Path]:
-    """Snapshot the clan, then save every finished war we do not have yet."""
+    """Snapshot the clan, save new finished wars, and refresh any war still running.
+
+    Returns only the newly finished war files; running wars live in ``data/in-progress/``
+    and are rewritten every run, so counting them as "new" would be misleading.
+    """
     tag = config.clan_tag
     fetched_at = now or datetime.now(UTC)
     saved: list[Path] = []
+    running: list[Path] = []
 
     save_clan_snapshot(clan_snapshot_from_payload(api.clan(tag), fetched_at), data_dir)
     log("클랜원 목록 갱신")
@@ -119,11 +127,16 @@ def collect(
                 "클랜전 정보를 조회할 수 없습니다. 클랜 전적을 공개로 설정해 주세요."
             ) from err
         raise
-    if current.get("state") == "warEnded":
+    if current.get("state") in SAVED_STATES:
         war = war_from_regular(current)
         if path := save_war(war, data_dir):
-            saved.append(path)
-            log(f"일반 클랜전 저장: {path.name}")
+            if war.in_progress:
+                running.append(path)
+                progress = f"{war.attacks_made}/{war.attack_slots} 공격"
+                log(f"일반 클랜전 진행 중: {path.name} ({progress})")
+            else:
+                saved.append(path)
+                log(f"일반 클랜전 저장: {path.name}")
     else:
         log(f"일반 클랜전 상태: {current.get('state')} (저장 안 함)")
 
@@ -134,16 +147,21 @@ def collect(
                 if war_tag == EMPTY_WAR_TAG:
                     continue
                 payload = api.cwl_war(war_tag)
-                if payload.get("state") != "warEnded":
+                if payload.get("state") not in SAVED_STATES:
                     continue
                 war = war_from_cwl(payload, tag)
                 if war is None:
                     continue
                 if path := save_war(war, data_dir):
-                    saved.append(path)
-                    log(f"리그전 저장: {path.name}")
+                    if war.in_progress:
+                        running.append(path)
+                        progress = f"{war.attacks_made}/{war.attack_slots} 공격"
+                        log(f"리그전 진행 중: {path.name} ({progress})")
+                    else:
+                        saved.append(path)
+                        log(f"리그전 저장: {path.name}")
     else:
         log("리그전 진행 중 아님")
 
-    log(f"새로 저장한 클랜전: {len(saved)}개")
+    log(f"새로 저장한 클랜전: {len(saved)}개 (진행 중 {len(running)}개 갱신)")
     return saved

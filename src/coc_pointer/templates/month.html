@@ -26,7 +26,9 @@
       <h2>{{ view.label }} 점수판 (전체 클랜원)</h2>
       {{ month_select() }}
     </div>
-    <p class="hint">반영된 일반 클랜전 {{ view.regular_wars|length }}개 · 리그전 기록 {{ view.cwl_wars|length }}개 (점수 미반영)</p>
+    <p class="hint">반영된 일반 클랜전 {{ view.regular_wars|length }}개 · 리그전 기록 {{ view.cwl_wars|length }}개 (점수 미반영)
+    {%- set running = view.regular_wars|selectattr("in_progress")|list|length %}
+    {%- if running %} · <strong>진행 중인 클랜전 {{ running }}개가 포함되어 있어 점수가 더 오를 수 있습니다.</strong>{% endif %}</p>
     {% if view.ranked %}{{ score_table(view.ranked) }}{% else %}<p class="empty">기록 없음. 아직 저장된 클랜전이 없습니다.</p>{% endif %}
   </section>
 
@@ -43,6 +45,7 @@
 
   <section class="panel" id="panel-cwl">
     <h2>{{ view.label }} 리그전 참가 명단 ({{ view.cwl_participants|length }}명)</h2>
+    <p class="hint">점수는 일반 클랜전과 같은 공식으로 계산한 리그전 자체 점수이며, 점수판과 선발에는 반영되지 않습니다.</p>
     {% if view.cwl_participants %}{{ cwl_table(view.cwl_participants) }}{% else %}<p class="empty">이번 달 리그전 기록이 아직 없습니다.</p>{% endif %}
     <h2>{{ view.label }} 리그전 기록 ({{ view.cwl_wars|length }}경기 · 참가자 {{ view.cwl_grid|length }}명 · 점수 미반영)</h2>
     <p class="hint">칸: 공격 별 수, x = 미공격. 리그전에 참가한 멤버만 표시.</p>

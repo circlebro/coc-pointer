@@ -154,10 +154,10 @@ def test_collect_saves_snapshot_and_ended_regular_war(tmp_path: Path):
     assert collect(api, CFG, tmp_path, log=lambda s: None) == []
 
 
-def test_collect_skips_war_in_progress(tmp_path):
-    api = FakeApi(current_war={**REGULAR_ENDED, "state": "inWar"})
+def test_collect_skips_war_in_preparation(tmp_path):
+    api = FakeApi(current_war={**REGULAR_ENDED, "state": "preparation"})
     assert collect(api, CFG, tmp_path, log=lambda s: None) == []
-    assert load_wars(tmp_path) == []
+    assert load_wars(tmp_path) == [], "no attacks exist yet, so there is nothing to show"
 
 
 def test_collect_saves_only_our_ended_cwl_wars(tmp_path):
@@ -179,3 +179,31 @@ def test_collect_raises_clear_error_when_war_log_private(tmp_path):
     api = FakeApi(current_war=CocApiError(403, "/clans/x/currentwar", "accessDenied", "private"))
     with pytest.raises(WarLogPrivateError, match="전적"):
         collect(api, CFG, tmp_path, log=lambda s: None)
+
+
+def test_collect_saves_running_wars_separately(tmp_path: Path):
+    api = FakeApi(current_war={**REGULAR_ENDED, "state": "inWar"})
+    new = collect(api, CFG, tmp_path, log=lambda s: None)
+    assert new == [], "a running war is not counted as a newly finished one"
+    running = load_wars(tmp_path)
+    assert len(running) == 1 and running[0].in_progress is True
+    assert (running[0].attacks_made, running[0].attack_slots) == (2, 4)
+    assert not (tmp_path / "wars").exists(), "nothing final was committed yet"
+
+
+def test_collect_promotes_a_running_war_once_it_ends(tmp_path: Path):
+    quiet = lambda s: None  # noqa: E731
+    collect(FakeApi(current_war={**REGULAR_ENDED, "state": "inWar"}), CFG, tmp_path, log=quiet)
+    new = collect(FakeApi(current_war=REGULAR_ENDED), CFG, tmp_path, log=quiet)
+    assert len(new) == 1 and new[0].parent.name == "wars"
+    wars = load_wars(tmp_path)
+    assert len(wars) == 1 and wars[0].in_progress is False, "no duplicate of the same war"
+
+
+def test_collect_saves_running_cwl_rounds(tmp_path: Path):
+    group = {"state": "inWar", "rounds": [{"warTags": ["#W1"]}]}
+    running = {**CWL_ENDED_WE_ARE_OPPONENT, "state": "inWar"}
+    api = FakeApi(league_group=group, cwl_wars={"#W1": running})
+    assert collect(api, CFG, tmp_path, log=lambda s: None) == []
+    wars = load_wars(tmp_path)
+    assert len(wars) == 1 and wars[0].war_type == "cwl" and wars[0].in_progress is True

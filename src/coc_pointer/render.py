@@ -46,6 +46,13 @@ class MonthView:
     next_label: str  # month whose CWL roster this month's scores decide
 
 
+def war_status(war: War) -> str:
+    """Korean marker for a war that has not finished yet; empty once it has."""
+    if not war.in_progress:
+        return ""
+    return "완료 대기" if war.attacks_made >= war.attack_slots else "진행중"
+
+
 def war_cell(war: War, tag: str) -> str:
     """``"3/2"`` for attacks made, ``x`` for each missed attack, ``""`` if not in the war."""
     for m in war.members:
@@ -118,6 +125,7 @@ def _env() -> Environment:
     )
     env.filters["kst"] = _kst
     env.filters["role_ko"] = lambda role: ROLE_KO.get(role, role)
+    env.filters["war_status"] = war_status
     return env
 
 

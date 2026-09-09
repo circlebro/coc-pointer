@@ -20,6 +20,7 @@ def war(
     end: str = "2026-09-05T14:30:00Z",
     opponent_tag: str = "#OPP1",
     opponent_name: str = "상대",
+    in_progress: bool = False,
 ) -> War:
     end_dt = datetime.strptime(end, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=UTC)
     return War(
@@ -31,4 +32,5 @@ def war(
         opponent_tag=opponent_tag,
         opponent_name=opponent_name,
         members=tuple(members),
+        in_progress=in_progress,
     )

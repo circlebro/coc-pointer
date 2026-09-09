@@ -30,3 +30,16 @@ def test_clan_snapshot_round_trips_through_dict():
     assert d["fetched_at"] == "2026-09-07T09:00:00Z"
     assert d["members"][0]["role"] == "coLeader"
     assert ClanSnapshot.from_dict(d) == snap
+
+
+def test_war_tracks_progress_and_attack_counts():
+    running = war([member("#P1", "도토리", (3, 2)), member("#P2", "제니", (1,))], in_progress=True)
+    assert running.attacks_made == 3
+    assert running.attack_slots == 4, "2 members x 2 attacks in a regular war"
+    assert War.from_dict(running.to_dict()).in_progress is True
+
+
+def test_war_defaults_to_finished_for_records_written_before_the_field_existed():
+    d = war([member("#P1", "도토리", (3, 2))]).to_dict()
+    del d["in_progress"]
+    assert War.from_dict(d).in_progress is False
