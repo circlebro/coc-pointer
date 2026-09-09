@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_tables.html" import rules_box, roster_table, score_table, war_grid, cwl_table, members_table with context %}
+{% from "_tables.html" import rules_box, roster_table, score_table, war_grid, cwl_table, members_table, month_select with context %}
 {% block title %}{{ view.label }} · {{ clan_name }}{% endblock %}
 {% block content %}
 <div class="tabs">
@@ -8,14 +8,12 @@
   <input type="radio" name="tab" id="tab-roster">
   <input type="radio" name="tab" id="tab-regular">
   <input type="radio" name="tab" id="tab-cwl">
-  <input type="radio" name="tab" id="tab-rules">
   <div class="tab-bar">
     <label for="tab-members">길드원</label>
     <label for="tab-scores">점수판</label>
     <label for="tab-roster">선발 명단</label>
     <label for="tab-regular">일반 클랜전</label>
     <label for="tab-cwl">리그전</label>
-    <label for="tab-rules">규칙</label>
   </div>
 
   <section class="panel" id="panel-members">
@@ -23,7 +21,11 @@
   </section>
 
   <section class="panel" id="panel-scores">
-    <h2>{{ view.label }} 점수판 (전체 클랜원)</h2>
+    {{ rules_box() }}
+    <div class="scores-head">
+      <h2>{{ view.label }} 점수판 (전체 클랜원)</h2>
+      {{ month_select() }}
+    </div>
     <p class="hint">반영된 일반 클랜전 {{ view.regular_wars|length }}개 · 리그전 기록 {{ view.cwl_wars|length }}개 (점수 미반영)</p>
     {% if view.ranked %}{{ score_table(view.ranked) }}{% else %}<p class="empty">기록 없음. 아직 저장된 클랜전이 없습니다.</p>{% endif %}
   </section>
@@ -47,8 +49,5 @@
     {% if view.cwl_grid %}{{ war_grid(view.cwl_wars, view.cwl_grid, "cwl") }}{% else %}<p class="empty">기록 없음.</p>{% endif %}
   </section>
 
-  <section class="panel" id="panel-rules">
-    {{ rules_box() }}
-  </section>
 </div>
 {% endblock %}

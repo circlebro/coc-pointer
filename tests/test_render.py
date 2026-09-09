@@ -142,10 +142,15 @@ def test_tabs_and_month_select(tmp_path):
     build_site(tmp_path, CFG, out, now=datetime(2026, 9, 7, 3, 0, tzinfo=UTC))
     index = (out / "index.html").read_text(encoding="utf-8")
     assert '<option value="2026-09/" selected>2026/09</option>' in index, "YYYY/MM, current month"
-    tabs = ("길드원", "점수판", "선발 명단", "일반 클랜전", "리그전", "규칙")
+    tabs = ("길드원", "점수판", "선발 명단", "일반 클랜전", "리그전")
     labels = [index.index(f">{t}<") for t in tabs]
     assert labels == sorted(labels), "tab order: 길드원 first"
     assert 'id="tab-members" checked' in index, "길드원 tab opens by default"
+    assert ">규칙<" not in index, "rules are no longer a tab"
+    scores = index[index.index('id="panel-scores"') : index.index('id="panel-roster"')]
+    assert "기본 5점" in scores and "<select" in scores, "rules and month select live in 점수판"
+    members_panel = index[index.index('id="panel-members"') : index.index('id="panel-scores"')]
+    assert "<th>설정</th>" not in members_panel and "clan.yaml" not in members_panel
     import re
 
     m = re.search(r'href="style\.css\?v=([0-9a-f]{8})"', index)
