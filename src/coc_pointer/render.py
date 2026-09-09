@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import shutil
+import hashlib
 from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -143,8 +143,14 @@ def build_site(
     generated_at = _kst(now, "%Y-%m-%d %H:%M")
     clan_name = snapshot.name if snapshot else "클랜"
 
+    css_src = resources.files("coc_pointer").joinpath("templates/style.css")
+    css_bytes = css_src.read_bytes()
+    # Browsers (notably mobile Safari) cache style.css; a content hash in the URL forces a refetch.
+    asset_version = hashlib.sha256(css_bytes).hexdigest()[:8]
+
     env = _env()
     common = {
+        "asset_version": asset_version,
         "months": months,
         "months_desc": list(reversed(months)),
         "rules": RULES,
@@ -167,9 +173,7 @@ def build_site(
     for view in months:
         write(f"{view.key}/index.html", "month.html", root="../", view=view, current_key=view.key)
     write("members/index.html", "members.html", root="../", current_key=current_key)
-    css_src = resources.files("coc_pointer").joinpath("templates/style.css")
     css_dst = out_dir / "style.css"
-    with resources.as_file(css_src) as src:
-        shutil.copyfile(src, css_dst)
+    css_dst.write_bytes(css_bytes)
     written.append(css_dst)
     return written

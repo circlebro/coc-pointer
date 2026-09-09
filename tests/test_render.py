@@ -146,6 +146,10 @@ def test_tabs_and_month_select(tmp_path):
     labels = [index.index(f">{t}<") for t in tabs]
     assert labels == sorted(labels), "tab order: 길드원 first"
     assert 'id="tab-members" checked' in index, "길드원 tab opens by default"
+    import re
+
+    m = re.search(r'href="style\.css\?v=([0-9a-f]{8})"', index)
+    assert m, "stylesheet link carries a content-hash version to defeat stale caches"
 
 
 def test_current_month_page_exists_without_data(tmp_path):
