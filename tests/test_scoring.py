@@ -15,6 +15,7 @@ from coc_pointer.scoring import (
     passes_cutline,
     rank_month,
     roster,
+    split_rewards,
 )
 
 
@@ -219,3 +220,37 @@ def test_running_regular_war_counts_toward_the_score():
     assert rows["#P1"].score == 100.0
     assert (rows["#P2"].attacks, rows["#P2"].opportunities) == (0, 2), "not attacked yet"
     assert rows["#P2"].score == 0.0
+
+
+def cwl(name, stars, attacks=7, tag=None):
+    return mm(attacks, 7, stars, tag=tag or f"#{name}", name=name)
+
+
+def test_rewards_go_to_everyone_when_there_are_fewer_than_the_bonus_count():
+    rows = [cwl("a", 21), cwl("b", 18)]
+    split = split_rewards(rows, 11)
+    assert len(split.guaranteed) == 2 and not split.needs_draw
+
+
+def test_clear_winners_are_guaranteed_and_the_tied_ones_are_drawn():
+    strong = [cwl(f"강{i}", 21) for i in range(3)]
+    tied = [cwl(f"동{i}", 15) for i in range(4)]
+    weak = [cwl("약", 9)]
+    split = split_rewards(strong + tied + weak, 5)
+    assert [m.name for m in split.guaranteed] == ["강0", "강1", "강2"]
+    assert sorted(m.name for m in split.contested) == ["동0", "동1", "동2", "동3"]
+    assert split.open_slots == 2, "5 - 3 확정"
+
+
+def test_no_draw_when_the_tied_group_fits_in_the_remaining_slots():
+    rows = [cwl("강", 21), cwl("동1", 15), cwl("동2", 15), cwl("약", 9)]
+    split = split_rewards(rows, 3)
+    assert [m.name for m in split.guaranteed] == ["강", "동1", "동2"]
+    assert not split.needs_draw, "두 명이 두 자리를 나눠 가지므로 뽑을 것이 없다"
+
+
+def test_nickname_never_decides_a_reward():
+    tied = [cwl("하하", 21), cwl("가가", 21)]
+    split = split_rewards(tied, 1)
+    assert not split.guaranteed, "이름 순으로 자르지 않는다"
+    assert len(split.contested) == 2 and split.open_slots == 1

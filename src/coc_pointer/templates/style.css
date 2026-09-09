@@ -1,4 +1,5 @@
-:root { --elite: #fff3c4; --muted: #999; --line: #ddd; --running: #dce9f6; --running-ink: #1f4e79; }
+:root { --elite: #fff3c4; --muted: #999; --line: #ddd; --running: #dce9f6; --running-ink: #1f4e79;
+  --reward-sure: #d8f0dd; --reward-draw: #ffe4c4; }
 * { box-sizing: border-box; }
 body { margin: 0; font-family: -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; font-size: 14px; color: #222; background: #fafafa; }
 header { padding: 12px 16px; background: #2b2d42; color: #fff; }
@@ -45,3 +46,23 @@ table.cwl th { background: #ececec; color: #555; }
 #tab-cwl:checked ~ .tab-bar label[for="tab-cwl"] { color: #2b2d42; border-bottom-color: #2b2d42; font-weight: bold; }
 table.grid th.running { background: var(--running); }
 table.grid th .status { font-weight: bold; color: var(--running-ink); font-size: 12px; }
+h3 { font-size: 15px; margin: 0 0 6px; }
+.subtabs > input { display: none; }
+.subtab-bar { display: flex; gap: 6px; overflow-x: auto; margin-bottom: 14px; padding-bottom: 2px; }
+.subtab-bar label { padding: 6px 12px; cursor: pointer; white-space: nowrap; font-size: 13px;
+  color: #444; background: #ececec; border-radius: 999px; }
+.subtabs .subpanel { display: none; }
+#cwltab-roster:checked ~ #subpanel-roster, #cwltab-record:checked ~ #subpanel-record,
+#cwltab-scores:checked ~ #subpanel-scores, #cwltab-reward:checked ~ #subpanel-reward { display: block; }
+#cwltab-roster:checked ~ .subtab-bar label[for="cwltab-roster"],
+#cwltab-record:checked ~ .subtab-bar label[for="cwltab-record"],
+#cwltab-scores:checked ~ .subtab-bar label[for="cwltab-scores"],
+#cwltab-reward:checked ~ .subtab-bar label[for="cwltab-reward"] { background: #2b2d42; color: #fff; }
+h4 { font-size: 14px; margin: 18px 0 6px; }
+tr.reward-sure { background: var(--reward-sure); }
+tr.reward-draw { background: var(--reward-draw); }
+.legend { font-size: 12px; color: #555; margin: 0 0 8px; }
+.swatch { display: inline-block; width: 12px; height: 12px; border: 1px solid #bbb; vertical-align: -1px; }
+.swatch.reward-sure { background: var(--reward-sure); }
+.swatch.reward-draw { background: var(--reward-draw); }
+.summary { margin: 0 0 8px; }

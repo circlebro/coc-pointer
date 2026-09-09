@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_tables.html" import rules_box, roster_table, score_table, war_grid, cwl_table, members_table, month_select with context %}
+{% from "_tables.html" import rules_box, roster_table, score_table, war_grid, cwl_table, cwl_roster_table, reward_legend, members_table, month_select with context %}
 {% block title %}{{ view.label }} · {{ clan_name }}{% endblock %}
 {% block content %}
 <div class="tabs">
@@ -44,12 +44,60 @@
   </section>
 
   <section class="panel" id="panel-cwl">
-    <h2>{{ view.label }} 리그전 참가 명단 ({{ view.cwl_participants|length }}명)</h2>
-    <p class="hint">점수는 일반 클랜전과 같은 공식으로 계산한 리그전 자체 점수이며, 점수판과 선발에는 반영되지 않습니다.</p>
-    {% if view.cwl_participants %}{{ cwl_table(view.cwl_participants) }}{% else %}<p class="empty">이번 달 리그전 기록이 아직 없습니다.</p>{% endif %}
-    <h2>{{ view.label }} 리그전 기록 ({{ view.cwl_wars|length }}경기 · 참가자 {{ view.cwl_grid|length }}명 · 점수 미반영)</h2>
-    <p class="hint">칸: 공격 별 수, x = 미공격. 리그전에 참가한 멤버만 표시.</p>
-    {% if view.cwl_grid %}{{ war_grid(view.cwl_wars, view.cwl_grid, "cwl") }}{% else %}<p class="empty">기록 없음.</p>{% endif %}
+    <div class="scores-head">
+      <h2>{{ view.label }} 리그전</h2>
+      {{ month_select() }}
+    </div>
+    <div class="subtabs">
+      <input type="radio" name="cwltab" id="cwltab-roster" checked>
+      <input type="radio" name="cwltab" id="cwltab-record">
+      <input type="radio" name="cwltab" id="cwltab-scores">
+      <input type="radio" name="cwltab" id="cwltab-reward">
+      <div class="subtab-bar">
+        <label for="cwltab-roster">참여자 명단</label>
+        <label for="cwltab-record">리그 기록</label>
+        <label for="cwltab-scores">리그 점수판</label>
+        <label for="cwltab-reward">보상 대상자</label>
+      </div>
+
+      <section class="subpanel" id="subpanel-roster">
+        <h3>참여자 명단 ({{ view.cwl_roster|length }}명)</h3>
+        <p class="hint">홀 레벨이 높은 순서로 정렬했습니다.</p>
+        {% if view.cwl_roster %}{{ cwl_roster_table(view.cwl_roster) }}{% else %}<p class="empty">이번 달 리그전 기록이 아직 없습니다.</p>{% endif %}
+      </section>
+
+      <section class="subpanel" id="subpanel-record">
+        <h3>리그 기록 ({{ view.cwl_wars|length }}경기 · 참가자 {{ view.cwl_grid|length }}명)</h3>
+        <p class="hint">칸: 공격 별 수, x = 미공격. 리그전에 참가한 멤버만 표시합니다.</p>
+        {% if view.cwl_grid %}{{ war_grid(view.cwl_wars, view.cwl_grid, "cwl") }}{% else %}<p class="empty">기록 없음.</p>{% endif %}
+      </section>
+
+      <section class="subpanel" id="subpanel-scores">
+        <h3>리그 점수판 ({{ view.cwl_participants|length }}명)</h3>
+        <p class="hint">일반 클랜전과 같은 공식으로 계산한 리그전 자체 점수입니다. 점수판과 선발 명단에는 반영되지 않습니다.</p>
+        {% if view.cwl_participants %}{{ reward_legend() }}{{ cwl_table(view.cwl_participants, view.reward_status) }}{% else %}<p class="empty">이번 달 리그전 기록이 아직 없습니다.</p>{% endif %}
+      </section>
+
+      <section class="subpanel" id="subpanel-reward">
+        <h3>보상 대상자 ({{ config.bonus_count }}명)</h3>
+        {% if not view.cwl_participants %}
+        <p class="empty">이번 달 리그전 기록이 아직 없습니다.</p>
+        {% else %}
+        <p class="hint">리그전 점수가 높은 순으로 {{ config.bonus_count }}명이 보상을 받습니다. 성적 기준은 점수 → 별 총합 → 공격 횟수이며, 닉네임은 기준에 넣지 않습니다.</p>
+        <p class="summary">확정 <strong>{{ view.rewards.guaranteed|length }}명</strong>
+        {%- if view.rewards.needs_draw %} · 남은 <strong>{{ view.rewards.open_slots }}자리</strong>를 <strong>{{ view.rewards.contested|length }}명</strong>이 놓고 추첨합니다{% endif %}</p>
+        {% if view.rewards.guaranteed %}
+        <h4>확정 {{ view.rewards.guaranteed|length }}명</h4>
+        {{ cwl_table(view.rewards.guaranteed, view.reward_status) }}
+        {% endif %}
+        {% if view.rewards.needs_draw %}
+        <h4>추첨 대상 {{ view.rewards.contested|length }}명 중 {{ view.rewards.open_slots }}명 선정</h4>
+        <p class="hint">이 {{ view.rewards.contested|length }}명은 점수·별 총합·공격 횟수가 모두 같아 성적으로는 순위를 가릴 수 없습니다. 추첨 기능은 준비 중입니다.</p>
+        {{ cwl_table(view.rewards.contested, view.reward_status) }}
+        {% endif %}
+        {% endif %}
+      </section>
+    </div>
   </section>
 
 </div>

@@ -21,16 +21,25 @@
 </tbody></table></div>
 {% endmacro %}
 
-{% macro cwl_table(rows) %}
+{% macro cwl_table(rows, status={}) %}
 <div class="scroll"><table>
-<thead><tr><th>순위</th><th>닉네임</th><th>홀</th><th>공격</th><th>미공격</th><th>별 총합</th><th>별 평균</th><th>점수</th></tr></thead>
+<thead><tr><th>순위</th><th>닉네임</th><th>홀</th><th>공격</th><th>미공격</th><th>별 총합</th><th>별 평균</th><th>점수</th><th>보상</th></tr></thead>
 <tbody>
 {% for m in rows %}
-<tr><td>{{ loop.index }}</td><td>{{ m.name }}</td><td>{{ m.townhall }}</td>
+{% set mark = status.get(m.tag) %}
+<tr class="{{ 'reward-sure' if mark == '확정' else ('reward-draw' if mark == '추첨' else '') }}">
+  <td>{{ loop.index }}</td><td>{{ m.name }}</td><td>{{ m.townhall }}</td>
   <td>{{ m.attacks }}</td><td>{{ m.missed }}</td><td>{{ m.stars }}</td><td>{{ "%.2f"|format(m.star_avg) }}</td>
-  <td>{{ "%.1f"|format(m.score) }}</td></tr>
+  <td>{{ "%.1f"|format(m.score) }}</td><td>{{ mark or "" }}</td></tr>
 {% endfor %}
 </tbody></table></div>
+{% endmacro %}
+
+{% macro reward_legend() %}
+<p class="legend">
+  <span class="swatch reward-sure"></span> 확정 &nbsp;
+  <span class="swatch reward-draw"></span> 추첨 대상 (성적이 같아 자리보다 인원이 많음)
+</p>
 {% endmacro %}
 
 {% macro score_table(rows) %}
@@ -80,10 +89,20 @@
 {% macro month_select() %}
 <form class="month-select" onsubmit="return false">
   <label>월
-    <select onchange="location.href=this.value">
+    <select onchange="location.href = this.value + location.hash">
       {% for m in months_desc %}<option value="{{ root }}{{ m.key }}/"{% if current_key == m.key %} selected{% endif %}>{{ m.key[:4] }}/{{ m.key[5:] }}</option>{% endfor %}
     </select>
   </label>
   <noscript>{% for m in months_desc %}<a href="{{ root }}{{ m.key }}/">{{ m.key[:4] }}/{{ m.key[5:] }}</a> {% endfor %}</noscript>
 </form>
+{% endmacro %}
+
+{% macro cwl_roster_table(rows) %}
+<div class="scroll"><table>
+<thead><tr><th>번호</th><th>닉네임</th><th>홀</th></tr></thead>
+<tbody>
+{% for m in rows %}
+<tr><td>{{ loop.index }}</td><td>{{ m.name }}</td><td>{{ m.townhall }}</td></tr>
+{% endfor %}
+</tbody></table></div>
 {% endmacro %}

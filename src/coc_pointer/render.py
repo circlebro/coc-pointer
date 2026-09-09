@@ -18,12 +18,14 @@ from coc_pointer.scoring import (
     RULES,
     MemberMonth,
     RankedMember,
+    RewardSplit,
     aggregate_month,
     group_wars_by_month,
     month_key,
     rank_month,
     roster,
     sort_key,
+    split_rewards,
 )
 from coc_pointer.storage import load_clan_snapshot, load_wars
 
@@ -43,6 +45,9 @@ class MonthView:
     regular_grid: list[tuple[RankedMember, list[str]]]  # participants only
     cwl_grid: list[tuple[RankedMember, list[str]]]  # participants only
     cwl_participants: list[MemberMonth]  # actual CWL roster this month, CWL record only
+    cwl_roster: list[MemberMonth]  # the same people, ordered the way the roster is drawn up
+    rewards: RewardSplit
+    reward_status: dict[str, str]  # player tag -> 확정 / 추첨
     next_label: str  # month whose CWL roster this month's scores decide
 
 
@@ -81,6 +86,11 @@ def build_month_view(
     key: str, wars: list[War], config: ClanConfig, clan_members: Iterable[ClanMember] = ()
 ) -> MonthView:
     ranked = rank_month(aggregate_month(wars, clan_members), config)
+    participants = sorted(
+        aggregate_month([w for w in wars if w.war_type == "cwl"], war_types=frozenset({"cwl"})),
+        key=sort_key,
+    )
+    rewards = split_rewards(participants, config.bonus_count)
     regular_wars = [w for w in wars if w.war_type == "regular"]
     cwl_wars = [w for w in wars if w.war_type == "cwl"]
     return MonthView(
@@ -93,8 +103,11 @@ def build_month_view(
         cwl_wars=cwl_wars,
         regular_grid=_participant_grid(ranked, regular_wars),
         cwl_grid=_participant_grid(ranked, cwl_wars),
-        cwl_participants=sorted(
-            aggregate_month(cwl_wars, war_types=frozenset({"cwl"})), key=sort_key
+        cwl_participants=participants,
+        cwl_roster=sorted(participants, key=lambda m: (-m.townhall, m.name)),
+        rewards=rewards,
+        reward_status=(
+            {m.tag: "확정" for m in rewards.guaranteed} | {m.tag: "추첨" for m in rewards.contested}
         ),
         next_label=next_month_label(key),
     )
