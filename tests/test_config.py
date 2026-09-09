@@ -91,3 +91,16 @@ def test_warnings_value_must_be_int(tmp_path):
     p = write(tmp_path, 'clan_tag: "#2C8L822LQ"\nwarnings:\n  "#AAA1": true\n')
     with pytest.raises(ConfigError, match=r"warnings\.#AAA1: 경고 횟수는 정수여야 합니다"):
         load_config(p)
+
+
+def test_bonus_count_defaults_to_eleven_and_can_be_set(tmp_path):
+    assert load_config(write(tmp_path, 'clan_tag: "#2C8L822LQ"\n')).bonus_count == 11
+    p = write(tmp_path, 'clan_tag: "#2C8L822LQ"\ncwl_bonus_count: 8\n')
+    assert load_config(p).bonus_count == 8
+
+
+def test_bonus_count_must_be_a_positive_integer(tmp_path):
+    for bad in ("0", '"열한명"', "true"):
+        p = write(tmp_path, f'clan_tag: "#2C8L822LQ"\ncwl_bonus_count: {bad}\n')
+        with pytest.raises(ConfigError, match="cwl_bonus_count"):
+            load_config(p)

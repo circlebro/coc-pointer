@@ -17,5 +17,41 @@
 {% block content %}{% endblock %}
 </main>
 <footer>마지막 갱신: {{ generated_at }} (한국 시간) · 30분마다 자동 갱신, 끝난 클랜전만 반영</footer>
+<script>
+// 보던 탭을 주소에 남겨, 다른 달로 이동해도 같은 화면이 열리게 한다. (예: #cwl:reward)
+(function () {
+  var mainTabs = ["members", "scores", "roster", "regular", "cwl"];
+  var cwlTabs = ["roster", "record", "scores", "reward"];
+
+  function pick(id) {
+    var el = document.getElementById(id);
+    if (el) { el.checked = true; }
+  }
+  function chosen(prefix, names) {
+    for (var i = 0; i < names.length; i++) {
+      var el = document.getElementById(prefix + names[i]);
+      if (el && el.checked) { return names[i]; }
+    }
+    return names[0];
+  }
+  function applyHash() {
+    var parts = location.hash.slice(1).split(":");
+    if (mainTabs.indexOf(parts[0]) >= 0) { pick("tab-" + parts[0]); }
+    if (cwlTabs.indexOf(parts[1]) >= 0) { pick("cwltab-" + parts[1]); }
+  }
+  function rememberTab() {
+    var main = chosen("tab-", mainTabs);
+    var hash = main === "cwl" ? "cwl:" + chosen("cwltab-", cwlTabs) : main;
+    history.replaceState(null, "", "#" + hash);
+  }
+
+  applyHash();
+  window.addEventListener("hashchange", applyHash);
+  var inputs = document.querySelectorAll('input[name="tab"], input[name="cwltab"]');
+  Array.prototype.forEach.call(inputs, function (el) {
+    el.addEventListener("change", rememberTab);
+  });
+})();
+</script>
 </body>
 </html>

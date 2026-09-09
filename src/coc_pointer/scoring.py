@@ -202,3 +202,41 @@ def roster(ranked: Iterable[RankedMember]) -> list[RankedMember]:
         )
         for i, r in enumerate(chosen, start=1)
     ]
+
+
+def reward_key(m: MemberMonth) -> tuple[float, int, int]:
+    """How members are compared for a CWL bonus: merit only, never the nickname.
+
+    The nickname is deliberately left out. Two members with the same score, stars and
+    attacks are indistinguishable on merit, so a slot between them is drawn by lot rather
+    than handed to whoever happens to sort first alphabetically.
+    """
+    return (round(m.score, 6), m.stars, m.attacks)
+
+
+@dataclass(frozen=True)
+class RewardSplit:
+    """Who has a CWL bonus for certain, and who is tied at the cut line."""
+
+    guaranteed: list[MemberMonth]
+    contested: list[MemberMonth]
+    open_slots: int  # how many of ``contested`` will get one
+
+    @property
+    def needs_draw(self) -> bool:
+        return bool(self.contested)
+
+
+def split_rewards(members: Iterable[MemberMonth], count: int) -> RewardSplit:
+    """Split ``members`` into certain winners and those tied for the remaining slots."""
+    ordered = sorted(members, key=lambda m: (-m.score, -m.stars, -m.attacks, m.name))
+    if len(ordered) <= count:
+        return RewardSplit(list(ordered), [], 0)
+
+    boundary = reward_key(ordered[count - 1])
+    guaranteed = [m for m in ordered if reward_key(m) > boundary]
+    contested = [m for m in ordered if reward_key(m) == boundary]
+    open_slots = count - len(guaranteed)
+    if len(contested) <= open_slots:
+        return RewardSplit(guaranteed + contested, [], 0)
+    return RewardSplit(guaranteed, contested, open_slots)

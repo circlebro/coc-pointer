@@ -12,6 +12,7 @@ from pathlib import Path
 import yaml
 
 TAG_RE = re.compile(r"^#[0-9A-Z]+$")
+DEFAULT_BONUS_COUNT = 11  # CWL bonus medals go to this many members
 
 
 class ConfigError(ValueError):
@@ -25,6 +26,7 @@ class ClanConfig:
     alts: frozenset[str] = frozenset()
     excluded: frozenset[str] = frozenset()
     warnings: dict[str, int] = field(default_factory=dict)
+    bonus_count: int = DEFAULT_BONUS_COUNT
 
     def is_elite(self, tag: str) -> bool:
         return tag in self.elite and tag not in self.alts
@@ -106,8 +108,13 @@ def load_config(path: Path) -> ClanConfig:
     warnings = {
         _check_tag(t, f"warnings.{t}"): warning_count(t, n) for t, n in raw_warnings.items()
     }
+    bonus = raw.get("cwl_bonus_count", DEFAULT_BONUS_COUNT)
+    if isinstance(bonus, bool) or not isinstance(bonus, int) or bonus < 1:
+        raise ConfigError(f"cwl_bonus_count: 1 이상의 정수여야 합니다 ({bonus!r})")
+
     return ClanConfig(
         clan_tag=clan_tag,
+        bonus_count=bonus,
         elite=tag_set("elite"),
         alts=tag_set("alts"),
         excluded=tag_set("excluded"),
