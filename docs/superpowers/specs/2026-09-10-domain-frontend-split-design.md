@@ -298,8 +298,8 @@ class ClanRole(StrEnum):
     """
 
     LEADER = "LEADER"
-    COLEADER = "COLEADER"   # 언더스코어를 넣지 않는다. API 의 coLeader 와 맞추기 위해서다
-    ADMIN = "ADMIN"         # 게임 화면에서는 "장로(Elder)". API 가 admin 으로 준다
+    COLEADER = "COLEADER"  # 언더스코어를 넣지 않는다. API 의 coLeader 와 맞추기 위해서다
+    ADMIN = "ADMIN"  # 게임 화면에서는 "장로(Elder)". API 가 admin 으로 준다
     MEMBER = "MEMBER"
     UNKNOWN = "UNKNOWN"
 
@@ -326,7 +326,7 @@ class ClanRole(StrEnum):
 
 ```python
 class MemberStatus(StrEnum):
-    ACTIVE = "ACTIVE"      # 지금 클랜에 있다
+    ACTIVE = "ACTIVE"  # 지금 클랜에 있다
     INACTIVE = "INACTIVE"  # 목록에서 사라졌다
 ```
 
@@ -352,10 +352,10 @@ class MemberService:
 ```python
 @dataclass(frozen=True)
 class SyncResult:
-    total: int                       # 받은 사람 수
-    added: int                       # 새로 들어온 사람
-    left: int                        # INACTIVE 로 내린 사람
-    unknown_roles: dict[str, int]    # {"veteran": 3} — 무엇이 몇 번 왔나
+    total: int  # 받은 사람 수
+    added: int  # 새로 들어온 사람
+    left: int  # INACTIVE 로 내린 사람
+    unknown_roles: dict[str, int]  # {"veteran": 3} — 무엇이 몇 번 왔나
 ```
 
 ### 6.5 동기화가 지켜야 할 것
@@ -395,8 +395,7 @@ MemberSvc = Annotated[MemberService, Depends(get_member_service)]
 
 
 @app.get("/api/v1/members")
-async def list_members(service: MemberSvc) -> MemberListResponse:
-    ...
+async def list_members(service: MemberSvc) -> MemberListResponse: ...
 ```
 
 번거로워 보이지만 무엇이 들어가는지 눈에 보이고, 테스트에서 가짜를 넣기 쉽다. 모킹 프레임워크가 필요 없다.
