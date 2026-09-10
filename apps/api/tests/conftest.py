@@ -17,6 +17,8 @@ from pathlib import Path
 
 import pytest
 
+from worker import app
+
 SCHEMA = Path(__file__).resolve().parents[1] / "schema.sql"
 
 
@@ -85,3 +87,17 @@ def fake_db() -> FakeD1:
     conn.execute("PRAGMA foreign_keys = ON")
     conn.executescript(SCHEMA.read_text(encoding="utf-8"))
     return FakeD1(conn)
+
+
+@app.middleware("http")
+async def inject_env_for_testing(request, call_next):
+    """테스트에서 app.dependency_overrides 로 주입한 env 를 request.scope 에도 넣는다."""
+    # 의존성 override 에서 env 를 가져온다
+    if hasattr(app, "dependency_overrides") and len(app.dependency_overrides) > 0:
+        # get_env 의 override 가 있으면 사용한다
+        from worker import get_env
+
+        if get_env in app.dependency_overrides:
+            request.scope["env"] = app.dependency_overrides[get_env]()
+
+    return await call_next(request)
