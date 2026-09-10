@@ -14,17 +14,17 @@ echo "== 서버 모델 (Pydantic) =="
 uv run datamodel-codegen \
   --input "$CONTRACT" \
   --input-file-type openapi \
-  --output apps/api/src/schemas/ \
+  --output apps/api/src/schemas.py \
   --output-model-type pydantic_v2.BaseModel \
   --target-python-version 3.13 \
   --use-standard-collections \
   --use-union-operator \
   --custom-file-header "# 이 파일은 contracts/openapi.yaml 에서 생성되었다. 손으로 고치지 마라."
-echo "  → apps/api/src/schemas/"
+echo "  → apps/api/src/schemas.py"
 
 echo
 
-uv run ruff format apps/api/src/schemas/ >/dev/null
+uv run ruff format apps/api/src/schemas.py >/dev/null
 
 echo "== 프론트 타입 (TypeScript) =="
 mkdir -p apps/web/src/api
