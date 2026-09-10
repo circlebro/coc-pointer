@@ -83,7 +83,7 @@ CoC API → MemberService → MemberRepository → D1 → GET /api/v1/members �
 
 ```
 contracts/openapi.yaml          ← 계약. 이것이 기준이다
-    ├──→ apps/api/src/schemas/       Pydantic 모델   (자동 생성)
+    ├──→ apps/api/src/schemas.py     Pydantic 모델   (자동 생성)
     └──→ apps/web/src/api/schema.d.ts TypeScript 타입 (자동 생성)
 ```
 
@@ -97,7 +97,7 @@ contracts/openapi.yaml          ← 계약. 이것이 기준이다
 # 서버 모델
 uv run datamodel-codegen \
   --input contracts/openapi.yaml \
-  --output apps/api/src/schemas/ \
+  --output apps/api/src/schemas.py \
   --output-model-type pydantic_v2.BaseModel
 
 # 프론트 타입
@@ -105,6 +105,9 @@ npx openapi-typescript contracts/openapi.yaml -o apps/web/src/api/schema.d.ts
 ```
 
 **생성물은 손으로 고치지 않는다.** 고치고 싶으면 명세를 고치고 다시 생성한다. 파일 맨 위에 그 규칙을 주석으로 남긴다.
+
+**`--output`에는 확장자를 붙인다.** `datamodel-code-generator`는 단일 입력·단일 출력일 때 경로 끝의 슬래시를 버리고 그 경로를 그대로 파일 이름으로 쓴다. `apps/api/src/schemas/`라고 적으면 확장자 없는 `schemas` 파일이 만들어져 파이썬이 모듈로 찾지 못한다. 더 고약한 것은 `ruff`도 확장자 없는 파일을 재귀 탐색에서 건너뛰어, 검사가 통과한 것처럼 보이면서 아무것도 검증하지 않는다는 점이다.
+
 
 생성물은 git에 커밋한다. 명세를 고쳤을 때 무엇이 따라 바뀌었는지 PR에서 보이고, 새로 받은 저장소가 생성 없이도 빌드된다.
 

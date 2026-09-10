@@ -21,7 +21,7 @@
 - **점수 규칙은 `packages/core/src/coc_core/scoring.py` 한 곳에만 있다.** 이 계획은 그것을 건드리지 않는다
 - 시각은 UTC ISO 8601 문자열(`2026-09-10T05:30:00Z`). `coc_core.models.to_iso()`를 쓴다
 - CoC API 토큰은 `.env`와 Cloudflare Secret에만 둔다. 코드·저장소에 넣지 않는다
-- 생성물(`apps/api/src/schemas/`, `apps/web/src/api/schema.d.ts`)은 손으로 고치지 않는다
+- 생성물(`apps/api/src/schemas.py`, `apps/web/src/api/schema.d.ts`)은 손으로 고치지 않는다
 - 커밋 제목은 `타입: 한국어 요약` 형식, 본문은 한국어 불릿. 트레일러 두 줄을 유지한다:
   `Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>`
   `Claude-Session: https://claude.ai/code/session_01SEjU63ioVTGGo4ZeJ2B4wU`
@@ -205,13 +205,13 @@ echo "== 서버 모델 (Pydantic) =="
 uv run datamodel-codegen \
   --input "$CONTRACT" \
   --input-file-type openapi \
-  --output apps/api/src/schemas/ \
+  --output apps/api/src/schemas.py \
   --output-model-type pydantic_v2.BaseModel \
   --target-python-version 3.13 \
   --use-standard-collections \
   --use-union-operator \
   --custom-file-header "# 이 파일은 contracts/openapi.yaml 에서 생성되었다. 손으로 고치지 마라."
-echo "  → apps/api/src/schemas/"
+echo "  → apps/api/src/schemas.py"
 
 echo
 echo "== 프론트 타입 (TypeScript) =="
@@ -236,23 +236,25 @@ uv sync
 ./scripts/generate-from-contract.sh
 ```
 
-기대: `apps/api/src/schemas/`에 파이썬 파일이 생기고 `apps/web/src/api/schema.d.ts`가 생긴다.
+기대: `apps/api/src/schemas.py`에 파이썬 파일이 생기고 `apps/web/src/api/schema.d.ts`가 생긴다.
 
 생성된 파이썬 파일을 열어 `ClanRole`이 다섯 값을 갖는지 확인한다. `schema.d.ts`에서도 `ClanRole: "LEADER" | "COLEADER" | ...`가 보여야 한다.
+
+**`--output`에는 확장자를 붙인다.** `datamodel-code-generator`는 단일 입력·단일 출력일 때 경로 끝의 슬래시를 버리고 그 경로를 그대로 파일 이름으로 쓴다. `apps/api/src/schemas/`라고 적으면 확장자 없는 `schemas` 파일이 만들어져 파이썬이 모듈로 찾지 못한다. 더 고약한 것은 `ruff`도 확장자 없는 파일을 재귀 탐색에서 건너뛰어, 검사가 통과한 것처럼 보이면서 아무것도 검증하지 않는다는 점이다.
 
 - [ ] **5단계: 생성물이 검사를 통과하게 한다**
 
 생성된 코드가 ruff 형식과 어긋날 수 있다. 확인한다.
 
 ```bash
-uv run ruff check apps/api/src/schemas/
-uv run ruff format --check apps/api/src/schemas/
+uv run ruff check apps/api/src/schemas.py
+uv run ruff format --check apps/api/src/schemas.py
 ```
 
-어긋나면 `uv run ruff format apps/api/src/schemas/`로 맞춘다. **다만 생성 스크립트를 다시 돌리면 되돌아간다.** 그러니 형식을 맞추는 줄을 생성 스크립트 끝에 넣는다.
+어긋나면 `uv run ruff format apps/api/src/schemas.py`로 맞춘다. **다만 생성 스크립트를 다시 돌리면 되돌아간다.** 그러니 형식을 맞추는 줄을 생성 스크립트 끝에 넣는다.
 
 ```bash
-uv run ruff format apps/api/src/schemas/ >/dev/null
+uv run ruff format apps/api/src/schemas.py >/dev/null
 ```
 
 이 줄을 `scripts/generate-from-contract.sh`의 "프론트 타입" 절 앞에 넣는다.
@@ -262,7 +264,7 @@ uv run ruff format apps/api/src/schemas/ >/dev/null
 생성물은 커밋한다. `.gitignore`에 `schemas/`나 `schema.d.ts`가 걸리지 않는지 본다.
 
 ```bash
-git check-ignore -v apps/api/src/schemas/ apps/web/src/api/schema.d.ts || echo "무시되지 않음 (정상)"
+git check-ignore -v apps/api/src/schemas.py apps/web/src/api/schema.d.ts || echo "무시되지 않음 (정상)"
 ```
 
 무시된다면 `.gitignore`에서 그 줄을 고친다.
@@ -278,7 +280,7 @@ uv run pytest -q && uv run ruff check . && uv run ruff format --check .
 - [ ] **8단계: 커밋한다**
 
 ```bash
-git add contracts/ scripts/generate-from-contract.sh apps/api/pyproject.toml pyproject.toml uv.lock apps/api/src/schemas/ apps/web/src/api/schema.d.ts
+git add contracts/ scripts/generate-from-contract.sh apps/api/pyproject.toml pyproject.toml uv.lock apps/api/src/schemas.py apps/web/src/api/schema.d.ts
 git commit -F - <<'MSG'
 feat: API 계약과 생성 절차 마련
 
