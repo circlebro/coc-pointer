@@ -20,6 +20,11 @@ dev = [
     "pytest>=9.1.1",
     "ruff>=0.16.6",
     "pytest-asyncio>=1.0",
+    # apps/api(coc-api)는 [tool.uv] package = false 라 워크스페이스 의존성 해석에
+    # 끼지 않는다. 루트에서 `uv sync` 한 번으로 apps/api 테스트까지 돌리려면
+    # coc-api 가 쓰는 런타임/테스트 의존성을 여기 그대로 적어 둬야 한다.
+    "fastapi>=0.115",
+    "httpx>=0.28.1",
 ]
 
 [tool.ruff]

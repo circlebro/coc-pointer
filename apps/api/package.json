@@ -1,0 +1,12 @@
+{
+  "name": "coc-api",
+  "private": true,
+  "description": "coc-pointer API 서버가 배포할 때 쓰는 wrangler 버전 고정용. 배포 자체는 deploy.sh 가 한다.",
+  "scripts": {
+    "deploy": "uv run pywrangler deploy",
+    "dev": "uv run pywrangler dev"
+  },
+  "devDependencies": {
+    "wrangler": "^4.130.0"
+  }
+}
