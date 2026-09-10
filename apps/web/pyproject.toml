@@ -1,6 +1,6 @@
 [project]
 name = "coc-pointer"
-version = "0.1.0"
+version = "0.5.0"
 description = "Clash of Clans clan point score tracker"
 authors = [
     { name = "박원형", email = "circle@mz.co.kr" }

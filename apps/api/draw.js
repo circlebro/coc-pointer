@@ -8,45 +8,47 @@
 //   KV 바인딩  DRAWS           : 뽑은 결과를 달마다 저장한다
 //   시크릿     ADMIN_PASSWORD  : 추첨과 다시 뽑기에 필요한 비밀번호
 //   변수       ALLOWED_ORIGIN  : 페이지 주소 (예: https://circlebro.github.io)
+//   변수       API_VERSION     : 저장소 버전 (응답에 함께 실어 어느 판이 떠 있는지 알린다)
 
 const MONTH = /^\d{4}-\d{2}$/;
 
 export default {
   async fetch(request, env) {
     const origin = env.ALLOWED_ORIGIN || "*";
+    const json = (data, status) => respond(data, status, origin, env.API_VERSION);
     if (request.method === "OPTIONS") {
       return new Response(null, { headers: cors(origin) });
     }
 
     const month = new URL(request.url).pathname.split("/").filter(Boolean).pop();
     if (!MONTH.test(month || "")) {
-      return json({ error: "주소 끝에 2026-09 형태의 달이 필요합니다." }, 400, origin);
+      return json({ error: "주소 끝에 2026-09 형태의 달이 필요합니다." }, 400);
     }
 
     if (request.method === "GET") {
       // 클랜원 누구나 결과를 읽을 수 있다.
-      return json((await env.DRAWS.get(month, "json")) || null, 200, origin);
+      return json((await env.DRAWS.get(month, "json")) || null, 200);
     }
 
     if (request.method !== "POST") {
-      return json({ error: "지원하지 않는 요청입니다." }, 405, origin);
+      return json({ error: "지원하지 않는 요청입니다." }, 405);
     }
 
     const body = await request.json().catch(() => ({}));
     if (!env.ADMIN_PASSWORD || body.password !== env.ADMIN_PASSWORD) {
-      return json({ error: "비밀번호가 맞지 않습니다." }, 403, origin);
+      return json({ error: "비밀번호가 맞지 않습니다." }, 403);
     }
 
     const saved = await env.DRAWS.get(month, "json");
     if (saved && !body.redraw) {
       // 이미 뽑았다면 그대로 돌려준다. 실수로 두 번 눌러도 결과가 바뀌지 않는다.
-      return json(saved, 200, origin);
+      return json(saved, 200);
     }
 
     const candidates = Array.isArray(body.candidates) ? body.candidates : [];
     const slots = Math.min(Number(body.slots) || 0, candidates.length);
     if (!candidates.length || !slots) {
-      return json({ error: "후보 목록이나 뽑을 인원이 없습니다." }, 400, origin);
+      return json({ error: "후보 목록이나 뽑을 인원이 없습니다." }, 400);
     }
 
     const record = {
@@ -57,7 +59,7 @@ export default {
       redrawnFrom: saved ? saved.drawnAt : null,
     };
     await env.DRAWS.put(month, JSON.stringify(record));
-    return json(record, 200, origin);
+    return json(record, 200);
   },
 };
 
@@ -87,9 +89,14 @@ function cors(origin) {
   };
 }
 
-function json(data, status, origin) {
+function respond(data, status, origin, version) {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { "Content-Type": "application/json; charset=utf-8", ...cors(origin) },
+    headers: {
+      "Content-Type": "application/json; charset=utf-8",
+      // 어느 판이 떠 있는지 응답만 보고도 알 수 있게 한다.
+      "X-Api-Version": version || "unknown",
+      ...cors(origin),
+    },
   });
 }

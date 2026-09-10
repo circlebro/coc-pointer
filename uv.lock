@@ -32,7 +32,7 @@ wheels = [
 
 [[package]]
 name = "coc-pointer"
-version = "0.1.0"
+version = "0.5.0"
 source = { editable = "apps/web" }
 dependencies = [
     { name = "httpx" },
