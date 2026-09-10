@@ -32,3 +32,4 @@ select = ["E", "F", "I", "UP", "B"]
 [tool.pytest.ini_options]
 testpaths = ["apps/web/tests", "apps/api/tests", "packages/core/tests"]
 asyncio_mode = "auto"
+pythonpath = ["apps/api/src"]
