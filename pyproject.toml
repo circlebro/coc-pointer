@@ -1,11 +1,12 @@
 # 저장소 루트. 실제 파이썬 패키지는 apps/ 와 packages/ 에 있고, 여기서는 작업 공간만 선언한다.
 # 이렇게 두면 루트에서 `uv run coc-pointer ...` 로 바로 실행할 수 있다.
 [tool.uv.workspace]
-members = ["apps/web", "packages/core"]
+members = ["apps/web", "apps/api", "packages/core"]
 
 [tool.uv.sources]
 coc-pointer = { workspace = true }
 coc-core = { workspace = true }
+coc-api = { workspace = true }
 
 [project]
 name = "coc-pointer-workspace"
@@ -18,6 +19,7 @@ dependencies = ["coc-pointer"]
 dev = [
     "pytest>=9.1.1",
     "ruff>=0.16.6",
+    "pytest-asyncio>=1.0",
 ]
 
 [tool.ruff]
@@ -28,4 +30,5 @@ line-length = 100
 select = ["E", "F", "I", "UP", "B"]
 
 [tool.pytest.ini_options]
-testpaths = ["apps/web/tests", "packages/core/tests"]
+testpaths = ["apps/web/tests", "apps/api/tests", "packages/core/tests"]
+asyncio_mode = "auto"
