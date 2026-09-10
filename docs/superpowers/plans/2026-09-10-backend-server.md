@@ -416,14 +416,22 @@ async def test_표_목록을_돌려준다(fake_db):
 
 
 async def test_월_점수는_높은_순으로_나온다(fake_db):
-    await fake_db.prepare(
-        "INSERT INTO monthly_scores (month, tag, name, attacks, stars, score, computed_at) "
-        "VALUES (?, ?, ?, ?, ?, ?, ?)"
-    ).bind("2026-09", "#AAA", "도토리", 10, 25, 87.5, "2026-09-10T00:00:00Z").run()
-    await fake_db.prepare(
-        "INSERT INTO monthly_scores (month, tag, name, attacks, stars, score, computed_at) "
-        "VALUES (?, ?, ?, ?, ?, ?, ?)"
-    ).bind("2026-09", "#BBB", "히로", 12, 30, 93.75, "2026-09-10T00:00:00Z").run()
+    await (
+        fake_db.prepare(
+            "INSERT INTO monthly_scores (month, tag, name, attacks, stars, score, computed_at) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?)"
+        )
+        .bind("2026-09", "#AAA", "도토리", 10, 25, 87.5, "2026-09-10T00:00:00Z")
+        .run()
+    )
+    await (
+        fake_db.prepare(
+            "INSERT INTO monthly_scores (month, tag, name, attacks, stars, score, computed_at) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?)"
+        )
+        .bind("2026-09", "#BBB", "히로", 12, 30, 93.75, "2026-09-10T00:00:00Z")
+        .run()
+    )
 
     rows = await get_monthly_scores(fake_db, "2026-09")
 
@@ -433,10 +441,14 @@ async def test_월_점수는_높은_순으로_나온다(fake_db):
 
 
 async def test_다른_달_점수는_섞이지_않는다(fake_db):
-    await fake_db.prepare(
-        "INSERT INTO monthly_scores (month, tag, name, attacks, stars, score, computed_at) "
-        "VALUES (?, ?, ?, ?, ?, ?, ?)"
-    ).bind("2026-08", "#AAA", "도토리", 10, 25, 87.5, "2026-09-10T00:00:00Z").run()
+    await (
+        fake_db.prepare(
+            "INSERT INTO monthly_scores (month, tag, name, attacks, stars, score, computed_at) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?)"
+        )
+        .bind("2026-08", "#AAA", "도토리", 10, 25, 87.5, "2026-09-10T00:00:00Z")
+        .run()
+    )
 
     assert await get_monthly_scores(fake_db, "2026-09") == []
 
@@ -716,11 +728,15 @@ def test_점수를_높은_순으로_돌려준다(client, fake_db):
             ("#AAA", "도토리", 10, 25, 87.5),
             ("#BBB", "히로", 12, 30, 93.75),
         ]:
-            await fake_db.prepare(
-                "INSERT INTO monthly_scores "
-                "(month, tag, name, attacks, stars, score, computed_at) "
-                "VALUES (?, ?, ?, ?, ?, ?, ?)"
-            ).bind("2026-09", tag, name, attacks, stars, score, "2026-09-10T00:00:00Z").run()
+            await (
+                fake_db.prepare(
+                    "INSERT INTO monthly_scores "
+                    "(month, tag, name, attacks, stars, score, computed_at) "
+                    "VALUES (?, ?, ?, ?, ?, ?, ?)"
+                )
+                .bind("2026-09", tag, name, attacks, stars, score, "2026-09-10T00:00:00Z")
+                .run()
+            )
 
     asyncio.run(seed())
 
