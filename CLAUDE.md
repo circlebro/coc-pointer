@@ -49,6 +49,7 @@ under `packages/`, and shared inputs at the root.
 - Members are keyed by player tag, never by name.
 - `config/clan.yaml` is the admin surface: tags must be quoted (`#` is a YAML comment).
 - The API token comes from `COC_API_TOKEN` (local `.env`, gitignored; Actions secret). The proxy rejects requests without a User-Agent.
+- `apps/api/deploy.sh` authenticates with `CLOUDFLARE_API_TOKEN` from the same `.env` — the way Terraform uses an AWS profile, so deploys run without a browser login. Issue it once at dash.cloudflare.com/profile/api-tokens with Workers Scripts (Edit), D1 (Edit) and Account Settings (Read).
 - Spec: `docs/superpowers/specs/2026-09-07-coc-pointer-design.md`.
 
 ## Current state
