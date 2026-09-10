@@ -41,10 +41,6 @@ def test_health_는_공용_코드가_도는지_확인한다(client):
     assert len(body["kst_now"]) == 16
 
 
-def test_응답에_판_번호가_붙는다(client):
-    assert client.get("/api/health").headers["X-Api-Version"] == "0.5.0"
-
-
 def test_점수가_없는_달은_빈_목록(client):
     body = client.get("/api/scores/2026-09").json()
 

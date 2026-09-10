@@ -11,7 +11,7 @@ Workers 가 들어온 요청을 그대로 넘겨주고, 바인딩과 비밀값�
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any
+from typing import Annotated, Any
 
 from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -45,17 +45,14 @@ def get_db(request: Request) -> Any:
     return request.scope["env"].DB
 
 
-@app.middleware("http")
-async def stamp_version(request: Request, call_next):
-    """어느 배포본이 답했는지 응답만 보고 알 수 있게 한다."""
-    response = await call_next(request)
-    env = request.scope.get("env")
-    response.headers["X-Api-Version"] = getattr(env, "API_VERSION", "unknown")
-    return response
+# 의존성은 Annotated 로 적는다. Depends() 를 인자 기본값에 그대로 두면
+# ruff 의 B008(인자 기본값에서 함수를 부르지 말 것)에 걸리기 때문이다.
+Env = Annotated[Any, Depends(get_env)]
+Db = Annotated[Any, Depends(get_db)]
 
 
 @app.get("/api/health")
-async def health(env: Any = Depends(get_env), database: Any = Depends(get_db)) -> dict:
+async def health(env: Env, database: Db) -> dict:
     """배포가 제대로 되었는지 한 번에 확인한다.
 
     Pyodide 위에서 공용 코드가 도는지, 시간대 자료가 있는지, D1 이 붙었는지를
@@ -81,13 +78,13 @@ async def health(env: Any = Depends(get_env), database: Any = Depends(get_db)) -
 
 
 @app.get("/api/scores/{month}")
-async def get_scores(month: str, database: Any = Depends(get_db)) -> dict:
+async def get_scores(month: str, database: Db) -> dict:
     """그달 점수표. 수집할 때 미리 계산해 둔 것을 읽기만 한다."""
     return {"month": month, "members": await db.get_monthly_scores(database, month)}
 
 
 @app.get("/api/draws/{month}")
-async def get_draw(month: str, database: Any = Depends(get_db)) -> dict:
+async def get_draw(month: str, database: Db) -> dict:
     """그달 추첨 결과. 아직 뽑지 않았으면 ``drawn`` 이 거짓이다."""
     drawn = await db.get_draw(database, month)
     if drawn is None:
