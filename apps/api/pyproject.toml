@@ -6,8 +6,15 @@ authors = [
     { name = "박원형", email = "circle@mz.co.kr" }
 ]
 requires-python = ">=3.13"
+# coc_core 는 여기 의존성으로 넣지 않는다. deploy.sh 4단계가 packages/core의
+# 소스를 그대로 src/coc_core 로 복사해 번들에 넣기 때문에(PyPI에 없는 로컬
+# 전용 패키지라 pywrangler 가 대신 받아 줄 수 없다) 설치가 필요 없다. 넣어
+# 두면 `pywrangler sync`/`deploy` 가 coc-core 를 pip 설치하려다 wasm 휠이
+# 없어 "can't be installed because it is marked as --no-build but has no
+# binary distribution" 로 실패한다. 로컬 테스트에서 coc_core 를 여전히 쓸 수
+# 있는 건 워크스페이스의 다른 멤버(apps/web)가 이 패키지를 의존성으로 갖고
+# 있어 같은 .venv 에 이미 설치되어 있기 때문이다.
 dependencies = [
-    "coc-core",
     "fastapi>=0.115",
 ]
 

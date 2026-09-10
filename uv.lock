@@ -64,7 +64,6 @@ name = "coc-api"
 version = "0.5.0"
 source = { virtual = "apps/api" }
 dependencies = [
-    { name = "coc-core" },
     { name = "fastapi" },
 ]
 
@@ -79,10 +78,7 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [
-    { name = "coc-core", editable = "packages/core" },
-    { name = "fastapi", specifier = ">=0.115" },
-]
+requires-dist = [{ name = "fastapi", specifier = ">=0.115" }]
 
 [package.metadata.requires-dev]
 dev = [
