@@ -21,10 +21,16 @@ dev = [
     "ruff>=0.16.6",
     "pytest-asyncio>=1.0",
     # apps/api(coc-api)는 [tool.uv] package = false 라 워크스페이스 의존성 해석에
-    # 끼지 않는다. 루트에서 `uv sync` 한 번으로 apps/api 테스트까지 돌리려면
-    # coc-api 가 쓰는 런타임/테스트 의존성을 여기 그대로 적어 둬야 한다.
+    # 끼지 않는다. 워크스페이스는 .venv 를 하나만 공유하므로, `cd apps/api` 뒤의
+    # `uv run` 은 같은 .venv 를 보되 apps/api 자신의 dev 그룹만 추가로 동기화한다.
+    # 그래서 루트에서의 평범한 `uv sync` (CLAUDE.md 가 안내하는 그 명령)는 이
+    # 목록에 없는 것은 절대 설치하지 않는다. coc-api 가 쓰는 런타임/테스트/배포
+    # 의존성을 전부 여기 그대로 적어 둬야 새 클론에서 `uv sync` 한 번으로
+    # apps/api 테스트도, `./apps/api/deploy.sh` 도 바로 된다.
     "fastapi>=0.115",
     "httpx>=0.28.1",
+    "workers-py",
+    "workers-runtime-sdk",
 ]
 
 [tool.ruff]
