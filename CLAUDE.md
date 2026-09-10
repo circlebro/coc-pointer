@@ -49,8 +49,36 @@ under `packages/`, and shared inputs at the root.
 - Members are keyed by player tag, never by name.
 - `config/clan.yaml` is the admin surface: tags must be quoted (`#` is a YAML comment).
 - The API token comes from `COC_API_TOKEN` (local `.env`, gitignored; Actions secret). The proxy rejects requests without a User-Agent.
-- `apps/api/deploy.sh` authenticates with `CLOUDFLARE_API_TOKEN` from the same `.env` — the way Terraform uses an AWS profile, so deploys run without a browser login. Issue it once at dash.cloudflare.com/profile/api-tokens with Workers Scripts (Edit), D1 (Edit) and Account Settings (Read).
 - Spec: `docs/superpowers/specs/2026-09-07-coc-pointer-design.md`.
+
+## Deploying the API
+
+`apps/api/` deploys to Cloudflare Workers via `./apps/api/deploy.sh`. Design: `docs/superpowers/specs/2026-09-10-backend-server-design.md`.
+
+**Why `pywrangler` and not `wrangler`** — `apps/api` depends on FastAPI, a third-party package. Plain `wrangler deploy` does not bundle third-party packages into a Python Worker, so the deployed code fails at `import fastapi`. `pywrangler` (devDependency `workers-py`) reads `apps/api/pyproject.toml` and vendors the dependencies before deploying. Never revert `deploy.sh` to plain `wrangler deploy` — it will look like it worked and then fail on every request.
+
+**First deploy:**
+
+1. Authenticate, one of two ways (see table below). `npx wrangler@4 login` opens a browser; approve it once and the credential is cached under `~/Library/Preferences/.wrangler/` (macOS) — the same spot on every later invocation, so this is a one-time step, like `aws sso login`.
+2. Run `./apps/api/deploy.sh`.
+3. Commit the `database_id` change in `apps/api/wrangler.toml`. The script writes it after creating the D1 database. Skip this and the next clone or worktree creates a second database — data splits across two databases with no way to tell which is authoritative.
+4. Append `/api/health` to the printed URL and open it. Success looks like `coc_core: "ok"` and eight tables.
+
+**Redeploy:** `./apps/api/deploy.sh` — one line. It re-copies `coc_core` and deploys again; it does not recreate the database or re-run schema migrations beyond `CREATE TABLE IF NOT EXISTS`.
+
+**Two ways to authenticate:**
+
+| Method | When |
+|---|---|
+| `wrangler login` (browser) | A person deploying from their own machine. Where we are now. |
+| `CLOUDFLARE_API_TOKEN` in `.env` | Nowhere to open a browser — GitHub Actions or another unattended deploy. |
+
+A token needs three permissions: Workers Scripts (Edit), D1 (Edit), Account Settings (Read). Issue it at dash.cloudflare.com/profile/api-tokens. `deploy.sh` prints the same steps, but this is the place to look first.
+
+**Automatic vs. manual:**
+
+- Automatic (the script does it): create the D1 database, create tables, copy `coc_core` into `src/`, deploy.
+- Manual (a person does it): authenticate once, commit the `database_id` change, check `/api/health`.
 
 ## Current state
 
@@ -83,14 +111,14 @@ version put which change in front of the clan.
 - Version is `0.MINOR.PATCH` while the project is still taking shape. A new feature bumps
   MINOR; a fix-only deploy bumps PATCH. `1.0.0` waits until the site fully replaces the
   spreadsheet it was built to replace.
-- Releasing, in order: bump `version` in `apps/web/pyproject.toml` and `packages/core/pyproject.toml`,
-  and `API_VERSION` in `apps/api/wrangler.toml` (all track the tag), commit, then tag the squash commit on
-  `main` with `git tag -a v0.6.0 <sha> -m "<한 줄 요약>"`, push tags, and `gh release create`
-  with Korean notes listing the PRs it contains.
+- Releasing, in order: bump `version` in `apps/web/pyproject.toml`, `apps/api/pyproject.toml` and
+  `packages/core/pyproject.toml`, and `API_VERSION` in `apps/api/wrangler.toml` (all track the
+  tag), commit, then tag the squash commit on `main` with `git tag -a v0.6.0 <sha> -m "<한 줄
+  요약>"`, push tags, and `gh release create` with Korean notes listing the PRs it contains.
 - The site footer prints the installed `apps/web` version and links to that release, so the
   page itself says which build a viewer is looking at. `GET /api/health` reports the same
   number as the API's `version` — Workers has no startup log, so that endpoint stands in for
-  one. The tag, the two `pyproject.toml` versions and `API_VERSION` all carry the same value,
+  one. The tag, the three `pyproject.toml` versions and `API_VERSION` all carry the same value,
   which is what ties a deployed build back to a point in the repository.
 - The Obsidian vault mirrors this: `릴리즈/` holds one note per version and each ticket
   carries a `버전` property, so a ticket shows which release shipped it.
