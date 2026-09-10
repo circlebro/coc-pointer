@@ -1,24 +1,17 @@
+# 저장소 루트. 실제 파이썬 패키지는 apps/web 에 있고, 여기서는 작업 공간만 선언한다.
+# 이렇게 두면 루트에서 `uv run coc-pointer ...` 로 바로 실행할 수 있다.
+[tool.uv.workspace]
+members = ["apps/web"]
+
+[tool.uv.sources]
+coc-pointer = { workspace = true }
+
 [project]
-name = "coc-pointer"
-version = "0.1.0"
-description = "Clash of Clans clan point score tracker"
-readme = "README.md"
-authors = [
-    { name = "박원형", email = "circle@mz.co.kr" }
-]
+name = "coc-pointer-workspace"
+version = "0.0.0"
+description = "coc-pointer 저장소 루트 (apps/web, apps/api)"
 requires-python = ">=3.14"
-dependencies = [
-    "httpx>=0.28.1",
-    "jinja2>=3.1.6",
-    "pyyaml>=6.0.3",
-]
-
-[project.scripts]
-coc-pointer = "coc_pointer:main"
-
-[build-system]
-requires = ["uv_build>=0.9.27,<0.10.0"]
-build-backend = "uv_build"
+dependencies = ["coc-pointer"]
 
 [dependency-groups]
 dev = [
@@ -34,4 +27,5 @@ line-length = 100
 select = ["E", "F", "I", "UP", "B"]
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
+testpaths = ["apps/web/tests"]
+pythonpath = ["apps/web/tests"]

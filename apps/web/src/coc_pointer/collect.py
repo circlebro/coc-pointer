@@ -50,7 +50,13 @@ def _member(raw: dict[str, Any]) -> WarMember:
 
 
 def _build_war(
-    payload: dict[str, Any], war_type: str, ours: dict[str, Any], theirs: dict[str, Any], apm: int
+    payload: dict[str, Any],
+    war_type: str,
+    ours: dict[str, Any],
+    theirs: dict[str, Any],
+    apm: int,
+    round_no: int | None = None,
+    total_rounds: int | None = None,
 ) -> War:
     return War(
         war_type=war_type,
@@ -62,6 +68,8 @@ def _build_war(
         opponent_name=theirs["name"],
         members=tuple(_member(m) for m in ours.get("members", [])),
         in_progress=payload.get("state") != "warEnded",
+        round_no=round_no,
+        total_rounds=total_rounds,
     )
 
 
@@ -70,12 +78,18 @@ def war_from_regular(payload: dict[str, Any]) -> War:
     return _build_war(payload, "regular", payload["clan"], payload["opponent"], apm)
 
 
-def war_from_cwl(payload: dict[str, Any], our_tag: str) -> War | None:
+def war_from_cwl(
+    payload: dict[str, Any],
+    our_tag: str,
+    round_no: int | None = None,
+    total_rounds: int | None = None,
+) -> War | None:
     clan, opponent = payload["clan"], payload["opponent"]
+    rounds = (round_no, total_rounds)
     if clan["tag"] == our_tag:
-        return _build_war(payload, "cwl", clan, opponent, CWL_ATTACKS)
+        return _build_war(payload, "cwl", clan, opponent, CWL_ATTACKS, *rounds)
     if opponent["tag"] == our_tag:
-        return _build_war(payload, "cwl", opponent, clan, CWL_ATTACKS)
+        return _build_war(payload, "cwl", opponent, clan, CWL_ATTACKS, *rounds)
     return None
 
 
@@ -142,14 +156,16 @@ def collect(
 
     group = api.league_group(tag)
     if group:
-        for round_ in group.get("rounds", []):
+        rounds = group.get("rounds", [])
+        total_rounds = len(rounds)
+        for round_no, round_ in enumerate(rounds, start=1):
             for war_tag in round_.get("warTags", []):
                 if war_tag == EMPTY_WAR_TAG:
                     continue
                 payload = api.cwl_war(war_tag)
                 if payload.get("state") not in SAVED_STATES:
                     continue
-                war = war_from_cwl(payload, tag)
+                war = war_from_cwl(payload, tag, round_no, total_rounds)
                 if war is None:
                     continue
                 if path := save_war(war, data_dir):

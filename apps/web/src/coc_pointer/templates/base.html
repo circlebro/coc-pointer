@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}{{ clan_name }} 클랜전 점수{% endblock %}</title>
+<link rel="stylesheet" href="{{ root }}style.css?v={{ asset_version }}">
+</head>
+<body>
+<header>
+  <div class="bar">
+    <h1><a href="{{ root }}">{{ clan_name }} 클랜전 점수</a></h1>
+    <div class="updated" title="30분마다 자동 수집·갱신. 끝난 클랜전만 반영">마지막 갱신 <time>{{ generated_at }}</time><br><small>한국 시간 · 30분마다 자동 갱신</small></div>
+  </div>
+</header>
+<main>
+{% block content %}{% endblock %}
+</main>
+<footer>마지막 갱신: {{ generated_at }} (한국 시간) · 30분마다 자동 갱신, 끝난 클랜전만 반영</footer>
+<script>
+// 보던 탭을 주소에 남겨, 다른 달로 이동해도 같은 화면이 열리게 한다. (예: #cwl:reward)
+(function () {
+  var mainTabs = ["members", "scores", "roster", "regular", "cwl"];
+  var cwlTabs = ["roster", "record", "scores", "reward"];
+
+  function pick(id) {
+    var el = document.getElementById(id);
+    if (el) { el.checked = true; }
+  }
+  function chosen(prefix, names) {
+    for (var i = 0; i < names.length; i++) {
+      var el = document.getElementById(prefix + names[i]);
+      if (el && el.checked) { return names[i]; }
+    }
+    return names[0];
+  }
+  function applyHash() {
+    var parts = location.hash.slice(1).split(":");
+    if (mainTabs.indexOf(parts[0]) >= 0) { pick("tab-" + parts[0]); }
+    if (cwlTabs.indexOf(parts[1]) >= 0) { pick("cwltab-" + parts[1]); }
+  }
+  function rememberTab() {
+    var main = chosen("tab-", mainTabs);
+    var hash = main === "cwl" ? "cwl:" + chosen("cwltab-", cwlTabs) : main;
+    history.replaceState(null, "", "#" + hash);
+  }
+
+  applyHash();
+  window.addEventListener("hashchange", applyHash);
+  var inputs = document.querySelectorAll('input[name="tab"], input[name="cwltab"]');
+  Array.prototype.forEach.call(inputs, function (el) {
+    el.addEventListener("change", rememberTab);
+  });
+})();
+
+// 보상 추첨. 관리자가 "추첨하기"를 누르는 그 자리에서 무작위로 뽑고, 한 자리씩 채워 발표한다.
+// 뽑은 결과는 이 브라우저에 저장되어 새로고침해도 남는다. "초기화"를 누르면 다시 뽑는다.
+(function () {
+  var box = document.getElementById("draw-box");
+  var button = document.getElementById("draw-play");
+  if (!box || !button) { return; }  // 추첨이 필요 없거나 아직 뽑을 수 없는 달
+  var resetButton = document.getElementById("draw-reset");
+  var note = document.getElementById("draw-note");
+  var pool = Array.prototype.slice.call(document.querySelectorAll("#draw-pool li"));
+  var slots = Array.prototype.slice.call(document.querySelectorAll("#draw-slots li.empty"));
+  var slotCount = parseInt(box.getAttribute("data-slots"), 10) || 0;
+  var storeKey = "coc-picks-" + box.getAttribute("data-month");
+  var animate = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var winners = load();
+
+  function load() {
+    try {
+      var saved = localStorage.getItem(storeKey);
+      return saved ? saved.split(",") : null;
+    } catch (e) { return null; }
+  }
+  function store() {
+    try { localStorage.setItem(storeKey, winners.join(",")); } catch (e) { /* 저장 불가 */ }
+  }
+  function forget() {
+    try { localStorage.removeItem(storeKey); } catch (e) { /* 저장 불가 */ }
+  }
+  function tagOf(li) { return li.getAttribute("data-tag"); }
+  function nameOf(tag) {
+    for (var i = 0; i < pool.length; i++) {
+      if (tagOf(pool[i]) === tag) { return pool[i].textContent; }
+    }
+    return tag;
+  }
+  function pickWinners() {
+    var tags = pool.map(tagOf);
+    for (var i = tags.length - 1; i > 0; i--) {  // 피셔-예이츠 섞기
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = tags[i]; tags[i] = tags[j]; tags[j] = t;
+    }
+    return tags.slice(0, slotCount);
+  }
+  function paintRow(tag, cls, label) {
+    var panel = document.getElementById("subpanel-reward");
+    var row = panel && panel.querySelector('tr[data-tag="' + tag + '"]');
+    if (!row) { return; }
+    row.className = cls;
+    var cells = row.querySelectorAll("td");
+    if (cells.length) { cells[cells.length - 1].textContent = label; }
+  }
+  function clearBoard() {
+    pool.forEach(function (li) {
+      li.className = "";
+      paintRow(tagOf(li), "reward-draw", "추첨");
+    });
+    slots.forEach(function (li) {
+      li.className = "empty";
+      li.querySelector(".who").textContent = "—";
+    });
+  }
+  function fill(i) {
+    var slot = slots[i];
+    if (slot) {
+      slot.className = "filled just-filled";
+      slot.querySelector(".who").textContent = nameOf(winners[i]);
+    }
+    pool.forEach(function (li) {
+      if (tagOf(li) === winners[i]) { li.className = "won"; }
+    });
+    paintRow(winners[i], "reward-sure", "당첨");
+  }
+  function settle() {
+    for (var i = 0; i < winners.length; i++) { fill(i); }
+    slots.forEach(function (li) { li.className = li.className.replace(" just-filled", ""); });
+    pool.forEach(function (li) {
+      if (winners.indexOf(tagOf(li)) < 0) {
+        li.className = "lost";
+        paintRow(tagOf(li), "reward-lost", "미당첨");
+      }
+    });
+    button.disabled = false;
+    button.textContent = "다시 보기";
+    note.textContent = "이 브라우저에 저장된 결과입니다. 다시 뽑으려면 초기화를 누르세요.";
+  }
+  function reveal(i) {
+    if (i >= winners.length) { settle(); return; }
+    fill(i);
+    setTimeout(function () { reveal(i + 1); }, 520);
+  }
+  function play() {
+    if (!winners) { winners = pickWinners(); store(); }
+    if (!animate) { settle(); return; }
+    button.disabled = true;
+    button.textContent = "추첨 중…";
+    clearBoard();
+    var flashes = 0;
+    var timer = setInterval(function () {
+      pool.forEach(function (li) { li.className = ""; });
+      pool[Math.floor(Math.random() * pool.length)].className = "flash";
+      if (++flashes > 14) {
+        clearInterval(timer);
+        pool.forEach(function (li) { li.className = ""; });
+        reveal(0);
+      }
+    }, 90);
+  }
+
+  if (winners) { settle(); }
+  button.addEventListener("click", play);
+  if (resetButton) {
+    resetButton.addEventListener("click", function () {
+      forget();
+      winners = null;  // 다음 추첨하기에서 새로 뽑는다
+      clearBoard();
+      button.disabled = false;
+      button.textContent = "추첨하기";
+      note.textContent = "추첨하기를 누르면 그 자리에서 무작위로 정해집니다.";
+    });
+  }
+})();
+</script>
+</body>
+</html>

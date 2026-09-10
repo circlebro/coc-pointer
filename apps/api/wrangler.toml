@@ -1,0 +1,13 @@
+name = "coc-draw"
+main = "draw.js"
+compatibility_date = "2026-09-01"
+
+# 페이지 주소. 이 주소에서 온 요청만 허용한다.
+[vars]
+ALLOWED_ORIGIN = "https://circlebro.github.io"
+
+# 뽑은 결과를 달마다 저장하는 곳.
+# id는 deploy.sh가 저장소를 만들면서 채워 넣는다.
+[[kv_namespaces]]
+binding = "DRAWS"
+id = "PUT_KV_ID_HERE"

@@ -6,9 +6,12 @@ from coc_pointer import cli
 from coc_pointer.storage import save_war
 
 
-def write_config(tmp_path: Path) -> Path:
+def write_config(tmp_path: Path, bonus_count: int | None = None) -> Path:
     p = tmp_path / "clan.yaml"
-    p.write_text('clan_tag: "#2C8L822LQ"\nelite:\n  - "#P1"\n', encoding="utf-8")
+    text = 'clan_tag: "#2C8L822LQ"\nelite:\n  - "#P1"\n'
+    if bonus_count is not None:
+        text += f"cwl_bonus_count: {bonus_count}\n"
+    p.write_text(text, encoding="utf-8")
     return p
 
 

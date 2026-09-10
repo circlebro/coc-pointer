@@ -46,6 +46,8 @@ class War:
     opponent_name: str
     members: tuple[WarMember, ...]
     in_progress: bool = False
+    round_no: int | None = None  # CWL only: 1-based round
+    total_rounds: int | None = None  # CWL only: rounds in the season
 
     @property
     def attacks_made(self) -> int:
@@ -70,6 +72,8 @@ class War:
             "team_size": self.team_size,
             "attacks_per_member": self.attacks_per_member,
             "in_progress": self.in_progress,
+            "round_no": self.round_no,
+            "total_rounds": self.total_rounds,
             "opponent": {"tag": self.opponent_tag, "name": self.opponent_name},
             "members": [
                 {
@@ -91,6 +95,8 @@ class War:
             team_size=d["team_size"],
             attacks_per_member=d["attacks_per_member"],
             in_progress=d.get("in_progress", False),
+            round_no=d.get("round_no"),
+            total_rounds=d.get("total_rounds"),
             opponent_tag=d["opponent"]["tag"],
             opponent_name=d["opponent"]["name"],
             members=tuple(

@@ -13,6 +13,7 @@ from jinja2 import Environment, PackageLoader, select_autoescape
 
 from coc_pointer.config import ClanConfig
 from coc_pointer.models import ClanMember, ClanSnapshot, War
+from coc_pointer.rewards import cwl_is_settled
 from coc_pointer.scoring import (
     KST,
     RULES,
@@ -48,6 +49,7 @@ class MonthView:
     cwl_roster: list[MemberMonth]  # the same people, ordered the way the roster is drawn up
     rewards: RewardSplit
     reward_status: dict[str, str]  # player tag -> 확정 / 추첨
+    cwl_settled: bool  # scores are final, so the bonus slots can be drawn
     next_label: str  # month whose CWL roster this month's scores decide
 
 
@@ -106,9 +108,8 @@ def build_month_view(
         cwl_participants=participants,
         cwl_roster=sorted(participants, key=lambda m: (-m.townhall, m.name)),
         rewards=rewards,
-        reward_status=(
-            {m.tag: "확정" for m in rewards.guaranteed} | {m.tag: "추첨" for m in rewards.contested}
-        ),
+        reward_status=_reward_status(rewards),
+        cwl_settled=cwl_is_settled(cwl_wars),
         next_label=next_month_label(key),
     )
 
@@ -123,6 +124,14 @@ def _participant_grid(
         if any(cells):
             rows.append((r, cells))
     return rows
+
+
+def _reward_status(rewards: RewardSplit) -> dict[str, str]:
+    """Label every bonus candidate: certain, or still to be drawn for."""
+    status = {m.tag: "확정" for m in rewards.guaranteed}
+    for m in rewards.contested:
+        status[m.tag] = "추첨"
+    return status
 
 
 def _kst(dt: datetime, fmt: str) -> str:
