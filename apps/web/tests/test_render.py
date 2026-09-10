@@ -1,5 +1,6 @@
 from dataclasses import replace
 from datetime import UTC, datetime
+from importlib.metadata import version
 from pathlib import Path
 
 from helpers import member, war
@@ -318,3 +319,13 @@ def test_result_slots_are_all_filled_when_no_draw_is_needed(tmp_path):
     assert reward.count('<li class="filled">') == 2, "두 자리가 모두 확정으로 찬다"
     assert '<li class="empty">' not in reward
     assert 'id="draw-play"' not in reward, "뽑을 것이 없으면 버튼도 없다"
+
+
+def test_footer_links_the_version_to_its_release(tmp_path):
+    save_war(war([member("#P1", "도토리", (3, 3))]), tmp_path)
+    out = tmp_path / "site"
+    build_site(tmp_path, CFG, out)
+    page = (out / "index.html").read_text(encoding="utf-8")
+    installed = version("coc-pointer")
+    assert f">v{installed}</a>" in page, "지금 보는 화면이 어느 판인지 알 수 있다"
+    assert f"/releases/tag/v{installed}" in page

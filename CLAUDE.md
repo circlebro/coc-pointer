@@ -69,6 +69,24 @@ The body explains what changed and why, as Korean bullets, so `git log` alone sh
 feature was built. PRs are squash-merged, so the PR title follows the same format — it
 becomes the commit on `main`. Keep the `Co-Authored-By` and `Claude-Session` trailers.
 
+## Releases
+
+Every deploy that is worth naming gets a git tag and a GitHub release, so it is clear which
+version put which change in front of the clan.
+
+- Version is `0.MINOR.PATCH` while the project is still taking shape. A new feature bumps
+  MINOR; a fix-only deploy bumps PATCH. `1.0.0` waits until the site fully replaces the
+  spreadsheet it was built to replace.
+- Releasing, in order: bump `version` in `apps/web/pyproject.toml` and `API_VERSION` in
+  `apps/api/wrangler.toml` (both track the tag), commit, then tag the squash commit on
+  `main` with `git tag -a v0.6.0 <sha> -m "<한 줄 요약>"`, push tags, and `gh release create`
+  with Korean notes listing the PRs it contains.
+- The site footer prints the installed `apps/web` version and links to that release, so the
+  page itself says which build a viewer is looking at. The Worker answers with the same
+  number in an `X-Api-Version` header.
+- The Obsidian vault mirrors this: `릴리즈/` holds one note per version and each ticket
+  carries a `버전` property, so a ticket shows which release shipped it.
+
 ## Git
 
 - Default branch: `main`. Open PRs against it.

@@ -16,7 +16,7 @@
 <main>
 {% block content %}{% endblock %}
 </main>
-<footer>마지막 갱신: {{ generated_at }} (한국 시간) · 30분마다 자동 갱신, 끝난 클랜전만 반영</footer>
+<footer>마지막 갱신: {{ generated_at }} (한국 시간) · 30분마다 자동 갱신, 끝난 클랜전만 반영<br><a class="ver" href="https://github.com/circlebro/coc-pointer/releases/tag/v{{ app_version }}">v{{ app_version }}</a></footer>
 <script>
 // 보던 탭을 주소에 남겨, 다른 달로 이동해도 같은 화면이 열리게 한다. (예: #cwl:reward)
 (function () {

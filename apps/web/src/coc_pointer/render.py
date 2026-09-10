@@ -7,6 +7,7 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from importlib import resources
+from importlib.metadata import version
 from pathlib import Path
 
 from jinja2 import Environment, PackageLoader, select_autoescape
@@ -186,6 +187,7 @@ def build_site(
         "rules": RULES,
         "generated_at": generated_at,
         "clan_name": clan_name,
+        "app_version": version("coc-pointer"),
         "snapshot": snapshot,
         "members": _sorted_members(snapshot),
         "config": config,

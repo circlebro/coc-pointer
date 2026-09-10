@@ -5,6 +5,8 @@ compatibility_date = "2026-09-01"
 # 페이지 주소. 이 주소에서 온 요청만 허용한다.
 [vars]
 ALLOWED_ORIGIN = "https://circlebro.github.io"
+# 저장소 버전과 맞춘다. 릴리즈할 때 함께 올린다.
+API_VERSION = "0.5.0"
 
 # 뽑은 결과를 달마다 저장하는 곳.
 # id는 deploy.sh가 저장소를 만들면서 채워 넣는다.
