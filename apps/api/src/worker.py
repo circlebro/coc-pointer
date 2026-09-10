@@ -77,6 +77,43 @@ async def health(env: Env, database: Db) -> dict:
     return result
 
 
+@app.get("/api/health/crypto")
+async def health_crypto() -> dict:
+    """비밀번호 해시에 쓸 방법이 이 환경에서 되는지 확인한다.
+
+    비밀번호는 원문을 저장하지 않고 해시로 담는데, 안전한 해시는 일부러 느린
+    계산을 수만 번 되풀이한다. 무료 플랜은 요청 한 건에 CPU 10밀리초뿐이라
+    그 계산이 들어갈지 알 수 없다. 두 갈래를 재 본다.
+
+    - ``js_crypto``: Workers 가 주는 브라우저 표준 암호 기능. 계산을 런타임이
+      대신하므로 빠르다. 쓸 수 있으면 무료 플랜으로 간다
+    - ``pbkdf2_100k_ms``: 파이썬만으로 10만 번 돌렸을 때 걸린 밀리초.
+      10 이하면 파이썬 계산으로도 된다
+
+    사용자 관리(TASK-23) 착수 전에 판정하려고 둔 임시 경로다. 판정한 뒤 지운다.
+    """
+    result: dict = {}
+
+    try:
+        import js
+
+        result["js_crypto"] = hasattr(js.crypto, "subtle")
+    except Exception as exc:  # noqa: BLE001 - 무엇이 왜 실패했는지 그대로 보여준다
+        result["js_crypto"] = f"실패: {type(exc).__name__}: {exc}"
+
+    try:
+        import hashlib
+        import time
+
+        started = time.monotonic()
+        hashlib.pbkdf2_hmac("sha256", b"test", b"salt", 100_000)
+        result["pbkdf2_100k_ms"] = round((time.monotonic() - started) * 1000, 1)
+    except Exception as exc:  # noqa: BLE001
+        result["pbkdf2_100k_ms"] = f"실패: {type(exc).__name__}: {exc}"
+
+    return result
+
+
 @app.get("/api/scores/{month}")
 async def get_scores(month: str, database: Db) -> dict:
     """그달 점수표. 수집할 때 미리 계산해 둔 것을 읽기만 한다."""
