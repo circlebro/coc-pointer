@@ -216,7 +216,9 @@ CREATE TABLE draws (
 | `GET /api/draws/{월}` | 누구나 | 추첨 결과 |
 | `POST /api/draws/{월}` | 관리자 | 추첨 실행 |
 
-응답에는 `X-Api-Version` 헤더를 붙여, 어느 배포본이 답했는지 응답만 보고 알 수 있게 한다.
+지금 어느 판이 떠 있는지는 `GET /api/health`의 `version`으로 확인한다. Workers는 항상 켜져 있는 프로세스가 아니라 요청이 올 때마다 실행되므로 기동 로그가 없다. 이 경로가 그 자리를 대신한다.
+
+판 번호는 `apps/api/wrangler.toml`의 `API_VERSION`, `apps/web`과 `packages/core`의 `version`, 그리고 git 태그가 모두 같은 값을 갖는다. 배포된 것과 저장소의 어느 시점이 이어지는지 이 번호로 짚는다.
 
 ## 6. 인증
 

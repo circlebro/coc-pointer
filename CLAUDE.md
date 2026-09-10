@@ -85,8 +85,10 @@ version put which change in front of the clan.
   `main` with `git tag -a v0.6.0 <sha> -m "<한 줄 요약>"`, push tags, and `gh release create`
   with Korean notes listing the PRs it contains.
 - The site footer prints the installed `apps/web` version and links to that release, so the
-  page itself says which build a viewer is looking at. The Worker answers with the same
-  number in an `X-Api-Version` header.
+  page itself says which build a viewer is looking at. `GET /api/health` reports the same
+  number as the API's `version` — Workers has no startup log, so that endpoint stands in for
+  one. The tag, the two `pyproject.toml` versions and `API_VERSION` all carry the same value,
+  which is what ties a deployed build back to a point in the repository.
 - The Obsidian vault mirrors this: `릴리즈/` holds one note per version and each ticket
   carries a `버전` property, so a ticket shows which release shipped it.
 

@@ -710,10 +710,6 @@ def test_health_는_공용_코드가_도는지_확인한다(client):
     assert len(body["kst_now"]) == 16
 
 
-def test_응답에_판_번호가_붙는다(client):
-    assert client.get("/api/health").headers["X-Api-Version"] == "0.5.0"
-
-
 def test_점수가_없는_달은_빈_목록(client):
     body = client.get("/api/scores/2026-09").json()
 
@@ -775,7 +771,7 @@ Workers 가 들어온 요청을 그대로 넘겨주고, 바인딩과 비밀값�
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any
+from typing import Annotated, Any
 
 import db
 from fastapi import Depends, FastAPI, Request
@@ -808,17 +804,14 @@ def get_db(request: Request) -> Any:
     return request.scope["env"].DB
 
 
-@app.middleware("http")
-async def stamp_version(request: Request, call_next):
-    """어느 배포본이 답했는지 응답만 보고 알 수 있게 한다."""
-    response = await call_next(request)
-    env = request.scope.get("env")
-    response.headers["X-Api-Version"] = getattr(env, "API_VERSION", "unknown")
-    return response
+# 의존성은 Annotated 로 적는다. Depends() 를 인자 기본값에 그대로 두면
+# ruff 의 B008(인자 기본값에서 함수를 부르지 말 것)에 걸리기 때문이다.
+Env = Annotated[Any, Depends(get_env)]
+Db = Annotated[Any, Depends(get_db)]
 
 
 @app.get("/api/health")
-async def health(env: Any = Depends(get_env), database: Any = Depends(get_db)) -> dict:
+async def health(env: Env, database: Db) -> dict:
     """배포가 제대로 되었는지 한 번에 확인한다.
 
     Pyodide 위에서 공용 코드가 도는지, 시간대 자료가 있는지, D1 이 붙었는지를
@@ -844,13 +837,13 @@ async def health(env: Any = Depends(get_env), database: Any = Depends(get_db)) -
 
 
 @app.get("/api/scores/{month}")
-async def get_scores(month: str, database: Any = Depends(get_db)) -> dict:
+async def get_scores(month: str, database: Db) -> dict:
     """그달 점수표. 수집할 때 미리 계산해 둔 것을 읽기만 한다."""
     return {"month": month, "members": await db.get_monthly_scores(database, month)}
 
 
 @app.get("/api/draws/{month}")
-async def get_draw(month: str, database: Any = Depends(get_db)) -> dict:
+async def get_draw(month: str, database: Db) -> dict:
     """그달 추첨 결과. 아직 뽑지 않았으면 ``drawn`` 이 거짓이다."""
     drawn = await db.get_draw(database, month)
     if drawn is None:
@@ -874,7 +867,7 @@ except ImportError:  # pragma: no cover - 로컬에서는 FastAPI 앱만 쓴다
 uv run pytest apps/api/tests/test_worker.py -v
 ```
 
-기대: 여섯 개 모두 통과.
+기대: 다섯 개 모두 통과.
 
 만약 `test_health_는_공용_코드가_도는지_확인한다`가 `coc_core` 관련으로 실패하면, `apps/api/pyproject.toml`의 `dependencies`에 `coc-core`가 있는지, `uv sync`를 돌렸는지 확인한다.
 
@@ -896,7 +889,6 @@ feat: FastAPI 앱과 조회 엔드포인트 추가
 - health 가 공용 코드·시간대·D1 을 한 번에 확인한다. 올려 보기 전에는
   알 수 없는 것들을 배포 후 한 번의 호출로 판정하기 위해서다
 - 월 점수 조회와 추첨 결과 조회
-- 응답마다 X-Api-Version 헤더를 붙여 어느 배포본이 답했는지 알 수 있게 함
 - D1 과 환경을 의존성으로 받아 테스트에서 가짜로 바꿔 끼운다
 
 Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
