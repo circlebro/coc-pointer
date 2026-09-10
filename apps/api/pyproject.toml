@@ -26,6 +26,7 @@ dev = [
     "pytest-asyncio>=1.0",
     "workers-py",
     "workers-runtime-sdk",
+    "datamodel-code-generator>=0.28",
 ]
 
 # apps/api 는 파이썬 휠이 아니라 Cloudflare Workers 번들로 배포된다 (deploy.sh 가
