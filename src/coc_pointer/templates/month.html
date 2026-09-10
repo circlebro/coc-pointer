@@ -85,14 +85,59 @@
         {% else %}
         <p class="hint">리그전 점수가 높은 순으로 {{ config.bonus_count }}명이 보상을 받습니다. 성적 기준은 점수 → 별 총합 → 공격 횟수이며, 닉네임은 기준에 넣지 않습니다.</p>
         <p class="summary">확정 <strong>{{ view.rewards.guaranteed|length }}명</strong>
-        {%- if view.rewards.needs_draw %} · 남은 <strong>{{ view.rewards.open_slots }}자리</strong>를 <strong>{{ view.rewards.contested|length }}명</strong>이 놓고 추첨합니다{% endif %}</p>
+        {%- if view.rewards.needs_draw %} · <span class="badge-draw">추첨 필요</span> 남은 <strong>{{ view.rewards.open_slots }}자리</strong>를 <strong>{{ view.rewards.contested|length }}명</strong>이 놓고 추첨합니다
+        {%- else %} · 성적만으로 모두 정해져 추첨이 필요 없습니다{% endif %}</p>
+
+        <div class="draw-box" id="draw-box" data-month="{{ view.key }}"
+             data-slots="{{ view.rewards.open_slots }}">
+          <div class="draw-grid">
+            <div>
+              <h5>후보 {{ (view.rewards.guaranteed|length) + (view.rewards.contested|length) }}명</h5>
+              {% if view.rewards.guaranteed %}
+              <p class="pool-label">확정 {{ view.rewards.guaranteed|length }}명</p>
+              <ul class="chips">
+                {% for m in view.rewards.guaranteed %}<li class="won">{{ m.name }}</li>{% endfor %}
+              </ul>
+              {% endif %}
+              {% if view.rewards.contested %}
+              <p class="pool-label">추첨 대상 {{ view.rewards.contested|length }}명</p>
+              <ul class="chips" id="draw-pool">
+                {% for m in view.rewards.contested %}<li data-tag="{{ m.tag }}">{{ m.name }}</li>{% endfor %}
+              </ul>
+              {% endif %}
+            </div>
+            <div>
+              <h5>결과 {{ config.bonus_count }}자리</h5>
+              <ol class="slots" id="draw-slots">
+                {% for m in view.rewards.guaranteed %}
+                <li class="filled"><span class="who">{{ m.name }}</span><span class="note">확정</span></li>
+                {% endfor %}
+                {% for _ in range(view.rewards.open_slots) %}
+                <li class="empty"><span class="who">—</span></li>
+                {% endfor %}
+              </ol>
+            </div>
+          </div>
+          {% if view.rewards.needs_draw %}
+          <p class="draw-actions">
+            {% if view.cwl_settled %}
+            <button type="button" id="draw-play">추첨하기</button>
+            <button type="button" id="draw-reset" class="ghost">초기화</button>
+            <span class="hint" id="draw-note">추첨하기를 누르면 그 자리에서 무작위로 정해집니다. 초기화를 누르면 다시 뽑을 수 있습니다.</span>
+            {% else %}
+            <span class="hint">리그전 공격이 모두 끝나야 추첨할 수 있습니다. 아직 남은 공격이 결과를 바꿀 수 있기 때문입니다.</span>
+            {% endif %}
+          </p>
+          {% endif %}
+        </div>
+
         {% if view.rewards.guaranteed %}
         <h4>확정 {{ view.rewards.guaranteed|length }}명</h4>
         {{ cwl_table(view.rewards.guaranteed, view.reward_status) }}
         {% endif %}
         {% if view.rewards.needs_draw %}
         <h4>추첨 대상 {{ view.rewards.contested|length }}명 중 {{ view.rewards.open_slots }}명 선정</h4>
-        <p class="hint">이 {{ view.rewards.contested|length }}명은 점수·별 총합·공격 횟수가 모두 같아 성적으로는 순위를 가릴 수 없습니다. 추첨 기능은 준비 중입니다.</p>
+        <p class="hint">이 {{ view.rewards.contested|length }}명은 점수·별 총합·공격 횟수가 모두 같아 성적으로는 순위를 가릴 수 없습니다. 추첨 결과는 위에서 발표한 뒤 이 표에도 표시됩니다.</p>
         {{ cwl_table(view.rewards.contested, view.reward_status) }}
         {% endif %}
         {% endif %}

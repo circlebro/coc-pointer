@@ -1,3 +1,4 @@
+from dataclasses import replace
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -260,3 +261,57 @@ def test_reward_rows_are_coloured_in_the_cwl_score_table(tmp_path):
     reward = page[page.index('id="subpanel-reward"') :]
     assert "남은 <strong>2자리</strong>를 <strong>3명</strong>이 놓고 추첨합니다" in reward
     assert reward.count('class="reward-sure"') == 3, "보상 탭에도 확정자가 나온다"
+
+
+def _settled_cwl(round_no, total=2, names=("가", "나", "다", "라")):
+    w = war(
+        [member(f"#P{i}", n, (3,)) for i, n in enumerate(names)],
+        war_type="cwl",
+        end=f"2026-09-0{round_no}T10:00:00Z",
+        opponent_tag=f"#OPP{round_no}",
+    )
+    return replace(w, round_no=round_no, total_rounds=total)
+
+
+def test_draw_panel_lists_candidates_and_leaves_the_slots_empty(tmp_path):
+    save_war(_settled_cwl(1), tmp_path)
+    save_war(_settled_cwl(2), tmp_path)
+    out = tmp_path / "site"
+    build_site(tmp_path, ClanConfig(clan_tag="#X", bonus_count=2), out)
+    page = (out / "index.html").read_text(encoding="utf-8")
+    box = page[page.index('id="draw-box"') : page.index("</section>", page.index('id="draw-box"'))]
+
+    assert box.count("<li data-tag=") == 4, "후보 네 명이 왼쪽에 모두 남는다"
+    assert box.count('<li class="empty">') == 2, "결과 두 자리가 비어 있다"
+    assert 'data-slots="2"' in box, "브라우저가 몇 명을 뽑을지 알 수 있다"
+    assert 'id="draw-play"' in box and 'id="draw-reset"' in box
+    assert "winner" not in box.lower(), "당첨자는 페이지에 미리 들어 있지 않다"
+
+    reward = page[page.index('id="subpanel-reward"') :]
+    assert '<tr class="reward-sure"' not in reward, "추첨 전에는 당첨 색이 없다"
+    assert reward.count('<tr class="reward-draw" data-tag') == 4
+
+
+def test_draw_button_waits_until_the_league_is_settled(tmp_path):
+    save_war(_settled_cwl(1, total=3), tmp_path)
+    save_war(_settled_cwl(2, total=3), tmp_path)  # 3라운드 중 2라운드만 끝났다
+    out = tmp_path / "site"
+    build_site(tmp_path, ClanConfig(clan_tag="#X", bonus_count=2), out)
+    reward = (out / "index.html").read_text(encoding="utf-8")
+    reward = reward[reward.index('id="subpanel-reward"') :]
+    assert 'id="draw-play"' not in reward
+    assert "리그전 공격이 모두 끝나야 추첨할 수 있습니다" in reward
+
+
+def test_result_slots_are_all_filled_when_no_draw_is_needed(tmp_path):
+    save_war(_settled_cwl(1, names=("가", "나")), tmp_path)
+    save_war(_settled_cwl(2, names=("가", "나")), tmp_path)
+    out = tmp_path / "site"
+    build_site(tmp_path, ClanConfig(clan_tag="#X", bonus_count=2), out)
+    reward = (out / "index.html").read_text(encoding="utf-8")
+    reward = reward[reward.index('id="subpanel-reward"') :]
+    assert "추첨 필요" not in reward
+    assert "성적만으로 모두 정해져 추첨이 필요 없습니다" in reward
+    assert reward.count('<li class="filled">') == 2, "두 자리가 모두 확정으로 찬다"
+    assert '<li class="empty">' not in reward
+    assert 'id="draw-play"' not in reward, "뽑을 것이 없으면 버튼도 없다"

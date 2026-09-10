@@ -27,7 +27,8 @@
 <tbody>
 {% for m in rows %}
 {% set mark = status.get(m.tag) %}
-<tr class="{{ 'reward-sure' if mark == '확정' else ('reward-draw' if mark == '추첨' else '') }}">
+{% set tone = {'확정': 'reward-sure', '당첨': 'reward-sure', '추첨': 'reward-draw', '미당첨': 'reward-lost'} %}
+<tr class="{{ tone.get(mark, '') }}" data-tag="{{ m.tag }}">
   <td>{{ loop.index }}</td><td>{{ m.name }}</td><td>{{ m.townhall }}</td>
   <td>{{ m.attacks }}</td><td>{{ m.missed }}</td><td>{{ m.stars }}</td><td>{{ "%.2f"|format(m.star_avg) }}</td>
   <td>{{ "%.1f"|format(m.score) }}</td><td>{{ mark or "" }}</td></tr>
@@ -35,10 +36,11 @@
 </tbody></table></div>
 {% endmacro %}
 
-{% macro reward_legend() %}
+{% macro reward_legend(drawn=false) %}
 <p class="legend">
-  <span class="swatch reward-sure"></span> 확정 &nbsp;
-  <span class="swatch reward-draw"></span> 추첨 대상 (성적이 같아 자리보다 인원이 많음)
+  <span class="swatch reward-sure"></span> {{ "보상 대상" if drawn else "확정" }} &nbsp;
+  {% if drawn %}<span class="swatch reward-lost"></span> 미당첨
+  {% else %}<span class="swatch reward-draw"></span> 추첨 대상 (성적이 같아 자리보다 인원이 많음){% endif %}
 </p>
 {% endmacro %}
 
