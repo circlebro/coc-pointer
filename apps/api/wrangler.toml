@@ -2,6 +2,7 @@
 # 배포는 ./deploy.sh 로 한다. database_id 는 그 스크립트가 채운다.
 name = "coc-api"
 main = "src/worker.py"
+migrations_dir = "database/migrations"
 compatibility_date = "2026-09-01"
 compatibility_flags = ["python_workers"]
 

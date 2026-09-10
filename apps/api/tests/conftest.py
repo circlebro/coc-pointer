@@ -17,7 +17,7 @@ from pathlib import Path
 
 import pytest
 
-SCHEMA = Path(__file__).resolve().parents[1] / "schema.sql"
+MIGRATIONS = Path(__file__).resolve().parents[1] / "database" / "migrations"
 
 
 class FakeRow:
@@ -75,7 +75,9 @@ class FakeD1:
 
 @pytest.fixture
 def fake_db() -> FakeD1:
-    """스키마가 적용된 빈 데이터베이스.
+    """마이그레이션을 순서대로 적용한 빈 데이터베이스.
+
+    실제 배포와 같은 경로를 지나므로 마이그레이션이 깨지면 여기서 먼저 걸린다.
 
     ``check_same_thread=False`` 가 필요하다. FastAPI 의 TestClient 는 앱을 다른
     스레드에서 돌리는데, sqlite3 는 기본적으로 만든 스레드 밖의 접근을 막기 때문이다.
@@ -83,5 +85,6 @@ def fake_db() -> FakeD1:
     """
     conn = sqlite3.connect(":memory:", check_same_thread=False)
     conn.execute("PRAGMA foreign_keys = ON")
-    conn.executescript(SCHEMA.read_text(encoding="utf-8"))
+    for path in sorted(MIGRATIONS.glob("*.sql")):
+        conn.executescript(path.read_text(encoding="utf-8"))
     return FakeD1(conn)

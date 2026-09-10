@@ -36,26 +36,13 @@ CREATE TABLE IF NOT EXISTS attacks (
     REFERENCES war_members(war_id, tag) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS members (
-  tag                TEXT PRIMARY KEY,
-  name               TEXT NOT NULL,
-  role               TEXT,
-  townhall           INTEGER,
-  trophies           INTEGER,
-  donations          INTEGER,
-  donations_received INTEGER,
-  in_clan            INTEGER NOT NULL DEFAULT 1,
-  first_seen_at      TEXT NOT NULL,
-  last_seen_at       TEXT NOT NULL
-);
-
 CREATE TABLE IF NOT EXISTS users (
   id            TEXT PRIMARY KEY,
   login_id      TEXT NOT NULL UNIQUE,
   password_hash TEXT NOT NULL,
   display_name  TEXT NOT NULL,
   role          TEXT NOT NULL DEFAULT 'member',
-  member_tag    TEXT REFERENCES members(tag),
+  member_tag    TEXT,
   created_at    TEXT NOT NULL,
   last_login_at TEXT
 );
@@ -86,3 +73,34 @@ CREATE TABLE IF NOT EXISTS draws (
 
 CREATE INDEX IF NOT EXISTS idx_wars_end_time ON wars(end_time);
 CREATE INDEX IF NOT EXISTS idx_monthly_scores_month ON monthly_scores(month);
+
+-- 클랜원 표를 새로 만든다.
+--
+-- 앞선 설계의 members 표를 지우고 clan_members 로 바꾼다. 자료가 하나도
+-- 없어 안전하다. 표 이름에 clan 이 들어가 war_members 와 나란히 읽히고,
+-- role 컬럼이 users.role(서비스 권한)과 헷갈리지 않는다.
+
+DROP TABLE IF EXISTS members;
+
+CREATE TABLE clan_members (
+  id                 TEXT PRIMARY KEY,
+  tag                TEXT NOT NULL UNIQUE,
+  name               TEXT NOT NULL,
+
+  -- CoC API 가 채운다
+  role               TEXT NOT NULL,
+  townhall           INTEGER,
+  trophies           INTEGER,
+  donations          INTEGER,
+  donations_received INTEGER,
+
+  -- 우리가 판정한다
+  status             TEXT NOT NULL DEFAULT 'ACTIVE',
+  created_at         TEXT NOT NULL,
+  updated_at         TEXT NOT NULL,
+
+  -- 관리자가 적는다. 동기화가 덮어쓰지 않는다
+  description        TEXT
+);
+
+CREATE INDEX idx_clan_members_status ON clan_members(status);

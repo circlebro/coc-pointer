@@ -107,8 +107,9 @@ fi
 
 echo
 echo "== 3/5 표 만들기 =="
-# schema.sql 은 CREATE TABLE IF NOT EXISTS 라서 여러 번 돌려도 안전하다.
-$WRANGLER d1 execute coc-pointer --remote --file=schema.sql
+# D1 이 어디까지 적용했는지 스스로 기록한다(d1_migrations 표). 이미 적용한
+# 파일은 건너뛰므로 여러 번 돌려도 안전하다.
+$WRANGLER d1 migrations apply coc-pointer --remote
 
 echo
 echo "== 4/5 공용 코드 복사 =="
