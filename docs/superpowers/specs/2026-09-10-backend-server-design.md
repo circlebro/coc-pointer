@@ -21,6 +21,7 @@ Cloudflare의 Python Workers가 FastAPI와 Pydantic을 공식 지원한다. 파�
 | 항목 | 내용 |
 |---|---|
 | 상태 | 오픈 베타. `python_workers` 호환성 플래그가 필요하다 |
+| **파이썬 버전** | **3.13.2로 고정 (Pyodide 0.28.3). 우리가 고를 수 없다.** `apps/api`와 그 의존성인 `packages/core`는 3.14 전용 문법(예: PEP 758의 괄호 없는 `except A, B:`)을 쓸 수 없다 — `requires-python`을 `>=3.13`으로 두고, `packages/core/tests/test_py313_syntax.py`가 `ast.parse(feature_version=(3, 13))`로 이를 테스트에서 잡는다 |
 | 지원 패키지 | Pyodide가 미리 준비한 것과 순수 파이썬 패키지. FastAPI, Pydantic 포함 |
 | HTTP 라이브러리 | 비동기만 가능하다. `httpx`는 되고 `requests`는 안 된다 |
 | 요금 | 무료 플랜으로 하루 10만 요청 |

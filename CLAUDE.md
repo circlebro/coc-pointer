@@ -57,6 +57,8 @@ under `packages/`, and shared inputs at the root.
 
 **Why `pywrangler` and not `wrangler`** — `apps/api` depends on FastAPI, a third-party package. Plain `wrangler deploy` does not bundle third-party packages into a Python Worker, so the deployed code fails at `import fastapi`. `pywrangler` (devDependency `workers-py`) reads `apps/api/pyproject.toml` and vendors the dependencies before deploying. Never revert `deploy.sh` to plain `wrangler deploy` — it will look like it worked and then fail on every request.
 
+**Cloudflare Workers Python is pinned to 3.13.2** (Pyodide 0.28.3 — not our choice, not configurable). `apps/api` and `packages/core` (which it depends on, and which `apps/web`/GitHub Actions also use at 3.14) must therefore stay importable under Python 3.13: no 3.14-only syntax — e.g. PEP 758's unparenthesized `except TypeError, ValueError:` — anywhere in `packages/core/src/coc_core/` or `apps/api/src/`. `requires-python` in both `packages/core/pyproject.toml` and `apps/api/pyproject.toml` is `>=3.13` for this reason; leave it there even though the workspace root and `apps/web` stay on `>=3.14`. `packages/core/tests/test_py313_syntax.py` parses every `coc_core` source file with `ast.parse(..., feature_version=(3, 13))` so a 3.14-only construct fails `pytest` immediately instead of surfacing only when `pywrangler sync`/`deploy` runs against the real Workers Python.
+
 **First deploy:**
 
 1. Authenticate, one of two ways (see table below). `npx wrangler@4 login` opens a browser; approve it once and the credential is cached under `~/Library/Preferences/.wrangler/` (macOS) — the same spot on every later invocation, so this is a one-time step, like `aws sso login`.

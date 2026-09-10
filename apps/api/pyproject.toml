@@ -5,7 +5,7 @@ description = "coc-pointer API 서버 (Cloudflare Python Workers)"
 authors = [
     { name = "박원형", email = "circle@mz.co.kr" }
 ]
-requires-python = ">=3.14"
+requires-python = ">=3.13"
 dependencies = [
     "coc-core",
     "fastapi>=0.115",
@@ -29,7 +29,9 @@ dev = [
 package = false
 
 [tool.ruff]
-target-version = "py314"
+# py313: 이 앱은 Cloudflare Workers(Pyodide, 파이썬 3.13.2)에 배포된다.
+# py314로 두면 ruff가 3.14 전용 문법으로 재포맷해 배포를 막을 수 있다.
+target-version = "py313"
 line-length = 100
 
 [tool.ruff.lint]
