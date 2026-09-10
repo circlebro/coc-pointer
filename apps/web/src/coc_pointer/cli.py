@@ -7,9 +7,10 @@ import os
 import sys
 from pathlib import Path
 
+from coc_core.config import ClanConfig, ConfigError, load_clan_tag, load_config
+
 from coc_pointer.api import CocApi, CocApiError
 from coc_pointer.collect import WarLogPrivateError, collect
-from coc_pointer.config import ClanConfig, ConfigError, load_clan_tag, load_config
 from coc_pointer.render import build_site
 
 TOKEN_ENV = "COC_API_TOKEN"

@@ -4,6 +4,7 @@ requires-python = ">=3.14"
 
 [manifest]
 members = [
+    "coc-core",
     "coc-pointer",
     "coc-pointer-workspace",
 ]
@@ -31,12 +32,10 @@ wheels = [
 ]
 
 [[package]]
-name = "coc-pointer"
+name = "coc-core"
 version = "0.5.0"
-source = { editable = "apps/web" }
+source = { editable = "packages/core" }
 dependencies = [
-    { name = "httpx" },
-    { name = "jinja2" },
     { name = "pyyaml" },
 ]
 
@@ -47,10 +46,35 @@ dev = [
 ]
 
 [package.metadata]
+requires-dist = [{ name = "pyyaml", specifier = ">=6.0.3" }]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "pytest", specifier = ">=9.1.1" },
+    { name = "ruff", specifier = ">=0.16.6" },
+]
+
+[[package]]
+name = "coc-pointer"
+version = "0.5.0"
+source = { editable = "apps/web" }
+dependencies = [
+    { name = "coc-core" },
+    { name = "httpx" },
+    { name = "jinja2" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "pytest" },
+    { name = "ruff" },
+]
+
+[package.metadata]
 requires-dist = [
+    { name = "coc-core", editable = "packages/core" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "jinja2", specifier = ">=3.1.6" },
-    { name = "pyyaml", specifier = ">=6.0.3" },
 ]
 
 [package.metadata.requires-dev]

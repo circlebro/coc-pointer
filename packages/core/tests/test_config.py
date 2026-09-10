@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from coc_pointer.config import ClanConfig, ConfigError, load_clan_tag, load_config
+from coc_core.config import ClanConfig, ConfigError, load_clan_tag, load_config
 
 
 def write(tmp_path: Path, text: str) -> Path:

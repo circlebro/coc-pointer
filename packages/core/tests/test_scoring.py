@@ -1,11 +1,10 @@
 from datetime import UTC, datetime
 
 import pytest
-from helpers import member, war
 
-from coc_pointer.config import ClanConfig
-from coc_pointer.models import ClanMember
-from coc_pointer.scoring import (
+from coc_core.config import ClanConfig
+from coc_core.models import ClanMember
+from coc_core.scoring import (
     ROSTER_SIZE,
     RULES,
     MemberMonth,
@@ -17,6 +16,7 @@ from coc_pointer.scoring import (
     roster,
     split_rewards,
 )
+from coc_core.testing import member, war
 
 
 def mm(attacks: int, opportunities: int, stars: int, tag="#P", name="x") -> MemberMonth:

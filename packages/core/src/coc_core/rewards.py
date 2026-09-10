@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 
-from coc_pointer.models import War
+from coc_core.models import War
 
 
 def cwl_is_settled(cwl_wars: Iterable[War]) -> bool:

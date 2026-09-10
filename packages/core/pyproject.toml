@@ -1,19 +1,14 @@
 [project]
-name = "coc-pointer"
+name = "coc-core"
 version = "0.5.0"
-description = "Clash of Clans clan point score tracker"
+description = "coc-pointer 공용 코드: 자료형, 설정, 점수 계산, 보상 판정"
 authors = [
     { name = "박원형", email = "circle@mz.co.kr" }
 ]
 requires-python = ">=3.14"
 dependencies = [
-    "coc-core",
-    "httpx>=0.28.1",
-    "jinja2>=3.1.6",
+    "pyyaml>=6.0.3",
 ]
-
-[project.scripts]
-coc-pointer = "coc_pointer:main"
 
 [build-system]
 requires = ["uv_build>=0.9.27,<0.10.0"]
