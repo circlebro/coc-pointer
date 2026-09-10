@@ -3,11 +3,11 @@ from datetime import UTC, datetime
 from importlib.metadata import version
 from pathlib import Path
 
-from helpers import member, war
+from coc_core.config import ClanConfig
+from coc_core.models import ClanMember, ClanSnapshot
+from coc_core.testing import member, war
 
 import coc_pointer.render
-from coc_pointer.config import ClanConfig
-from coc_pointer.models import ClanMember, ClanSnapshot
 from coc_pointer.render import (
     build_month_view,
     build_site,

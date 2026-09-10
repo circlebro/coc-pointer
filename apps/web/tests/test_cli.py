@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from helpers import member, war
+from coc_core.testing import member, war
 
 from coc_pointer import cli
 from coc_pointer.storage import save_war

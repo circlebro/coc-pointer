@@ -1,0 +1,39 @@
+[project]
+name = "coc-core"
+version = "0.5.0"
+description = "coc-pointer 공용 코드: 자료형, 설정, 점수 계산, 보상 판정"
+authors = [
+    { name = "박원형", email = "circle@mz.co.kr" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    # >=6.0 로 낮춰 둔다: Cloudflare Workers(Pyodide 0.28.3)의 패키지 색인에는
+    # pyyaml 6.0.2용 wasm32 휠만 있고 6.0.3은 없어서, >=6.0.3으로 묶으면
+    # `pywrangler sync`(uv pip compile --python cpython-3.13.2-emscripten...)의
+    # 의존성 해석이 실패한다. 로컬/GitHub Actions 쪽은 PyPI 전체를 보므로 이
+    # 하한을 낮춰도 여전히 최신 버전이 선택된다.
+    "pyyaml>=6.0",
+]
+
+[build-system]
+requires = ["uv_build>=0.9.27,<0.10.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "ruff>=0.16.6",
+]
+
+[tool.ruff]
+# py313: 이 패키지는 Cloudflare Workers(Pyodide, 파이썬 3.13.2)에서도 돌아야
+# 한다. py314로 두면 ruff가 PEP 758(괄호 없는 `except A, B:`) 같은 3.14 전용
+# 문법으로 오히려 재포맷해 버려 Workers 배포를 다시 막는다.
+target-version = "py313"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

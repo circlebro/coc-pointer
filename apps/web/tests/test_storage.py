@@ -1,9 +1,9 @@
 import json
 from datetime import UTC, datetime
 
-from helpers import member, war
+from coc_core.models import ClanMember, ClanSnapshot
+from coc_core.testing import member, war
 
-from coc_pointer.models import ClanMember, ClanSnapshot
 from coc_pointer.storage import (
     load_clan_snapshot,
     load_wars,

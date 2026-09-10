@@ -12,9 +12,10 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Protocol
 
+from coc_core.config import ClanConfig
+from coc_core.models import Attack, ClanMember, ClanSnapshot, War, WarMember
+
 from coc_pointer.api import CocApiError
-from coc_pointer.config import ClanConfig
-from coc_pointer.models import Attack, ClanMember, ClanSnapshot, War, WarMember
 from coc_pointer.storage import save_clan_snapshot, save_war
 
 _API_TIME = "%Y%m%dT%H%M%S.%fZ"

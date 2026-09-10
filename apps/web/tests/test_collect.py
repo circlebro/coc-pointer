@@ -2,6 +2,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
+from coc_core.config import ClanConfig
 
 from coc_pointer.api import CocApiError
 from coc_pointer.collect import (
@@ -12,7 +13,6 @@ from coc_pointer.collect import (
     war_from_cwl,
     war_from_regular,
 )
-from coc_pointer.config import ClanConfig
 from coc_pointer.storage import load_clan_snapshot, load_wars
 
 OUR = "#2C8L822LQ"

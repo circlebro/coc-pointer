@@ -1,8 +1,7 @@
 from dataclasses import replace
 
-from helpers import member, war
-
-from coc_pointer.rewards import cwl_is_settled
+from coc_core.rewards import cwl_is_settled
+from coc_core.testing import member, war
 
 
 def cwl(round_no, total=3, in_progress=False, stars=(3,)):

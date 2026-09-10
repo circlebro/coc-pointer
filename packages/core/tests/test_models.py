@@ -1,8 +1,7 @@
 from datetime import UTC, datetime
 
-from helpers import member, war
-
-from coc_pointer.models import ClanMember, ClanSnapshot, War
+from coc_core.models import ClanMember, ClanSnapshot, War
+from coc_core.testing import member, war
 
 
 def test_war_file_name_uses_utc_end_time_type_and_opponent_tag():

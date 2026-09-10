@@ -102,7 +102,7 @@ def load_config(path: Path) -> ClanConfig:
             raise ConfigError(f"warnings.{tag}: 경고 횟수는 정수여야 합니다 ({n!r})")
         try:
             return int(n)
-        except TypeError, ValueError:
+        except (TypeError, ValueError):
             raise ConfigError(f"warnings.{tag}: 경고 횟수는 정수여야 합니다 ({n!r})") from None
 
     warnings = {

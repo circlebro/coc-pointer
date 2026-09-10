@@ -10,12 +10,10 @@ from importlib import resources
 from importlib.metadata import version
 from pathlib import Path
 
-from jinja2 import Environment, PackageLoader, select_autoescape
-
-from coc_pointer.config import ClanConfig
-from coc_pointer.models import ClanMember, ClanSnapshot, War
-from coc_pointer.rewards import cwl_is_settled
-from coc_pointer.scoring import (
+from coc_core.config import ClanConfig
+from coc_core.models import ClanMember, ClanSnapshot, War
+from coc_core.rewards import cwl_is_settled
+from coc_core.scoring import (
     KST,
     RULES,
     MemberMonth,
@@ -29,6 +27,8 @@ from coc_pointer.scoring import (
     sort_key,
     split_rewards,
 )
+from jinja2 import Environment, PackageLoader, select_autoescape
+
 from coc_pointer.storage import load_clan_snapshot, load_wars
 
 ROLE_KO = {"leader": "대표", "coLeader": "공동 대표", "admin": "장로", "member": "멤버"}

@@ -25,8 +25,8 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from zoneinfo import ZoneInfo
 
-from coc_pointer.config import ClanConfig
-from coc_pointer.models import ClanMember, War
+from coc_core.config import ClanConfig
+from coc_core.models import ClanMember, War
 
 BASE_POINTS = 5
 MAX_POINTS_PER_ATTACK = 8

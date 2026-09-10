@@ -2,7 +2,7 @@
 
 from datetime import UTC, datetime, timedelta
 
-from coc_pointer.models import Attack, War, WarMember
+from coc_core.models import Attack, War, WarMember
 
 
 def member(tag: str, name: str, stars: tuple[int, ...] = (), townhall: int = 16) -> WarMember:

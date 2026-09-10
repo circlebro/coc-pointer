@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from coc_pointer.models import ClanSnapshot, War
+from coc_core.models import ClanSnapshot, War
 
 WARS_DIR = "wars"
 IN_PROGRESS_DIR = "in-progress"
