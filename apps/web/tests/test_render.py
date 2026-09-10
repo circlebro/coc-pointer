@@ -4,6 +4,7 @@ from pathlib import Path
 
 from helpers import member, war
 
+import coc_pointer.render
 from coc_pointer.config import ClanConfig
 from coc_pointer.models import ClanMember, ClanSnapshot
 from coc_pointer.render import (
@@ -225,8 +226,10 @@ def test_cwl_tab_holds_four_sub_tabs_and_its_own_month_select(tmp_path):
 
 
 def test_month_select_keeps_the_open_tab():
-    base = (Path("src/coc_pointer/templates") / "base.html").read_text(encoding="utf-8")
-    tables = (Path("src/coc_pointer/templates") / "_tables.html").read_text(encoding="utf-8")
+    # 실행 위치와 무관하도록 패키지가 설치된 자리에서 템플릿을 찾는다.
+    templates = Path(coc_pointer.render.__file__).parent / "templates"
+    base = (templates / "base.html").read_text(encoding="utf-8")
+    tables = (templates / "_tables.html").read_text(encoding="utf-8")
     assert "this.value + location.hash" in tables, "달을 바꿔도 보던 탭이 주소에 남는다"
     assert 'pick("cwltab-" + parts[1])' in base, "하위 탭까지 복원한다"
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # 리그전 보상 추첨 서버를 Cloudflare에 올린다.
 #
-#   ./worker/deploy.sh
+#   ./apps/api/deploy.sh
 #
 # 처음 실행하면 브라우저가 열려 Cloudflare 로그인을 묻고, 저장소(KV)를 만들고,
 # 서버를 배포한 뒤 비밀번호를 물어본다. 두 번째부터는 배포만 다시 한다.
@@ -27,7 +27,7 @@ if grep -q "PUT_KV_ID_HERE" wrangler.toml; then
   if [ -z "$kv_id" ]; then
     echo
     echo "저장소 id를 자동으로 찾지 못했습니다. 위 출력에서 32자리 id를 복사해"
-    echo "worker/wrangler.toml의 PUT_KV_ID_HERE 자리에 넣고 다시 실행해 주세요."
+    echo "apps/api/wrangler.toml의 PUT_KV_ID_HERE 자리에 넣고 다시 실행해 주세요."
     exit 1
   fi
   perl -pi -e "s/PUT_KV_ID_HERE/$kv_id/" wrangler.toml

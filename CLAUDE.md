@@ -14,7 +14,7 @@ coc-pointer: a Clash of Clans (CoC) clan point score tracker. Python 3.14, manag
 uv sync                          # create .venv and install all deps (incl. dev group)
 uv run coc-pointer               # run the CLI entry point (src/coc_pointer/__init__.py:main)
 uv run pytest                    # run all tests
-uv run pytest tests/test_smoke.py::test_package_imports   # run a single test
+uv run pytest apps/web/tests/test_scoring.py -k excel     # run one test
 uv run ruff check .              # lint
 uv run ruff format .             # format (use --check in CI)
 uv add <pkg>                     # add a runtime dependency
@@ -23,15 +23,24 @@ uv add --dev <pkg>               # add a dev-only dependency
 
 ## Layout
 
-- `src/coc_pointer/`: the package (src layout; installed into `.venv` in editable mode by `uv sync`).
-- `tests/`: pytest suite. Test discovery is limited to this directory via `[tool.pytest.ini_options]`.
-- `pyproject.toml`: single source of truth for metadata, dependencies, ruff, and pytest config. `uv.lock` is committed.
+The repository holds one deployable app per folder under `apps/`, with shared inputs at the root.
+Add `packages/` only when two apps need the same code.
+
+- `apps/web/`: Python app — collects wars, scores them, renders the static site.
+  - `src/coc_pointer/`: the package (src layout), including `templates/`.
+  - `tests/`: pytest suite.
+  - `pyproject.toml`: the package's own metadata and dependencies.
+- `apps/api/`: Cloudflare Workers app — stores the CWL bonus draw and admin settings.
+  `draw.js` is the whole server; `wrangler.toml` configures it; `deploy.sh` deploys it.
+- `config/`, `data/`: shared inputs, not owned by either app.
+- Root `pyproject.toml` declares a `uv` workspace, so `uv run`, `uv run pytest` and
+  `uv run ruff` all work from the repository root. `uv.lock` lives at the root and is committed.
 
 ## Data flow
 
-`coc-pointer collect` (src/coc_pointer/collect.py) fetches finished wars from the CoC API through the RoyaleAPI proxy and writes one JSON per war to `data/wars/` plus `data/clan.json`. `coc-pointer build` (render.py) reads `data/` and `config/clan.yaml`, scores each month with the pure functions in `scoring.py`, and writes static HTML to `site/` (gitignored). `.github/workflows/collect.yml` runs both every 30 minutes and on manual dispatch, commits new `data/` files, and deploys `site/` to GitHub Pages.
+`coc-pointer collect` (apps/web/src/coc_pointer/collect.py) fetches finished wars from the CoC API through the RoyaleAPI proxy and writes one JSON per war to `data/wars/` plus `data/clan.json`. `coc-pointer build` (apps/web/src/coc_pointer/render.py) reads `data/` and `config/clan.yaml`, scores each month with the pure functions in `scoring.py`, and writes static HTML to `site/` (gitignored). `.github/workflows/collect.yml` runs both every 30 minutes and on manual dispatch, commits new `data/` files, and deploys `site/` to GitHub Pages.
 
-- Scoring rules live only in `scoring.py` (module docstring + `RULES`); templates display `RULES` verbatim. Change rules there and nowhere else.
+- Scoring rules live only in `apps/web/src/coc_pointer/scoring.py` (module docstring + `RULES`); templates display `RULES` verbatim. Change rules there and nowhere else.
 - Members are keyed by player tag, never by name.
 - `config/clan.yaml` is the admin surface: tags must be quoted (`#` is a YAML comment).
 - The API token comes from `COC_API_TOKEN` (local `.env`, gitignored; Actions secret). The proxy rejects requests without a User-Agent.
