@@ -41,6 +41,32 @@ under `packages/`, and shared inputs at the root.
 - Root `pyproject.toml` declares a `uv` workspace, so `uv run`, `uv run pytest` and
   `uv run ruff` all work from the repository root. `uv.lock` lives at the root and is committed.
 
+## Boundaries
+
+**Every app treats every other app as a stranger.** They talk over HTTP and nothing else,
+so any one of them could be split out and deployed on its own without the others noticing.
+
+- **The contract is the only seam.** `contracts/openapi.yaml` is written by hand and is the
+  single source of truth; server models and frontend types are generated from it and are
+  never hand-edited. One spec, not one per side — two specs mean neither is the contract.
+- **The frontend is a stranger too.** Browsers cache old JavaScript, so a deployed frontend
+  outlives the deploy that replaced it. That is why paths carry `/api/v1/` even though only
+  our own page calls them. This repo has already been bitten once by a cached `style.css`.
+- **The backend states facts; the frontend decides how they look.** The API returns
+  `"role": "ADMIN"`, never `"장로"`. Putting display strings in a response drags i18n into
+  the server and makes a copy change a backend deploy.
+- **The frontend must not guess at server internals.** Only what the contract names — no
+  column names, no table structure, no query shapes the spec does not define.
+- **Shared code stays pure.** `packages/core` may hold types, rules and calculations because
+  they hold no state and reach nothing outside; everything that touches the world goes
+  through a port, so each app supplies its own adapter. Never share data access, DB handles,
+  or anything stateful — that is the coupling this rule exists to prevent.
+
+One deliberate exception: services share a single D1 database rather than owning one each.
+Splitting 50 clan members across databases and syncing between them costs more than it buys
+at this size. Keep the boundary in code — each service owns its tables — and revisit if the
+services ever diverge.
+
 ## Data flow
 
 `coc-pointer collect` (apps/web/src/coc_pointer/collect.py) fetches finished wars from the CoC API through the RoyaleAPI proxy and writes one JSON per war to `data/wars/` plus `data/clan.json`. `coc-pointer build` (apps/web/src/coc_pointer/render.py) reads `data/` and `config/clan.yaml`, scores each month with the pure functions in `coc_core.scoring`, and writes static HTML to `site/` (gitignored). `.github/workflows/collect.yml` runs both every 30 minutes and on manual dispatch, commits new `data/` files, and deploys `site/` to GitHub Pages.
