@@ -14,7 +14,11 @@ from __future__ import annotations
 import json
 from typing import Any
 
-_TABLES = "SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name"
+_TABLES = (
+    "SELECT name FROM sqlite_master WHERE type = 'table' "
+    "AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '\\_%' ESCAPE '\\' "
+    "ORDER BY name"
+)
 
 _MONTHLY_SCORES = (
     "SELECT tag, name, attacks, stars, score FROM monthly_scores "

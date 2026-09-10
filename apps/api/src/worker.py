@@ -10,10 +10,11 @@ Workers 가 들어온 요청을 그대로 넘겨주고, 바인딩과 비밀값�
 
 from __future__ import annotations
 
+import sys
 from datetime import datetime
 from typing import Annotated, Any
 
-from fastapi import Depends, FastAPI, Request
+from fastapi import Depends, FastAPI, Path, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 import db
@@ -50,6 +51,11 @@ def get_db(request: Request) -> Any:
 Env = Annotated[Any, Depends(get_env)]
 Db = Annotated[Any, Depends(get_db)]
 
+# "YYYY-MM" 모양이 아니면 FastAPI 가 422 로 거른다. draws.month 가 기본 키라,
+# 형식이 아닌 값이 그대로 키가 되는 것을 여기서 막는다. 두 경로가 같은 별칭을
+# 쓴다.
+Month = Annotated[str, Path(pattern=r"^\d{4}-\d{2}$")]
+
 
 @app.get("/api/health")
 async def health(env: Env, database: Db) -> dict:
@@ -66,12 +72,12 @@ async def health(env: Env, database: Db) -> dict:
         result["coc_core"] = "ok"
         result["rules"] = len(RULES)
         result["kst_now"] = datetime.now(KST).strftime("%Y-%m-%d %H:%M")
-    except Exception as exc:  # noqa: BLE001 - 무엇이 왜 실패했는지 그대로 보여준다
+    except Exception as exc:  # 무엇이 왜 실패했는지 그대로 보여준다
         result["coc_core"] = f"실패: {type(exc).__name__}: {exc}"
 
     try:
         result["tables"] = await db.list_tables(database)
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         result["tables"] = f"실패: {type(exc).__name__}: {exc}"
 
     return result
@@ -98,7 +104,7 @@ async def health_crypto() -> dict:
         import js
 
         result["js_crypto"] = hasattr(js.crypto, "subtle")
-    except Exception as exc:  # noqa: BLE001 - 무엇이 왜 실패했는지 그대로 보여준다
+    except Exception as exc:  # 무엇이 왜 실패했는지 그대로 보여준다
         result["js_crypto"] = f"실패: {type(exc).__name__}: {exc}"
 
     try:
@@ -108,20 +114,20 @@ async def health_crypto() -> dict:
         started = time.monotonic()
         hashlib.pbkdf2_hmac("sha256", b"test", b"salt", 100_000)
         result["pbkdf2_100k_ms"] = round((time.monotonic() - started) * 1000, 1)
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         result["pbkdf2_100k_ms"] = f"실패: {type(exc).__name__}: {exc}"
 
     return result
 
 
 @app.get("/api/scores/{month}")
-async def get_scores(month: str, database: Db) -> dict:
+async def get_scores(month: Month, database: Db) -> dict:
     """그달 점수표. 수집할 때 미리 계산해 둔 것을 읽기만 한다."""
     return {"month": month, "members": await db.get_monthly_scores(database, month)}
 
 
 @app.get("/api/draws/{month}")
-async def get_draw(month: str, database: Db) -> dict:
+async def get_draw(month: Month, database: Db) -> dict:
     """그달 추첨 결과. 아직 뽑지 않았으면 ``drawn`` 이 거짓이다."""
     drawn = await db.get_draw(database, month)
     if drawn is None:
@@ -129,9 +135,16 @@ async def get_draw(month: str, database: Db) -> dict:
     return {"drawn": True, **drawn}
 
 
-try:  # Workers 런타임에서만 있는 모듈이라 로컬 테스트에서는 건너뛴다
+if sys.platform == "emscripten":
+    # Pyodide(Workers 런타임) 위에서만 sys.platform 이 "emscripten" 이다. asgi
+    # 모듈은 그 런타임에만 있으므로 여기서만 불러온다. 이 안에서 실패하면
+    # 감싸지 않고 그대로 터뜨린다 — 감싸면 Default = None 인 채로 "배포 성공"
+    # 이 되고, 그 뒤 모든 요청이 핸들러 없음으로 조용히 죽는다(C-1 이 재발한
+    # 모습과 같다). 배포 로그에 실패가 시끄럽게 남아야 원인을 바로 안다.
     import asgi
 
     Default = asgi.entrypoint(app)
-except ImportError:  # pragma: no cover - 로컬에서는 FastAPI 앱만 쓴다
+else:
+    # 로컬(pytest, uv run 등)에는 asgi 모듈이 없다. FastAPI 앱만 쓰고
+    # Default 는 만들지 않는다.
     Default = None
