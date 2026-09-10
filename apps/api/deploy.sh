@@ -1,50 +1,55 @@
 #!/usr/bin/env bash
-# 리그전 보상 추첨 서버를 Cloudflare에 올린다.
+# API 서버를 Cloudflare에 올린다.
 #
 #   ./apps/api/deploy.sh
 #
-# 처음 실행하면 브라우저가 열려 Cloudflare 로그인을 묻고, 저장소(KV)를 만들고,
-# 서버를 배포한 뒤 비밀번호를 물어본다. 두 번째부터는 배포만 다시 한다.
+# 처음 실행하면 로그인을 묻고, 데이터베이스를 만들고, 표를 만든 뒤 배포한다.
+# 두 번째부터는 공용 코드를 새로 복사해 배포만 다시 한다.
 set -euo pipefail
 cd "$(dirname "$0")"
 
 WRANGLER="npx --yes wrangler@4"
 
-echo "== 1/4 Cloudflare 로그인 확인 =="
+echo "== 1/5 Cloudflare 로그인 확인 =="
 if ! $WRANGLER whoami >/dev/null 2>&1; then
   echo "브라우저가 열립니다. Cloudflare 계정으로 허용해 주세요."
   $WRANGLER login
 fi
-$WRANGLER whoami | grep -i "account" || true
 
 echo
-echo "== 2/4 저장소(KV) 준비 =="
-if grep -q "PUT_KV_ID_HERE" wrangler.toml; then
-  echo "coc-draws 저장소를 만듭니다."
-  # 출력에서 id를 뽑아 wrangler.toml에 채워 넣는다.
-  created=$($WRANGLER kv namespace create DRAWS 2>&1 | tee /dev/stderr)
-  kv_id=$(printf '%s' "$created" | grep -oE '"?id"?[[:space:]]*[:=][[:space:]]*"[0-9a-f]{32}"' | grep -oE '[0-9a-f]{32}' | head -1)
-  if [ -z "$kv_id" ]; then
+echo "== 2/5 데이터베이스 준비 =="
+if grep -q "PUT_D1_ID_HERE" wrangler.toml; then
+  echo "coc-pointer 데이터베이스를 만듭니다."
+  created=$($WRANGLER d1 create coc-pointer 2>&1 | tee /dev/stderr)
+  d1_id=$(printf '%s' "$created" | grep -oE '[0-9a-f-]{36}' | head -1)
+  if [ -z "$d1_id" ]; then
     echo
-    echo "저장소 id를 자동으로 찾지 못했습니다. 위 출력에서 32자리 id를 복사해"
-    echo "apps/api/wrangler.toml의 PUT_KV_ID_HERE 자리에 넣고 다시 실행해 주세요."
+    echo "데이터베이스 id를 자동으로 찾지 못했습니다. 위 출력에서 id를 복사해"
+    echo "apps/api/wrangler.toml의 PUT_D1_ID_HERE 자리에 넣고 다시 실행해 주세요."
     exit 1
   fi
-  perl -pi -e "s/PUT_KV_ID_HERE/$kv_id/" wrangler.toml
-  echo "저장소 id를 wrangler.toml에 기록했습니다: $kv_id"
+  perl -pi -e "s/PUT_D1_ID_HERE/$d1_id/" wrangler.toml
+  echo "데이터베이스 id를 기록했습니다: $d1_id"
 else
   echo "이미 준비되어 있습니다."
 fi
 
 echo
-echo "== 3/4 서버 배포 =="
+echo "== 3/5 표 만들기 =="
+# schema.sql 은 CREATE TABLE IF NOT EXISTS 라서 여러 번 돌려도 안전하다.
+$WRANGLER d1 execute coc-pointer --remote --file=schema.sql
+
+echo
+echo "== 4/5 공용 코드 복사 =="
+# Workers 는 PyPI 에 없는 패키지를 받을 수 없으므로 소스를 함께 올린다.
+rm -rf src/coc_core
+cp -R ../../packages/core/src/coc_core src/coc_core
+echo "packages/core → src/coc_core"
+
+echo
+echo "== 5/5 배포 =="
 $WRANGLER deploy
 
 echo
-echo "== 4/4 비밀번호 설정 =="
-echo "추첨과 다시 뽑기에 쓸 비밀번호를 정합니다. 화면에 보이지 않게 입력됩니다."
-echo "이미 정해 두었고 그대로 두려면 Ctrl+C로 빠져나오세요."
-$WRANGLER secret put ADMIN_PASSWORD
-
-echo
-echo "끝났습니다. 위에 보이는 https://coc-draw.....workers.dev 주소를 알려 주세요."
+echo "끝났습니다. 위에 보이는 주소 뒤에 /api/health 를 붙여 열어 보세요."
+echo "coc_core 가 ok 이고 표 여덟 개가 보이면 성공입니다."

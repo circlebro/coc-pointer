@@ -8,3 +8,4 @@ dist/
 .superpowers/
 site/
 data/in-progress/
+apps/api/src/coc_core/

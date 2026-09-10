@@ -33,8 +33,10 @@ under `packages/`, and shared inputs at the root.
 - `packages/core/`: Python package `coc_core` — models, config, scoring, rewards, plus
   `testing.py` with the War/WarMember builders both test suites use. Depends on nothing
   in `apps/`; both apps depend on it.
-- `apps/api/`: Cloudflare Workers app — stores the CWL bonus draw and admin settings.
-  `draw.js` is the whole server; `wrangler.toml` configures it; `deploy.sh` deploys it.
+- `apps/api/`: Python app on Cloudflare Workers — the API server and the scheduled
+  collector. `src/worker.py` is the FastAPI app, `src/db.py` holds every SQL string,
+  `schema.sql` defines the D1 tables, `deploy.sh` creates the database and deploys.
+  `src/coc_core/` is a build-time copy of `packages/core` and is gitignored.
 - `config/`, `data/`: shared inputs, not owned by either app.
 - Root `pyproject.toml` declares a `uv` workspace, so `uv run`, `uv run pytest` and
   `uv run ruff` all work from the repository root. `uv.lock` lives at the root and is committed.
