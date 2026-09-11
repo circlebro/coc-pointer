@@ -86,7 +86,8 @@ def test_build_site_writes_pages(tmp_path):
     out = tmp_path / "site"
     files = build_site(tmp_path, CFG, out, now=datetime(2026, 9, 7, 3, 0, tzinfo=UTC))
     names = {str(p.relative_to(out)) for p in files}
-    assert names == {"index.html", "style.css", "members/index.html", "2026-09/index.html"}
+    # members/ 가 없는 것이 맞다. React 앱이 그 자리를 맡고 워크플로가 합친다.
+    assert names == {"index.html", "style.css", "2026-09/index.html"}
 
     index = (out / "index.html").read_text(encoding="utf-8")
     assert "미니언즈" in index and "2026년 9월" in index
@@ -107,8 +108,11 @@ def test_build_site_writes_pages(tmp_path):
     assert "Day 1" in month, "CWL columns are numbered by round"
     assert "Day 2" not in month, "only one CWL war seeded"
 
-    members = (out / "members" / "index.html").read_text(encoding="utf-8")
-    assert "#P9" in members and "신입" in members and "공동 대표" in members
+    # 독립 members/ 페이지는 React 앱이 맡으므로 여기서 만들지 않는다. 다만 그
+    # 페이지가 보여 주던 것(태그·이름·직책)은 월별 페이지의 "길드원" 탭에도
+    # 그대로 있으므로, 검증을 잃지 않도록 이쪽에서 확인한다.
+    roster = index[index.index('id="panel-members"') : index.index('id="panel-scores"')]
+    assert "#P9" in roster and "신입" in roster and "공동 대표" in roster
 
 
 def test_build_site_with_no_data(tmp_path):

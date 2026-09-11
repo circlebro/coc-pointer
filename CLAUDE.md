@@ -33,10 +33,16 @@ A diff means someone hand-edited a generated file.
 The repository holds one deployable app per folder under `apps/`, code shared by two apps
 under `packages/`, and shared inputs at the root.
 
-- `apps/web/`: Python app — collects wars and renders the static site.
-  - `src/coc_pointer/`: the package (src layout), including `templates/`.
-  - `tests/`: pytest suite.
-  - `pyproject.toml`: the package's own metadata and dependencies.
+- `apps/web/`: two builds land here for now. `src/coc_pointer/` still renders the legacy
+  pages with Jinja2; `src/` (TypeScript) is the React app that replaces them one page at a
+  time. `/members/` is React already. The workflow runs both and merges the output into
+  `site/`, so nothing may write the same path twice — the Python build no longer emits
+  `members/index.html`.
+  - `src/coc_pointer/`: the Python package (src layout), including `templates/`.
+  - `src/api/`, `src/pages/`: the React app. `src/api/schema.d.ts` is generated from the
+    contract and never hand-edited.
+  - `tests/`: pytest suite for the Python side.
+  - `pyproject.toml`, `package.json`: one per language, side by side.
 - `packages/core/`: Python package `coc_core` — models, config, scoring, rewards, plus
   `testing.py` with the War/WarMember builders both test suites use. Depends on nothing
   in `apps/`; both apps depend on it.
@@ -83,6 +89,8 @@ services ever diverge.
 `coc-pointer collect` (apps/web/src/coc_pointer/collect.py) fetches finished wars from the CoC API through the RoyaleAPI proxy and writes one JSON per war to `data/wars/` plus `data/clan.json`. `coc-pointer build` (apps/web/src/coc_pointer/render.py) reads `data/` and `config/clan.yaml`, scores each month with the pure functions in `coc_core.scoring`, and writes static HTML to `site/` (gitignored). `.github/workflows/collect.yml` runs both every 30 minutes and on manual dispatch, commits new `data/` files, and deploys `site/` to GitHub Pages.
 
 - Scoring rules live only in `packages/core/src/coc_core/scoring.py` (module docstring + `RULES`); templates display `RULES` verbatim. Change rules there and nowhere else.
+- `/members/` is served by the React app, which calls `GET /api/v1/members`. The other
+  pages are still built by `coc-pointer build`. Both outputs are merged in the workflow.
 - Members are keyed by player tag, never by name.
 - `config/clan.yaml` is the admin surface: tags must be quoted (`#` is a YAML comment).
 - The API token comes from `COC_API_TOKEN` (local `.env`, gitignored; Actions secret). The proxy rejects requests without a User-Agent.
