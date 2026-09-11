@@ -3,7 +3,7 @@
 지금은 클랜원 동기화 하나뿐이다. 예약 실행(Cron)은 클랜전 수집을 옮길 때
 함께 붙인다.
 
-    cd apps/api && uv run python src/cli.py refresh-members
+    cd apps/rest-api && uv run python src/cli.py refresh-members
 
 이 앱은 pyproject.toml 이 package = false 라 설치되지 않는다. Cloudflare
 Workers 번들로 배포되기 때문이다. 그래서 진입점을 등록할 수 없고 파일을
@@ -68,7 +68,7 @@ def main() -> int:
 
     print("이 명령은 D1 연결이 필요합니다.")
     print("로컬 D1 로 시험하려면:")
-    print("  cd apps/api && uv run pywrangler dev")
+    print("  cd apps/rest-api && uv run pywrangler dev")
     print("배포된 D1 에 넣으려면 Cron 이 붙은 뒤에 서버가 스스로 합니다 (TASK-21).")
     return 0
 

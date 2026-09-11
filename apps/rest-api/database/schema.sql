@@ -1,5 +1,5 @@
 -- 이 파일은 마이그레이션에서 생성되었다. 손으로 고치지 마라.
--- 고치려면 apps/api/database/migrations/ 에 파일을 더하고
+-- 고치려면 apps/rest-api/database/migrations/ 에 파일을 더하고
 -- ./scripts/dump-schema.sh 를 돌린다.
 
 CREATE TABLE wars (

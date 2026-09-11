@@ -93,7 +93,7 @@ wheels = [
 [[package]]
 name = "coc-api"
 version = "0.6.0"
-source = { virtual = "apps/api" }
+source = { virtual = "apps/rest-api" }
 dependencies = [
     { name = "fastapi" },
     { name = "pyyaml" },

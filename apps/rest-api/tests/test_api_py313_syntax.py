@@ -1,11 +1,11 @@
-"""apps/api 는 Cloudflare Workers(Pyodide, 파이썬 3.13.2)에 배포된다. 로컬과
+"""apps/rest-api 는 Cloudflare Workers(Pyodide, 파이썬 3.13.2)에 배포된다. 로컬과
 CI 는 3.14 로 도므로, 3.14 전용 문법(예: PEP 758 의 `except A, B:`)이 섞여
 들어가도 테스트는 조용히 통과하고 `uv run pywrangler deploy` 를 돌릴 때가
 되어서야 실패한다. 이 테스트는 3.13 파서로 소스를 다시 파싱해 그 문법을 훨씬
 전에, 이 컴퓨터에 3.13 이 설치되어 있지 않아도 잡아낸다.
 
 packages/core/tests/test_py313_syntax.py 에 같은 일을 하는 테스트가 따로 있다.
-그쪽은 packages/core 자기 소스만 보고 이쪽은 apps/api 자기 소스만 본다. 한쪽이
+그쪽은 packages/core 자기 소스만 보고 이쪽은 apps/rest-api 자기 소스만 본다. 한쪽이
 다른 쪽을 들여다보면 앱과 공용 코드 사이의 경계가 무너지기 때문에 일부러 두
 벌로 둔다.
 

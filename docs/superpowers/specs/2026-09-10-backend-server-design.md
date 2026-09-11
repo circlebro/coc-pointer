@@ -21,7 +21,7 @@ Cloudflare의 Python Workers가 FastAPI와 Pydantic을 공식 지원한다. 파�
 | 항목 | 내용 |
 |---|---|
 | 상태 | 오픈 베타. `python_workers` 호환성 플래그가 필요하다 |
-| **파이썬 버전** | **3.13.2로 고정 (Pyodide 0.28.3). 우리가 고를 수 없다.** `apps/api`와 그 의존성인 `packages/core`는 3.14 전용 문법(예: PEP 758의 괄호 없는 `except A, B:`)을 쓸 수 없다 — `requires-python`을 `>=3.13`으로 두고, `packages/core/tests/test_py313_syntax.py`가 `ast.parse(feature_version=(3, 13))`로 이를 테스트에서 잡는다 |
+| **파이썬 버전** | **3.13.2로 고정 (Pyodide 0.28.3). 우리가 고를 수 없다.** `apps/rest-api`와 그 의존성인 `packages/core`는 3.14 전용 문법(예: PEP 758의 괄호 없는 `except A, B:`)을 쓸 수 없다 — `requires-python`을 `>=3.13`으로 두고, `packages/core/tests/test_py313_syntax.py`가 `ast.parse(feature_version=(3, 13))`로 이를 테스트에서 잡는다 |
 | 지원 패키지 | Pyodide가 미리 준비한 것과 순수 파이썬 패키지. FastAPI, Pydantic 포함 |
 | HTTP 라이브러리 | 비동기만 가능하다. `httpx`는 되고 `requests`는 안 된다 |
 | 요금 | 무료 플랜으로 하루 10만 요청 |
@@ -56,8 +56,8 @@ CPU 10밀리초 제한이 이 설계의 여러 판단을 좌우한다. 아래 4.
 > 프론트에서 도메인 로직을 걷어내고 화면을 API 소비자로 바꾸기로 방향이 바뀌었다.
 > 인증과 Python Workers 제약은 그대로 유효하다. 다만 D1 표 구조는 그 뒤에도
 > 바뀌었다 — `members` 표가 `clan_members` 로 다시 지어졌고 `users.member_tag` 의
-> 외래키가 없어졌다. 지금 무엇이 맞는지는 `apps/api/database/migrations/` 가 정하며,
-> `apps/api/database/schema.sql` 이 그 전체 모습을 자동으로 담고 있다.
+> 외래키가 없어졌다. 지금 무엇이 맞는지는 `apps/rest-api/database/migrations/` 가 정하며,
+> `apps/rest-api/database/schema.sql` 이 그 전체 모습을 자동으로 담고 있다.
 
 ~~화면은 지금 방식을 유지한다. 페이지 전체를 API로 그리도록 바꾸면 잘 돌아가는 부분까지 다시 만들게 되고, 중간에 문제가 생기면 사이트 전체가 멈춘다. 데이터의 주인만 서버로 옮기고 화면은 그대로 둔다.~~
 
@@ -65,7 +65,7 @@ CPU 10밀리초 제한이 이 설계의 여러 판단을 좌우한다. 아래 4.
 
 ```
 apps/web/       파이썬 - 정적 페이지 생성
-apps/api/       파이썬 - FastAPI + Cron
+apps/rest-api/       파이썬 - FastAPI + Cron
 packages/core/  점수 계산 등 공용 코드 (coc_core)
 ```
 
@@ -233,7 +233,7 @@ CREATE TABLE draws (
 
 지금 어느 판이 떠 있는지는 `GET /api/health`의 `version`으로 확인한다. Workers는 항상 켜져 있는 프로세스가 아니라 요청이 올 때마다 실행되므로 기동 로그가 없다. 이 경로가 그 자리를 대신한다.
 
-판 번호는 `apps/api/wrangler.toml`의 `API_VERSION`, `apps/api`·`apps/web`·`packages/core`의 `version`, 그리고 git 태그가 모두 같은 값을 갖는다. 배포된 것과 저장소의 어느 시점이 이어지는지 이 번호로 짚는다.
+판 번호는 `apps/rest-api/wrangler.toml`의 `API_VERSION`, `apps/rest-api`·`apps/web`·`packages/core`의 `version`, 그리고 git 태그가 모두 같은 값을 갖는다. 배포된 것과 저장소의 어느 시점이 이어지는지 이 번호로 짚는다.
 
 ## 6. 인증
 

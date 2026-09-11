@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # API 서버를 Cloudflare에 올린다.
 #
-#   ./apps/api/deploy.sh
+#   ./apps/rest-api/deploy.sh
 #
 # FastAPI 는 서드파티 패키지라, 그냥 `wrangler deploy` 로는 번들에 들어가지
 # 않는다(런타임에서 import fastapi 가 실패한다). pyproject.toml 의 의존성을
@@ -96,7 +96,7 @@ if grep -q "PUT_D1_ID_HERE" wrangler.toml; then
   if [ -z "$d1_id" ]; then
     echo
     echo "데이터베이스 id를 자동으로 찾지 못했습니다. 위 출력에서 id를 복사해"
-    echo "apps/api/wrangler.toml의 PUT_D1_ID_HERE 자리에 넣고 다시 실행해 주세요."
+    echo "apps/rest-api/wrangler.toml의 PUT_D1_ID_HERE 자리에 넣고 다시 실행해 주세요."
     exit 1
   fi
   perl -pi -e "s/PUT_D1_ID_HERE/$d1_id/" wrangler.toml
@@ -133,7 +133,7 @@ fi
 $WRANGLER deploy
 
 # 번들에 실렸으므로 로컬에 남길 이유가 없다. 남아 있으면 테스트가 이 사본을
-# 진짜 소스로 착각한다(pythonpath 에 apps/api/src 가 들어가기 때문).
+# 진짜 소스로 착각한다(pythonpath 에 apps/rest-api/src 가 들어가기 때문).
 rm -rf src/coc_core
 
 echo
@@ -144,7 +144,7 @@ echo "  /api/health/crypto  비밀번호 해시를 무료 플랜으로 할 수 �
 
 if ! git diff --quiet -- wrangler.toml 2>/dev/null; then
   echo
-  echo "!! apps/api/wrangler.toml 의 database_id 가 바뀌었습니다."
+  echo "!! apps/rest-api/wrangler.toml 의 database_id 가 바뀌었습니다."
   echo "!! 커밋하지 않으면 다음 클론이나 다른 워크트리가 데이터베이스를 새로 만듭니다."
-  echo "!! git add apps/api/wrangler.toml 로 커밋해 주세요."
+  echo "!! git add apps/rest-api/wrangler.toml 로 커밋해 주세요."
 fi

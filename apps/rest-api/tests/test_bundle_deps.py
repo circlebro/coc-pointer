@@ -1,6 +1,6 @@
 """배포 번들에 실려야 할 꾸러미가 빠지지 않았는지 본다.
 
-apps/api 는 coc_core 를 의존성으로 선언하지 않는다. Cloudflare Workers 에는
+apps/rest-api 는 coc_core 를 의존성으로 선언하지 않는다. Cloudflare Workers 에는
 그 wasm 휠이 없어 설치가 실패하기 때문이며, 대신 deploy.sh 가 소스를 그대로
 복사해 넣는다.
 
@@ -55,7 +55,7 @@ def _imported_packages() -> set[str]:
 
 
 def _declared() -> set[str]:
-    """apps/api 가 배포 번들에 넣겠다고 선언한 것."""
+    """apps/rest-api 가 배포 번들에 넣겠다고 선언한 것."""
     data = tomllib.loads(API_PYPROJECT.read_text(encoding="utf-8"))
     names = set()
     for spec in data["project"]["dependencies"]:
@@ -69,7 +69,7 @@ def test_coc_core_가_쓰는_것이_번들에_들어간다(module: str) -> None:
     wanted = wanted.lower()
 
     assert wanted in _declared(), (
-        f"coc_core 가 {module} 을 부르는데 apps/api/pyproject.toml 의 dependencies 에"
+        f"coc_core 가 {module} 을 부르는데 apps/rest-api/pyproject.toml 의 dependencies 에"
         f" {wanted} 가 없습니다. 이대로 배포하면 번들에 실리지 않아 첫 요청에서"
         f" ModuleNotFoundError 로 죽습니다."
     )

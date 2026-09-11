@@ -83,7 +83,7 @@ CoC API → MemberService → MemberRepository → D1 → GET /api/v1/members �
 
 ```
 api/openapi.yaml          ← 계약. 이것이 기준이다
-    ├──→ apps/api/src/schemas.py     Pydantic 모델   (자동 생성)
+    ├──→ apps/rest-api/src/schemas.py     Pydantic 모델   (자동 생성)
     └──→ apps/web/src/api/schema.d.ts TypeScript 타입 (자동 생성)
 ```
 
@@ -97,7 +97,7 @@ api/openapi.yaml          ← 계약. 이것이 기준이다
 # 서버 모델
 uv run datamodel-codegen \
   --input api/openapi.yaml \
-  --output apps/api/src/schemas.py \
+  --output apps/rest-api/src/schemas.py \
   --output-model-type pydantic_v2.BaseModel
 
 # 프론트 타입
@@ -106,7 +106,7 @@ npx openapi-typescript api/openapi.yaml -o apps/web/src/api/schema.d.ts
 
 **생성물은 손으로 고치지 않는다.** 고치고 싶으면 명세를 고치고 다시 생성한다. 파일 맨 위에 그 규칙을 주석으로 남긴다.
 
-**`--output`에는 확장자를 붙인다.** `datamodel-code-generator`는 단일 입력·단일 출력일 때 경로 끝의 슬래시를 버리고 그 경로를 그대로 파일 이름으로 쓴다. `apps/api/src/schemas/`라고 적으면 확장자 없는 `schemas` 파일이 만들어져 파이썬이 모듈로 찾지 못한다. 더 고약한 것은 `ruff`도 확장자 없는 파일을 재귀 탐색에서 건너뛰어, 검사가 통과한 것처럼 보이면서 아무것도 검증하지 않는다는 점이다.
+**`--output`에는 확장자를 붙인다.** `datamodel-code-generator`는 단일 입력·단일 출력일 때 경로 끝의 슬래시를 버리고 그 경로를 그대로 파일 이름으로 쓴다. `apps/rest-api/src/schemas/`라고 적으면 확장자 없는 `schemas` 파일이 만들어져 파이썬이 모듈로 찾지 못한다. 더 고약한 것은 `ruff`도 확장자 없는 파일을 재귀 탐색에서 건너뛰어, 검사가 통과한 것처럼 보이면서 아무것도 검증하지 않는다는 점이다.
 
 
 생성물은 git에 커밋한다. 명세를 고쳤을 때 무엇이 따라 바뀌었는지 PR에서 보이고, 새로 받은 저장소가 생성 없이도 빌드된다.
@@ -222,7 +222,7 @@ WHERE created_at >= '2026-09-01T00:00:00Z'
 ### 5.3 마이그레이션
 
 ```
-apps/api/database/
+apps/rest-api/database/
   schema.sql              현재 전체 구조. 자동 생성물
   migrations/
     0001_init.sql         변경 이력. 손으로 쓴다
@@ -271,7 +271,7 @@ packages/core/src/coc_core/
     repository.py      MemberRepository (Protocol)
     service.py         MemberService
 
-apps/api/
+apps/rest-api/
   database/
     schema.sql
     migrations/0001_init.sql
@@ -408,12 +408,12 @@ async def list_members(service: MemberSvc) -> MemberListResponse: ...
 첫 조각에서는 예약 실행을 붙이지 않는다.
 
 ```bash
-cd apps/api && uv run python src/cli.py refresh-members
+cd apps/rest-api && uv run python src/cli.py refresh-members
 ```
 
-`apps/api/src/cli.py`가 서비스를 조립해 부른다. 서버가 요청을 받아 조립하는 것과 같은 일이라 조립 코드를 함께 쓴다.
+`apps/rest-api/src/cli.py`가 서비스를 조립해 부른다. 서버가 요청을 받아 조립하는 것과 같은 일이라 조립 코드를 함께 쓴다.
 
-처음에는 `[project.scripts]`로 진입점을 두어 `uv run coc-api`로 부르려 했으나 그렇게 되지 않았다. `apps/api`는 `[tool.uv] package = false`라 설치되지 않기 때문이다. Cloudflare Workers 번들로 배포되므로 파이썬 휠로 설치할 수 없고, 설치되지 않으면 진입점을 적어도 `.venv/bin`에 생기지 않아 `Failed to spawn`으로 죽는다. 그래서 파일을 직접 가리켜 부른다.
+처음에는 `[project.scripts]`로 진입점을 두어 `uv run coc-api`로 부르려 했으나 그렇게 되지 않았다. `apps/rest-api`는 `[tool.uv] package = false`라 설치되지 않기 때문이다. Cloudflare Workers 번들로 배포되므로 파이썬 휠로 설치할 수 없고, 설치되지 않으면 진입점을 적어도 `.venv/bin`에 생기지 않아 `Failed to spawn`으로 죽는다. 그래서 파일을 직접 가리켜 부른다.
 
 원격 D1에 쓰는 방법은 구현할 때 확인한다. `wrangler d1 execute --remote`를 거치거나 D1 HTTP API를 부른다. 로컬 D1(`--local`)로 먼저 돌려 보고 원격으로 넘어간다.
 
