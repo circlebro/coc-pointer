@@ -16,6 +16,13 @@ requires-python = ">=3.13"
 # 있어 같은 .venv 에 이미 설치되어 있기 때문이다.
 dependencies = [
     "fastapi>=0.115",
+    # coc_core 가 쓰는 것을 여기에 대신 적는다. 위 주석대로 coc_core 자체는
+    # 의존성으로 넣지 않고 deploy.sh 가 소스를 복사하므로, 그 안에서 무엇을
+    # 부르는지 pywrangler 가 알 방법이 없다. 그래서 번들에 실리지 않고
+    # /api/health 가 "No module named 'yaml'" 로 실패한다. 실제 배포에서
+    # 겪었다. coc_core 에 바깥 꾸러미를 새로 들이면 여기에도 함께 적어야 한다.
+    # 하한을 6.0 으로 두는 까닭은 packages/core/pyproject.toml 에 적혀 있다.
+    "pyyaml>=6.0",
 ]
 
 # [project.scripts] 를 두지 않는다. 바로 아래 [tool.uv] 가 package = false 라

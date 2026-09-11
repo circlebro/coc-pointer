@@ -96,6 +96,7 @@ version = "0.5.0"
 source = { virtual = "apps/api" }
 dependencies = [
     { name = "fastapi" },
+    { name = "pyyaml" },
 ]
 
 [package.dev-dependencies]
@@ -110,7 +111,10 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "fastapi", specifier = ">=0.115" }]
+requires-dist = [
+    { name = "fastapi", specifier = ">=0.115" },
+    { name = "pyyaml", specifier = ">=6.0" },
+]
 
 [package.metadata.requires-dev]
 dev = [
