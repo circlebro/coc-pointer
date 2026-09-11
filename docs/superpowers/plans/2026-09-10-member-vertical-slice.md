@@ -2058,6 +2058,7 @@ from typing import Any
 import httpx
 from coc_core.member.service import MemberService, SyncResult
 
+from adapters.coc_api import CocApi
 from adapters.member_repository import D1MemberRepository
 
 
