@@ -12,8 +12,8 @@ async def test_스키마가_여덟_개_표를_만든다(fake_db):
     names = [r.name for r in result.results]
     assert names == [
         "attacks",
+        "clan_members",
         "draws",
-        "members",
         "monthly_scores",
         "settings",
         "users",

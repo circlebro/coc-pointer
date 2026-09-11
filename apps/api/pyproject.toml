@@ -16,7 +16,24 @@ requires-python = ">=3.13"
 # 있어 같은 .venv 에 이미 설치되어 있기 때문이다.
 dependencies = [
     "fastapi>=0.115",
+    # coc_core 가 쓰는 것을 여기에 대신 적는다. 위 주석대로 coc_core 자체는
+    # 의존성으로 넣지 않고 deploy.sh 가 소스를 복사하므로, 그 안에서 무엇을
+    # 부르는지 pywrangler 가 알 방법이 없다. 그래서 번들에 실리지 않고
+    # /api/health 가 "No module named 'yaml'" 로 실패한다. 실제 배포에서
+    # 겪었다. coc_core 에 바깥 꾸러미를 새로 들이면 여기에도 함께 적어야 한다.
+    # 하한을 6.0 으로 두는 까닭은 packages/core/pyproject.toml 에 적혀 있다.
+    "pyyaml>=6.0",
+    # coc_core.scoring 의 KST = ZoneInfo("Asia/Seoul") 이 시간대 자료를 읽는다.
+    # zoneinfo 는 표준 라이브러리지만 자료까지 들고 있지는 않아서, 보통은
+    # 운영체제가 가진 것을 쓴다. Workers(Pyodide)에는 그것이 없어 이 꾸러미를
+    # 실어야 한다. 없으면 ZoneInfoNotFoundError 가 난다. 실제 배포에서 겪었다.
+    "tzdata",
 ]
+
+# [project.scripts] 를 두지 않는다. 바로 아래 [tool.uv] 가 package = false 라
+# 이 앱은 설치되지 않으므로 진입점을 적어도 .venv/bin 에 생기지 않는다. 실제로
+# 적어 두었다가 `uv run coc-api` 가 "Failed to spawn" 으로 죽는 것을 확인했다.
+# 명령을 부르는 방법은 src/cli.py 의 설명글에 적어 두었다.
 
 [dependency-groups]
 dev = [
@@ -26,6 +43,7 @@ dev = [
     "pytest-asyncio>=1.0",
     "workers-py",
     "workers-runtime-sdk",
+    "datamodel-code-generator>=0.28",
 ]
 
 # apps/api 는 파이썬 휠이 아니라 Cloudflare Workers 번들로 배포된다 (deploy.sh 가
@@ -45,6 +63,12 @@ line-length = 100
 select = ["E", "F", "I", "UP", "B"]
 
 [tool.pytest.ini_options]
+# 루트 pyproject.toml 과 같은 이유로 둔다. pytest 는 인자에 따라 다른 설정
+# 파일을 고르므로 범위마다 같은 설정이 있어야 한다.
+addopts = "--import-mode=importlib"
 testpaths = ["tests"]
 asyncio_mode = "auto"
-pythonpath = ["src"]
+# packages/core/src 를 앞에 둔다. src/coc_core 는 deploy.sh 가 만드는 배포용
+# 복사본이라 하위 패키지가 빠져 있을 수 있고, 그것이 먼저 발견되면 테스트가
+# 옛 사본을 보게 된다. 루트 pyproject.toml 에도 같은 이유로 같은 순서를 둔다.
+pythonpath = ["../../packages/core/src", "src"]

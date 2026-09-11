@@ -12,6 +12,10 @@ API_VERSION = "0.5.0"
 binding = "DB"
 database_name = "coc-pointer"
 database_id = "779ac2d3-a93d-4a9e-9a98-fb67918a8a95"
+# 이 database 블록 안에 두어야 한다. 최상위에 두면 wrangler 가 모르는 항목으로
+# 흘려보내고 기본 경로(apps/api/migrations)를 보아, 마이그레이션이 하나도
+# 적용되지 않은 채 배포가 성공한 것처럼 끝난다.
+migrations_dir = "database/migrations"
 
 [observability]
 enabled = true

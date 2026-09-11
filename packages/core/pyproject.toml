@@ -22,6 +22,7 @@ build-backend = "uv_build"
 [dependency-groups]
 dev = [
     "pytest>=9.1.1",
+    "pytest-asyncio>=1.0",
     "ruff>=0.16.6",
 ]
 
@@ -36,4 +37,8 @@ line-length = 100
 select = ["E", "F", "I", "UP", "B"]
 
 [tool.pytest.ini_options]
+# 루트 pyproject.toml 과 같은 이유로 둔다. pytest 는 인자에 따라 다른 설정
+# 파일을 고르므로 범위마다 같은 설정이 있어야 한다.
+addopts = "--import-mode=importlib"
 testpaths = ["tests"]
+asyncio_mode = "auto"

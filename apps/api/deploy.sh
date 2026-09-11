@@ -107,8 +107,11 @@ fi
 
 echo
 echo "== 3/5 표 만들기 =="
-# schema.sql 은 CREATE TABLE IF NOT EXISTS 라서 여러 번 돌려도 안전하다.
-$WRANGLER d1 execute coc-pointer --remote --file=schema.sql
+# D1 이 어디까지 적용했는지 스스로 기록한다(d1_migrations 표). 이미 적용한
+# 파일은 건너뛰므로 여러 번 돌려도 안전하다.
+# 확인을 묻는 단계가 있지만 -y 같은 플래그는 없다. 사람이 지켜보는 터미널이
+# 아니면 wrangler 가 그 단계를 알아서 건너뛴다. 적용한 뒤에는 백업이 남는다.
+$WRANGLER d1 migrations apply coc-pointer --remote
 
 echo
 echo "== 4/5 공용 코드 복사 =="
@@ -128,6 +131,10 @@ if [ -f package.json ] && command -v npm >/dev/null 2>&1; then
   npm install --silent
 fi
 $WRANGLER deploy
+
+# 번들에 실렸으므로 로컬에 남길 이유가 없다. 남아 있으면 테스트가 이 사본을
+# 진짜 소스로 착각한다(pythonpath 에 apps/api/src 가 들어가기 때문).
+rm -rf src/coc_core
 
 echo
 echo "끝났습니다. 위에 보이는 주소 뒤에 두 곳을 붙여 열어 보세요."

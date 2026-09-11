@@ -1,4 +1,7 @@
-"""D1 질의. SQL 문자열은 이 파일에만 둔다.
+"""점수와 추첨 결과를 읽는 D1 질의.
+
+SQL 은 그것을 돌리는 자리 곁에 둔다. 여기 있는 것은 worker.py 의 점수·추첨
+경로가 쓰는 질의이고, 클랜원 질의는 adapters/member_repository.py 에 있다.
 
 D1 은 SQLite 라서 표준 SQL 이 그대로 돈다. 다만 부르는 모양이 다르다.
 
@@ -14,9 +17,13 @@ from __future__ import annotations
 import json
 from typing import Any
 
+# d1_migrations 는 우리 표가 아니라 D1 이 어디까지 적용했는지 스스로 적어 두는
+# 장부다. /api/health 가 "우리 스키마가 제대로 올라갔는가" 를 보여 주는 자리라
+# 여기에 섞이면 표 개수가 안내문과 어긋나 실패처럼 읽힌다.
 _TABLES = (
     "SELECT name FROM sqlite_master WHERE type = 'table' "
     "AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '\\_%' ESCAPE '\\' "
+    "AND name <> 'd1_migrations' "
     "ORDER BY name"
 )
 
