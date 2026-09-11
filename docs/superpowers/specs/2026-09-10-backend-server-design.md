@@ -54,7 +54,10 @@ CPU 10밀리초 제한이 이 설계의 여러 판단을 좌우한다. 아래 4.
 > [!warning] 이 절은 대체되었다
 > 아래 문단은 2026-09-10 에 `2026-09-10-domain-frontend-split-design.md` 로 대체되었다.
 > 프론트에서 도메인 로직을 걷어내고 화면을 API 소비자로 바꾸기로 방향이 바뀌었다.
-> 이 문서의 나머지(D1 표 구조, 인증, Python Workers 제약)는 그대로 유효하다.
+> 인증과 Python Workers 제약은 그대로 유효하다. 다만 D1 표 구조는 그 뒤에도
+> 바뀌었다 — `members` 표가 `clan_members` 로 다시 지어졌고 `users.member_tag` 의
+> 외래키가 없어졌다. 지금 무엇이 맞는지는 `apps/api/database/migrations/` 가 정하며,
+> `apps/api/database/schema.sql` 이 그 전체 모습을 자동으로 담고 있다.
 
 ~~화면은 지금 방식을 유지한다. 페이지 전체를 API로 그리도록 바꾸면 잘 돌아가는 부분까지 다시 만들게 되고, 중간에 문제가 생기면 사이트 전체가 멈춘다. 데이터의 주인만 서버로 옮기고 화면은 그대로 둔다.~~
 
@@ -213,14 +216,20 @@ CREATE TABLE draws (
 | `POST /api/auth/logout` | 로그인 | 토큰을 버린다 |
 | `GET /api/users/me` | 로그인 | 내 정보 |
 | `GET /api/users` | 관리자 | 계정 목록 |
-| `POST /api/users` | 관리자 | 계정 만들기 |
-| `PATCH /api/users/{id}` | 관리자 | 권한·연결 계정 변경 |
-| `GET /api/members` | 누구나 | 클랜원 목록 |
-| `GET /api/settings` | 누구나 | 보상 인원 등 클랜 설정 |
-| `PATCH /api/settings` | 관리자 | 클랜 설정 변경 |
-| `GET /api/scores/{월}` | 누구나 | 그달 점수표 |
-| `GET /api/draws/{월}` | 누구나 | 추첨 결과 |
-| `POST /api/draws/{월}` | 관리자 | 추첨 실행 |
+| `POST /api/v1/users` | 관리자 | 계정 만들기 |
+| `PATCH /api/v1/users/{id}` | 관리자 | 권한·연결 계정 변경 |
+| `GET /api/v1/members` | 누구나 | 클랜원 목록 |
+| `GET /api/v1/settings` | 누구나 | 보상 인원 등 클랜 설정 |
+| `PATCH /api/v1/settings` | 관리자 | 클랜 설정 변경 |
+| `GET /api/v1/scores/{월}` | 누구나 | 그달 점수표 |
+| `GET /api/v1/draws/{월}` | 누구나 | 추첨 결과 |
+| `POST /api/v1/draws/{월}` | 관리자 | 추첨 실행 |
+
+경로에 `/v1/` 이 붙은 것은 뒤에 정해진 사항이다. 브라우저가 옛 자바스크립트를
+들고 있을 수 있어, 우리 화면만 부르는 주소여도 판을 나눠 둔다. 다만
+`/api/health` 에는 붙이지 않는다. 배포가 되었는지 보는 자리라 판이 바뀌어도
+같은 곳에 있는 편이 낫다. 실제로 무엇이 떠 있는지는 `contracts/openapi.yaml`
+이 정하며, 이 표는 설계 당시의 밑그림이다.
 
 지금 어느 판이 떠 있는지는 `GET /api/health`의 `version`으로 확인한다. Workers는 항상 켜져 있는 프로세스가 아니라 요청이 올 때마다 실행되므로 기동 로그가 없다. 이 경로가 그 자리를 대신한다.
 

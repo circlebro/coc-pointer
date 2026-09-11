@@ -19,7 +19,14 @@ uv run ruff check .              # lint
 uv run ruff format .             # format (use --check in CI)
 uv add <pkg>                     # add a runtime dependency
 uv add --dev <pkg>               # add a dev-only dependency
+
+./scripts/generate-from-contract.sh   # contracts/openapi.yaml -> server models + TS types
+./scripts/dump-schema.sh              # migrations -> database/schema.sql snapshot
+cd apps/web && npm run build          # type-check and build the React app into dist/
 ```
+
+Both generator scripts are idempotent: run them, and `git status` should stay clean.
+A diff means someone hand-edited a generated file.
 
 ## Layout
 
@@ -34,8 +41,12 @@ under `packages/`, and shared inputs at the root.
   `testing.py` with the War/WarMember builders both test suites use. Depends on nothing
   in `apps/`; both apps depend on it.
 - `apps/api/`: Python app on Cloudflare Workers — the API server and the scheduled
-  collector. `src/worker.py` is the FastAPI app, `src/db.py` holds every SQL string,
-  `schema.sql` defines the D1 tables, `deploy.sh` creates the database and deploys.
+  collector. `src/worker.py` wires the app, `src/routes/` holds the HTTP paths and
+  `src/adapters/` the driven adapters (CoC API, D1). `database/migrations/` is the
+  source of truth for the schema — numbered files applied in order, which D1 records
+  in its own `d1_migrations` table; `database/schema.sql` is a generated full snapshot
+  (`scripts/dump-schema.sh`), never edited by hand. SQL strings live beside the adapter
+  that runs them. `deploy.sh` applies migrations and deploys.
   `src/coc_core/` is a build-time copy of `packages/core` and is gitignored.
 - `config/`, `data/`: shared inputs, not owned by either app.
 - Root `pyproject.toml` declares a `uv` workspace, so `uv run`, `uv run pytest` and
@@ -92,7 +103,10 @@ services ever diverge.
 3. Commit the `database_id` change in `apps/api/wrangler.toml`. The script writes it after creating the D1 database. Skip this and the next clone or worktree creates a second database — data splits across two databases with no way to tell which is authoritative.
 4. Append `/api/health` to the printed URL and open it. Success looks like `coc_core: "ok"` and eight tables.
 
-**Redeploy:** `./apps/api/deploy.sh` — one line. It re-copies `coc_core` and deploys again; it does not recreate the database or re-run schema migrations beyond `CREATE TABLE IF NOT EXISTS`.
+**Redeploy:** `./apps/api/deploy.sh` — one line. It re-copies `coc_core`, applies any
+migration D1 has not recorded yet, and deploys. Migrations that already ran are skipped,
+so running it twice is safe. A migration that has shipped is never edited — add a new
+numbered file instead, and remember SQLite cannot add a constraint to an existing table.
 
 **Two ways to authenticate:**
 
@@ -140,8 +154,8 @@ version put which change in front of the clan.
   MINOR; a fix-only deploy bumps PATCH. `1.0.0` waits until the site fully replaces the
   spreadsheet it was built to replace.
 - Releasing, in order: bump `version` in `apps/web/pyproject.toml`, `apps/api/pyproject.toml` and
-  `packages/core/pyproject.toml`, and `API_VERSION` in `apps/api/wrangler.toml` (all track the
-  tag), commit, then tag the squash commit on `main` with `git tag -a v0.6.0 <sha> -m "<한 줄
+  `packages/core/pyproject.toml`, `info.version` in `contracts/openapi.yaml`, and `API_VERSION`
+  in `apps/api/wrangler.toml` (all track the tag), commit, then tag the squash commit on `main` with `git tag -a v0.6.0 <sha> -m "<한 줄
   요약>"`, push tags, and `gh release create` with Korean notes listing the PRs it contains.
 - The site footer prints the installed `apps/web` version and links to that release, so the
   page itself says which build a viewer is looking at. `GET /api/health` reports the same
