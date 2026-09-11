@@ -48,4 +48,7 @@ select = ["E", "F", "I", "UP", "B"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
-pythonpath = ["src"]
+# packages/core/src 를 앞에 둔다. src/coc_core 는 deploy.sh 가 만드는 배포용
+# 복사본이라 하위 패키지가 빠져 있을 수 있고, 그것이 먼저 발견되면 테스트가
+# 옛 사본을 보게 된다. 루트 pyproject.toml 에도 같은 이유로 같은 순서를 둔다.
+pythonpath = ["../../packages/core/src", "src"]
