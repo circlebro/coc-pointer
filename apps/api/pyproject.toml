@@ -18,8 +18,10 @@ dependencies = [
     "fastapi>=0.115",
 ]
 
-[project.scripts]
-coc-api = "cli:main"
+# [project.scripts] 를 두지 않는다. 바로 아래 [tool.uv] 가 package = false 라
+# 이 앱은 설치되지 않으므로 진입점을 적어도 .venv/bin 에 생기지 않는다. 실제로
+# 적어 두었다가 `uv run coc-api` 가 "Failed to spawn" 으로 죽는 것을 확인했다.
+# 명령을 부르는 방법은 src/cli.py 의 설명글에 적어 두었다.
 
 [dependency-groups]
 dev = [

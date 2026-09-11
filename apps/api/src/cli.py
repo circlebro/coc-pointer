@@ -3,7 +3,11 @@
 지금은 클랜원 동기화 하나뿐이다. 예약 실행(Cron)은 클랜전 수집을 옮길 때
 함께 붙인다.
 
-    uv run coc-api refresh-members
+    cd apps/api && uv run python src/cli.py refresh-members
+
+이 앱은 pyproject.toml 이 package = false 라 설치되지 않는다. Cloudflare
+Workers 번들로 배포되기 때문이다. 그래서 진입점을 등록할 수 없고 파일을
+직접 가리켜 부른다.
 
 서버가 요청을 받아 조립하는 것과 같은 일을 여기서 한다. 조립하는 자리가
 두 곳이 되지 않게 이 파일이 그 몫을 맡는다.
@@ -54,7 +58,7 @@ def main() -> int:
     Workers 안에서는 바인딩을 쓴다. 지금은 안내만 하고 빠진다.
     """
     if len(sys.argv) < 2 or sys.argv[1] != "refresh-members":
-        print("쓰임: coc-api refresh-members")
+        print("쓰임: uv run python src/cli.py refresh-members")
         return 2
 
     token = os.environ.get("COC_API_TOKEN")
