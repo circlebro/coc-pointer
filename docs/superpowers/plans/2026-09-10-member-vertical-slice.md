@@ -1181,7 +1181,7 @@ CLAN_PAYLOAD = {
 
 def _api(handler) -> CocApi:
     return CocApi(
-        token="테스트-토큰",
+        token="test-token",
         clan_tag="#2C8L822LQ",
         transport=httpx.MockTransport(handler),
     )
@@ -1224,7 +1224,7 @@ async def test_프록시가_요구하는_헤더를_붙인다():
     await api.fetch_members()
     await api.aclose()
 
-    assert seen["authorization"] == "Bearer 테스트-토큰"
+    assert seen["authorization"] == "Bearer test-token"
     assert seen["user-agent"] == USER_AGENT
 
 
@@ -1702,7 +1702,7 @@ NOW = "2026-09-10T05:30:00Z"
 
 class FakeEnv:
     API_VERSION = "0.5.0"
-    COC_API_TOKEN = "테스트-토큰"
+    COC_API_TOKEN = "test-token"
     CLAN_TAG = "#2C8L822LQ"
 
     def __init__(self, db) -> None:
@@ -1994,7 +1994,7 @@ def _transport() -> httpx.MockTransport:
 async def test_동기화_결과를_돌려준다(fake_db):
     result = await refresh_members(
         db=fake_db,
-        token="테스트-토큰",
+        token="test-token",
         clan_tag="#2C8L822LQ",
         now=NOW,
         transport=_transport(),
@@ -2008,7 +2008,7 @@ async def test_동기화_결과를_돌려준다(fake_db):
 async def test_실제로_저장된다(fake_db):
     await refresh_members(
         db=fake_db,
-        token="테스트-토큰",
+        token="test-token",
         clan_tag="#2C8L822LQ",
         now=NOW,
         transport=_transport(),
