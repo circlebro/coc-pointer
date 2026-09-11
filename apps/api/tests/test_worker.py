@@ -6,6 +6,8 @@ Workers 런타임 없이 FastAPI 만 띄워 확인한다. D1 자리에는 Task 1
 
 from __future__ import annotations
 
+import asyncio
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -115,3 +117,34 @@ def test_월_형식이_아니면_422(client, path, bad_month):
     response = client.get(path.format(bad_month))
 
     assert response.status_code == 422
+
+
+def test_서버가_명세를_따로_발행하지_않는다(client):
+    """계약은 contracts/openapi.yaml 한 벌뿐이다.
+
+    FastAPI 가 코드를 훑어 만드는 명세는 계약과 다르다. 응답 모양을 적지 않고
+    operationId 도 다르다. 그것이 열려 있으면 누군가 거기에 코드 생성을 겨누어
+    계약이 두 벌이 된다. 열리지 않는 것을 여기서 지킨다.
+    """
+    assert client.get("/api/openapi.json").status_code == 404
+    assert client.get("/api/docs").status_code == 404
+
+
+def test_표를_셀_때_D1_장부는_빼고_센다(client, fake_db):
+    """/api/health 는 우리 스키마가 올라갔는지 보여 주는 자리다.
+
+    D1 은 마이그레이션을 어디까지 적용했는지 d1_migrations 표에 스스로 적는다.
+    그것은 우리 표가 아니므로 개수에 섞이면 안내문(여덟 개)과 어긋나 배포가
+    실패한 것처럼 읽힌다. 가짜 D1 에는 그 표가 없어 저절로는 드러나지 않으므로
+    여기서 일부러 만들어 둔다.
+    """
+    asyncio.run(
+        fake_db.prepare(
+            "CREATE TABLE d1_migrations (id INTEGER PRIMARY KEY, name TEXT, applied_at TEXT)"
+        ).run()
+    )
+
+    tables = client.get("/api/health").json()["tables"]
+
+    assert "d1_migrations" not in tables
+    assert len(tables) == 8

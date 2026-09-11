@@ -14,9 +14,13 @@ from __future__ import annotations
 import json
 from typing import Any
 
+# d1_migrations 는 우리 표가 아니라 D1 이 어디까지 적용했는지 스스로 적어 두는
+# 장부다. /api/health 가 "우리 스키마가 제대로 올라갔는가" 를 보여 주는 자리라
+# 여기에 섞이면 표 개수가 안내문과 어긋나 실패처럼 읽힌다.
 _TABLES = (
     "SELECT name FROM sqlite_master WHERE type = 'table' "
     "AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '\\_%' ESCAPE '\\' "
+    "AND name <> 'd1_migrations' "
     "ORDER BY name"
 )
 

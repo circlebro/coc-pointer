@@ -31,16 +31,6 @@ CREATE TABLE attacks (
   FOREIGN KEY (war_id, attacker_tag)
     REFERENCES war_members(war_id, tag) ON DELETE CASCADE
 );
-CREATE TABLE users (
-  id            TEXT PRIMARY KEY,
-  login_id      TEXT NOT NULL UNIQUE,
-  password_hash TEXT NOT NULL,
-  display_name  TEXT NOT NULL,
-  role          TEXT NOT NULL DEFAULT 'member',
-  member_tag    TEXT,
-  created_at    TEXT NOT NULL,
-  last_login_at TEXT
-);
 CREATE TABLE settings (
   key   TEXT PRIMARY KEY,
   value TEXT NOT NULL
@@ -85,3 +75,13 @@ CREATE TABLE clan_members (
   description        TEXT
 );
 CREATE INDEX idx_clan_members_status ON clan_members(status);
+CREATE TABLE users (
+  id            TEXT PRIMARY KEY,
+  login_id      TEXT NOT NULL UNIQUE,
+  password_hash TEXT NOT NULL,
+  display_name  TEXT NOT NULL,
+  role          TEXT NOT NULL DEFAULT 'member',
+  member_tag    TEXT,
+  created_at    TEXT NOT NULL,
+  last_login_at TEXT
+);
