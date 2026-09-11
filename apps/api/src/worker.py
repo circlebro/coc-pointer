@@ -18,6 +18,7 @@ from fastapi import Depends, FastAPI, Path, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 import db
+from routes.member import router as member_router
 
 app = FastAPI(
     title="coc-pointer API",
@@ -31,6 +32,8 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PATCH", "OPTIONS"],
     allow_headers=["Content-Type", "Authorization"],
 )
+
+app.include_router(member_router)
 
 
 def get_env(request: Request) -> Any:
@@ -120,13 +123,13 @@ async def health_crypto() -> dict:
     return result
 
 
-@app.get("/api/scores/{month}")
+@app.get("/api/v1/scores/{month}")
 async def get_scores(month: Month, database: Db) -> dict:
     """그달 점수표. 수집할 때 미리 계산해 둔 것을 읽기만 한다."""
     return {"month": month, "members": await db.get_monthly_scores(database, month)}
 
 
-@app.get("/api/draws/{month}")
+@app.get("/api/v1/draws/{month}")
 async def get_draw(month: Month, database: Db) -> dict:
     """그달 추첨 결과. 아직 뽑지 않았으면 ``drawn`` 이 거짓이다."""
     drawn = await db.get_draw(database, month)

@@ -42,7 +42,7 @@ def test_health_는_공용_코드가_도는지_확인한다(client):
 
 
 def test_점수가_없는_달은_빈_목록(client):
-    body = client.get("/api/scores/2026-09").json()
+    body = client.get("/api/v1/scores/2026-09").json()
 
     assert body == {"month": "2026-09", "members": []}
 
@@ -67,13 +67,13 @@ def test_점수를_높은_순으로_돌려준다(client, fake_db):
 
     asyncio.run(seed())
 
-    body = client.get("/api/scores/2026-09").json()
+    body = client.get("/api/v1/scores/2026-09").json()
 
     assert [m["name"] for m in body["members"]] == ["히로", "도토리"]
 
 
 def test_뽑지_않은_달은_drawn_이_거짓(client):
-    body = client.get("/api/draws/2026-09").json()
+    body = client.get("/api/v1/draws/2026-09").json()
 
     assert body == {"month": "2026-09", "drawn": False}
 
@@ -95,7 +95,7 @@ def test_뽑은_달은_당첨자와_후보를_돌려준다(client, fake_db):
 
     asyncio.run(seed())
 
-    body = client.get("/api/draws/2026-09").json()
+    body = client.get("/api/v1/draws/2026-09").json()
 
     assert body == {
         "drawn": True,
@@ -107,7 +107,7 @@ def test_뽑은_달은_당첨자와_후보를_돌려준다(client, fake_db):
     }
 
 
-@pytest.mark.parametrize("path", ["/api/scores/{}", "/api/draws/{}"])
+@pytest.mark.parametrize("path", ["/api/v1/scores/{}", "/api/v1/draws/{}"])
 @pytest.mark.parametrize("bad_month", ["2026", "2026-9", "2026-09-10", "아무말", "2026.09"])
 def test_월_형식이_아니면_422(client, path, bad_month):
     # "/" 가 들어간 값(예: "2026/09")은 경로 자체가 갈라져 404가 되므로 여기서
