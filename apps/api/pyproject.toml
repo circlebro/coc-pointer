@@ -18,6 +18,9 @@ dependencies = [
     "fastapi>=0.115",
 ]
 
+[project.scripts]
+coc-api = "cli:main"
+
 [dependency-groups]
 dev = [
     "pytest>=9.1.1",
