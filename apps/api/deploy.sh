@@ -130,6 +130,10 @@ if [ -f package.json ] && command -v npm >/dev/null 2>&1; then
 fi
 $WRANGLER deploy
 
+# 번들에 실렸으므로 로컬에 남길 이유가 없다. 남아 있으면 테스트가 이 사본을
+# 진짜 소스로 착각한다(pythonpath 에 apps/api/src 가 들어가기 때문).
+rm -rf src/coc_core
+
 echo
 echo "끝났습니다. 위에 보이는 주소 뒤에 두 곳을 붙여 열어 보세요."
 echo
