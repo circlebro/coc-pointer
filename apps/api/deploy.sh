@@ -109,6 +109,8 @@ echo
 echo "== 3/5 표 만들기 =="
 # D1 이 어디까지 적용했는지 스스로 기록한다(d1_migrations 표). 이미 적용한
 # 파일은 건너뛰므로 여러 번 돌려도 안전하다.
+# 확인을 묻는 단계가 있지만 -y 같은 플래그는 없다. 사람이 지켜보는 터미널이
+# 아니면 wrangler 가 그 단계를 알아서 건너뛴다. 적용한 뒤에는 백업이 남는다.
 $WRANGLER d1 migrations apply coc-pointer --remote
 
 echo
