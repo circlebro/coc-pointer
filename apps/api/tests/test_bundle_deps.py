@@ -30,6 +30,11 @@ CORE_SRC = HERE.parent.parent.parent / "packages" / "core" / "src" / "coc_core"
 # 꾸러미 이름과 들여오는 이름이 다른 것들
 DISTRIBUTION_NAME = {"yaml": "pyyaml"}
 
+# 표준 라이브러리지만 Workers 에서는 따로 실어야 하는 것들. 모듈 자체는 파이썬에
+# 딸려 오는데 자료가 없어서, 보통은 운영체제가 가진 것을 읽는다. Pyodide 에는
+# 그것이 없다.
+NEEDS_DATA_PACKAGE = {"zoneinfo": "tzdata"}
+
 
 def _imported_packages() -> set[str]:
     """coc_core 가 부르는 바깥 꾸러미 이름."""
@@ -41,7 +46,12 @@ def _imported_packages() -> set[str]:
                 found.update(a.name.split(".")[0] for a in node.names)
             elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
                 found.add(node.module.split(".")[0])
-    return {name for name in found if name != "coc_core" and name not in sys.stdlib_module_names}
+    return {
+        name
+        for name in found
+        if name != "coc_core"
+        and (name not in sys.stdlib_module_names or name in NEEDS_DATA_PACKAGE)
+    }
 
 
 def _declared() -> set[str]:
@@ -55,7 +65,8 @@ def _declared() -> set[str]:
 
 @pytest.mark.parametrize("module", sorted(_imported_packages()))
 def test_coc_core_가_쓰는_것이_번들에_들어간다(module: str) -> None:
-    wanted = DISTRIBUTION_NAME.get(module, module).lower()
+    wanted = NEEDS_DATA_PACKAGE.get(module) or DISTRIBUTION_NAME.get(module, module)
+    wanted = wanted.lower()
 
     assert wanted in _declared(), (
         f"coc_core 가 {module} 을 부르는데 apps/api/pyproject.toml 의 dependencies 에"

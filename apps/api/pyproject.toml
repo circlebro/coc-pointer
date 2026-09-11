@@ -23,6 +23,11 @@ dependencies = [
     # 겪었다. coc_core 에 바깥 꾸러미를 새로 들이면 여기에도 함께 적어야 한다.
     # 하한을 6.0 으로 두는 까닭은 packages/core/pyproject.toml 에 적혀 있다.
     "pyyaml>=6.0",
+    # coc_core.scoring 의 KST = ZoneInfo("Asia/Seoul") 이 시간대 자료를 읽는다.
+    # zoneinfo 는 표준 라이브러리지만 자료까지 들고 있지는 않아서, 보통은
+    # 운영체제가 가진 것을 쓴다. Workers(Pyodide)에는 그것이 없어 이 꾸러미를
+    # 실어야 한다. 없으면 ZoneInfoNotFoundError 가 난다. 실제 배포에서 겪었다.
+    "tzdata",
 ]
 
 # [project.scripts] 를 두지 않는다. 바로 아래 [tool.uv] 가 package = false 라
