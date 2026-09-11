@@ -408,10 +408,12 @@ async def list_members(service: MemberSvc) -> MemberListResponse: ...
 첫 조각에서는 예약 실행을 붙이지 않는다.
 
 ```bash
-uv run coc-api refresh-members
+cd apps/api && uv run python src/cli.py refresh-members
 ```
 
-`apps/api/pyproject.toml`에 `[project.scripts]`로 진입점을 두고, `apps/api/src/cli.py`가 서비스를 조립해 부른다. 서버가 요청을 받아 조립하는 것과 같은 일이라 조립 코드를 함께 쓴다.
+`apps/api/src/cli.py`가 서비스를 조립해 부른다. 서버가 요청을 받아 조립하는 것과 같은 일이라 조립 코드를 함께 쓴다.
+
+처음에는 `[project.scripts]`로 진입점을 두어 `uv run coc-api`로 부르려 했으나 그렇게 되지 않았다. `apps/api`는 `[tool.uv] package = false`라 설치되지 않기 때문이다. Cloudflare Workers 번들로 배포되므로 파이썬 휠로 설치할 수 없고, 설치되지 않으면 진입점을 적어도 `.venv/bin`에 생기지 않아 `Failed to spawn`으로 죽는다. 그래서 파일을 직접 가리켜 부른다.
 
 원격 D1에 쓰는 방법은 구현할 때 확인한다. `wrangler d1 execute --remote`를 거치거나 D1 HTTP API를 부른다. 로컬 D1(`--local`)로 먼저 돌려 보고 원격으로 넘어간다.
 
