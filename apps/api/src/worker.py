@@ -20,12 +20,12 @@ from fastapi.middleware.cors import CORSMiddleware
 import db
 from routes.member import router as member_router
 
-# 명세를 스스로 발행하지 않는다. 계약은 contracts/openapi.yaml 한 벌뿐이고
+# 명세를 스스로 발행하지 않는다. API 스펙은 api/openapi.yaml 한 벌뿐이고
 # 서버 모델과 화면 타입이 모두 거기서 생성된다. FastAPI 가 코드를 훑어 만드는
 # 명세는 그것과 다르다 — 응답 모양을 additionalProperties: true 로만 적고
 # operationId 도 listMembers 가 아니라 list_members_api_v1_members_get 이 된다.
 # 그것이 살아 있는 주소에 걸려 있으면 누군가 거기에 코드 생성을 겨누게 되고,
-# 그 순간 계약이 두 벌이 되어 어느 쪽도 계약이 아니게 된다.
+# 그 순간 스펙이 두 벌이 되어 어느 쪽도 스펙이 아니게 된다.
 app = FastAPI(
     title="coc-pointer API",
     docs_url=None,

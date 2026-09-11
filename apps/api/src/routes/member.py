@@ -1,6 +1,6 @@
 """클랜원 조회 경로.
 
-응답 모양은 contracts/openapi.yaml 이 정한다. 여기서는 도메인 자료형을
+응답 모양은 api/openapi.yaml 이 정한다. 여기서는 도메인 자료형을
 그 모양으로 옮기기만 한다.
 """
 
@@ -30,7 +30,7 @@ MemberSvc = Annotated[MemberService, Depends(get_member_service)]
 
 
 def _to_response(member: ClanMember) -> dict[str, Any]:
-    """도메인 자료형을 계약이 정한 모양으로. 키는 캐멀케이스다."""
+    """도메인 자료형을 스펙이 정한 모양으로. 키는 캐멀케이스다."""
     return {
         "id": member.id,
         "tag": member.tag,

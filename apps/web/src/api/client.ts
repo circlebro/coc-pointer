@@ -5,8 +5,8 @@ export type MemberListResponse = components["schemas"]["MemberListResponse"];
 
 const BASE_URL = "https://coc-api.coc-api.workers.dev";
 
-// satisfies 로 적어 두면 계약에 없는 주소를 부를 때 빌드가 걸린다. 그냥
-// 문자열로 두면 계약에서 주소를 바꾸고 타입을 다시 생성해도 여기는 따라오지
+// satisfies 로 적어 두면 스펙에 없는 주소를 부를 때 빌드가 걸린다. 그냥
+// 문자열로 두면 스펙에서 주소를 바꾸고 타입을 다시 생성해도 여기는 따라오지
 // 않고, 화면이 띄워진 뒤에야 404 로 드러난다.
 const MEMBERS = "/api/v1/members" satisfies keyof paths;
 

@@ -139,7 +139,7 @@ rm -rf src/coc_core
 echo
 echo "끝났습니다. 위에 보이는 주소 뒤에 두 곳을 붙여 열어 보세요."
 echo
-echo "  /api/health         coc_core 가 ok 이고 표 여덟 개가 보이면 성공"
+echo "  /api/health         coc_core 가 ok 이고 표 아홉 개가 보이면 성공"
 echo "  /api/health/crypto  비밀번호 해시를 무료 플랜으로 할 수 있는지 판정"
 
 if ! git diff --quiet -- wrangler.toml 2>/dev/null; then

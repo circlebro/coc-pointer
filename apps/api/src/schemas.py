@@ -1,4 +1,4 @@
-# 이 파일은 contracts/openapi.yaml 에서 생성되었다. 손으로 고치지 마라.
+# 이 파일은 api/openapi.yaml 에서 생성되었다. 손으로 고치지 마라.
 
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ class ClanStatus(StrEnum):
 class Clan(BaseModel):
     id: str = Field(
         ...,
-        description="우리 식별자(UUID 문자열). 주소에서 '#'을 인코딩하지 않으려고\nexternal_id 와 따로 둔다.\n",
+        description="우리 식별자(UUID 문자열)",
         examples=["3f2a1b4c-5d6e-4f70-8a91-b2c3d4e5f607"],
     )
     externalId: str = Field(
@@ -26,7 +26,7 @@ class Clan(BaseModel):
     )
     displayName: str | None = Field(
         None,
-        description="우리가 붙이는 이름. 첫 동기화 때 CoC 이름으로 채우고\n그 뒤로는 우리가 관리한다.\n",
+        description="우리가 붙이는 이름. 첫 동기화 때 채운다",
         examples=["미니언즈"],
     )
     status: ClanStatus

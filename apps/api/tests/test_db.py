@@ -5,7 +5,7 @@ from __future__ import annotations
 from db import get_draw, get_monthly_scores, list_tables, save_draw
 
 
-async def test_스키마가_여덟_개_표를_만든다(fake_db):
+async def test_스키마가_아홉_개_표를_만든다(fake_db):
     result = await fake_db.prepare(
         "SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name"
     ).all()
@@ -13,6 +13,7 @@ async def test_스키마가_여덟_개_표를_만든다(fake_db):
     assert names == [
         "attacks",
         "clan_members",
+        "clans",
         "draws",
         "monthly_scores",
         "settings",

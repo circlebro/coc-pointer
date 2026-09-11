@@ -57,13 +57,18 @@ export interface components {
          */
         ClanStatus: "ACTIVE" | "INACTIVE";
         /**
-         * @description CoC 가 모르는 값만 담는다. 이름조차 우리가 관리하는 것이며,
-         *     게임에서 클랜 이름을 바꿔도 우리 표기는 그대로 둘 수 있다.
+         * @description CoC 가 모르는 값만 담는다. 마크·레벨·점수·전적은 CoC 가 주인이라
+         *     우리가 사본을 들면 두 곳에서 관리하게 된다.
+         *
+         *     id 는 우리 식별자이고 externalId 는 CoC 세계의 식별자다. 주소에서
+         *     '#' 을 인코딩하지 않으려고 따로 둔다.
+         *
+         *     이름조차 우리가 관리한다. 게임에서 클랜 이름을 바꿔도 우리 표기는
+         *     그대로 둘 수 있고, 태그는 바뀌지 않으므로 그것으로 찾는다.
          */
         Clan: {
             /**
-             * @description 우리 식별자(UUID 문자열). 주소에서 '#'을 인코딩하지 않으려고
-             *     external_id 와 따로 둔다.
+             * @description 우리 식별자(UUID 문자열)
              * @example 3f2a1b4c-5d6e-4f70-8a91-b2c3d4e5f607
              */
             id: string;
@@ -73,8 +78,7 @@ export interface components {
              */
             externalId: string;
             /**
-             * @description 우리가 붙이는 이름. 첫 동기화 때 CoC 이름으로 채우고
-             *     그 뒤로는 우리가 관리한다.
+             * @description 우리가 붙이는 이름. 첫 동기화 때 채운다
              * @example 미니언즈
              */
             displayName?: string | null;

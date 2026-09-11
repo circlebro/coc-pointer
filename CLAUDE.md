@@ -20,7 +20,7 @@ uv run ruff format .             # format (use --check in CI)
 uv add <pkg>                     # add a runtime dependency
 uv add --dev <pkg>               # add a dev-only dependency
 
-./scripts/generate-from-contract.sh   # contracts/openapi.yaml -> server models + TS types
+./scripts/generate-from-spec.sh   # api/openapi.yaml -> server models + TS types
 ./scripts/dump-schema.sh              # migrations -> database/schema.sql snapshot
 cd apps/web && npm run build          # type-check and build the React app into dist/
 ```
@@ -63,7 +63,7 @@ under `packages/`, and shared inputs at the root.
 **Every app treats every other app as a stranger.** They talk over HTTP and nothing else,
 so any one of them could be split out and deployed on its own without the others noticing.
 
-- **The contract is the only seam.** `contracts/openapi.yaml` is written by hand and is the
+- **The contract is the only seam.** `api/openapi.yaml` is written by hand and is the
   single source of truth; server models and frontend types are generated from it and are
   never hand-edited. One spec, not one per side — two specs mean neither is the contract.
 - **The frontend is a stranger too.** Browsers cache old JavaScript, so a deployed frontend
@@ -109,7 +109,7 @@ services ever diverge.
 1. Authenticate, one of two ways (see table below). `npx wrangler@4 login` opens a browser; approve it once and the credential is cached under `~/Library/Preferences/.wrangler/` (macOS) — the same spot on every later invocation, so this is a one-time step, like `aws sso login`.
 2. Run `./apps/api/deploy.sh`.
 3. Commit the `database_id` change in `apps/api/wrangler.toml`. The script writes it after creating the D1 database. Skip this and the next clone or worktree creates a second database — data splits across two databases with no way to tell which is authoritative.
-4. Append `/api/health` to the printed URL and open it. Success looks like `coc_core: "ok"` and eight tables.
+4. Append `/api/health` to the printed URL and open it. Success looks like `coc_core: "ok"` and nine tables.
 
 **Redeploy:** `./apps/api/deploy.sh` — one line. It re-copies `coc_core`, applies any
 migration D1 has not recorded yet, and deploys. Migrations that already ran are skipped,
@@ -162,7 +162,7 @@ version put which change in front of the clan.
   MINOR; a fix-only deploy bumps PATCH. `1.0.0` waits until the site fully replaces the
   spreadsheet it was built to replace.
 - Releasing, in order: bump `version` in `apps/web/pyproject.toml`, `apps/api/pyproject.toml` and
-  `packages/core/pyproject.toml`, `info.version` in `contracts/openapi.yaml`, and `API_VERSION`
+  `packages/core/pyproject.toml`, `info.version` in `api/openapi.yaml`, and `API_VERSION`
   in `apps/api/wrangler.toml` (all track the tag), commit, then tag the squash commit on `main` with `git tag -a v0.6.0 <sha> -m "<한 줄
   요약>"`, push tags, and `gh release create` with Korean notes listing the PRs it contains.
 - The site footer prints the installed `apps/web` version and links to that release, so the
