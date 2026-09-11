@@ -8,6 +8,44 @@ from uuid import UUID
 from pydantic import AwareDatetime, BaseModel, Field
 
 
+class ClanStatus(StrEnum):
+    ACTIVE = "ACTIVE"
+    INACTIVE = "INACTIVE"
+
+
+class Clan(BaseModel):
+    id: str = Field(
+        ...,
+        description="우리 식별자(UUID 문자열). 주소에서 '#'을 인코딩하지 않으려고\nexternal_id 와 따로 둔다.\n",
+        examples=["3f2a1b4c-5d6e-4f70-8a91-b2c3d4e5f607"],
+    )
+    externalId: str = Field(
+        ...,
+        description="CoC 클랜 태그. 이 값으로 CoC API 를 부른다",
+        examples=["#2C8L822LQ"],
+    )
+    displayName: str | None = Field(
+        None,
+        description="우리가 붙이는 이름. 첫 동기화 때 CoC 이름으로 채우고\n그 뒤로는 우리가 관리한다.\n",
+        examples=["미니언즈"],
+    )
+    status: ClanStatus
+    createdAt: str = Field(
+        ...,
+        description="처음 본 시각. ISO 8601(UTC)",
+        examples=["2026-09-11T07:18:57Z"],
+    )
+    updatedAt: str = Field(
+        ...,
+        description="마지막으로 갱신한 시각. ISO 8601(UTC)",
+        examples=["2026-09-11T07:18:57Z"],
+    )
+
+
+class ClanListResponse(BaseModel):
+    clans: list[Clan]
+
+
 class ClanRole(StrEnum):
     LEADER = "LEADER"
     COLEADER = "COLEADER"

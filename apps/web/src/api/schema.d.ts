@@ -21,10 +21,78 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/clans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 클랜 목록
+         * @description 우리가 다루는 클랜. 지금은 미니언즈 하나뿐이다.
+         *
+         *     마크·레벨·점수·전적은 담지 않는다. CoC 가 주인인 값이라 우리가
+         *     사본을 들고 있으면 두 곳에서 관리하게 되고 언젠가 어긋난다.
+         *     필요하면 external_id 로 CoC 에 물으면 된다.
+         */
+        get: operations["listClans"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /**
+         * @description 우리가 이 클랜을 다루는가. CoC 가 주지 않고 우리가 판정한다.
+         *     MemberStatus 와 값이 같지만 뜻이 다르다. 이쪽은 "우리 관심사인가"이고
+         *     저쪽은 "클랜에 남아 있는가"다. 한쪽만 값이 늘 수 있으므로 따로 둔다.
+         * @enum {string}
+         */
+        ClanStatus: "ACTIVE" | "INACTIVE";
+        /**
+         * @description CoC 가 모르는 값만 담는다. 이름조차 우리가 관리하는 것이며,
+         *     게임에서 클랜 이름을 바꿔도 우리 표기는 그대로 둘 수 있다.
+         */
+        Clan: {
+            /**
+             * @description 우리 식별자(UUID 문자열). 주소에서 '#'을 인코딩하지 않으려고
+             *     external_id 와 따로 둔다.
+             * @example 3f2a1b4c-5d6e-4f70-8a91-b2c3d4e5f607
+             */
+            id: string;
+            /**
+             * @description CoC 클랜 태그. 이 값으로 CoC API 를 부른다
+             * @example #2C8L822LQ
+             */
+            externalId: string;
+            /**
+             * @description 우리가 붙이는 이름. 첫 동기화 때 CoC 이름으로 채우고
+             *     그 뒤로는 우리가 관리한다.
+             * @example 미니언즈
+             */
+            displayName?: string | null;
+            status: components["schemas"]["ClanStatus"];
+            /**
+             * @description 처음 본 시각. ISO 8601(UTC)
+             * @example 2026-09-11T07:18:57Z
+             */
+            createdAt: string;
+            /**
+             * @description 마지막으로 갱신한 시각. ISO 8601(UTC)
+             * @example 2026-09-11T07:18:57Z
+             */
+            updatedAt: string;
+        };
+        ClanListResponse: {
+            clans: components["schemas"]["Clan"][];
+        };
         /**
          * @description 게임 안 직책. CoC API 표기를 대문자로 바꾼 값이다.
          *     ADMIN 은 게임 화면에서 "장로(Elder)"로 불린다.
@@ -94,6 +162,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MemberListResponse"];
+                };
+            };
+        };
+    };
+    listClans: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 클랜 목록 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClanListResponse"];
                 };
             };
         };
