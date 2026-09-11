@@ -9,6 +9,7 @@ from coc_core.member.models import ClanMember, ClanRole, MemberStatus
 from fastapi.testclient import TestClient
 
 from adapters.member_repository import D1MemberRepository
+from schemas import Member, MemberListResponse
 from worker import app
 
 NOW = "2026-09-10T05:30:00Z"
@@ -99,3 +100,26 @@ def test_없는_태그면_빈_목록(client, fake_db):
     body = client.get("/api/v1/members", params={"tag": "#없음"}).json()
 
     assert body == {"members": []}
+
+
+def test_응답_키가_계약과_정확히_같다(client, fake_db):
+    """계약에서 생성한 모델과 실제 응답의 키가 어긋나지 않는지 본다.
+
+    이 경로는 생성 모델을 쓰지 않고 _to_response 로 사전을 손수 만든다.
+    생성 모델이 id 를 UUID, createdAt 을 AwareDatetime 으로 선언하는데 우리
+    도메인은 둘 다 문자열로 다루기 때문이다. 그래서 계약을 고치고 모델을 다시
+    생성해도 _to_response 는 저절로 따라가지 않는다. 이 테스트가 그 둘을 잇는
+    유일한 자리라, 키가 하나라도 어긋나면 여기서 걸린다.
+    """
+    _seed(fake_db, [_member("#A", "도토리")])
+
+    member = client.get("/api/v1/members").json()["members"][0]
+
+    assert set(member) == set(Member.model_fields)
+
+
+def test_응답_봉투가_계약과_같다(client):
+    """목록을 감싸는 바깥 모양도 계약이 정한 그대로여야 한다."""
+    body = client.get("/api/v1/members").json()
+
+    assert set(body) == set(MemberListResponse.model_fields)
