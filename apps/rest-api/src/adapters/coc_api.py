@@ -36,7 +36,12 @@ def encode_tag(tag: str) -> str:
 
 
 class CocApi:
-    """MemberSource 를 CoC 공식 API 로 구현한다."""
+    """MemberSource 와 ClanSource 를 CoC 공식 API 로 구현한다.
+
+    둘은 같은 요청(GET /clans/{tag})에서 나온다. CoC 가 클랜 정보와 클랜원
+    목록을 한 번에 주기 때문이다. 다만 부르는 쪽이 무엇을 받는지 분명하도록
+    메서드는 갈라 둔다.
+    """
 
     def __init__(
         self,
@@ -64,6 +69,15 @@ class CocApi:
         """클랜원 목록. CoC 가 준 항목을 그대로 돌려준다."""
         clan = await self._get(f"/clans/{encode_tag(self._clan_tag)}")
         return list(clan.get("memberList", []))
+
+    async def fetch_clan(self) -> dict[str, Any]:
+        """클랜 정보. 클랜원 목록은 빼고 돌려준다.
+
+        뺄 때 원본을 고치지 않고 사본을 만든다. 부르는 쪽이 받은 것을 그대로
+        믿을 수 있어야 하고, 같은 응답을 두 메서드가 나눠 쓰기 때문이다.
+        """
+        clan = await self._get(f"/clans/{encode_tag(self._clan_tag)}")
+        return {k: v for k, v in clan.items() if k != "memberList"}
 
     async def _get(self, path: str) -> dict[str, Any]:
         response = await self._client.get(path)

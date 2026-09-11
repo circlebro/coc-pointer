@@ -94,3 +94,46 @@ async def test_실패하면_이유를_담아_올린다():
 def test_태그_인코딩():
     assert encode_tag("#2ABC123") == "%232ABC123"
     assert encode_tag("2ABC123") == "%232ABC123"
+
+
+async def test_클랜_정보도_같은_응답에서_나온다():
+    """fetch_members 와 같은 요청이다. CoC 는 한 번에 둘 다 준다."""
+    seen: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.append(request.url.raw_path.decode())
+        return httpx.Response(200, json=CLAN_PAYLOAD)
+
+    api = _api(handler)
+    clan = await api.fetch_clan()
+    await api.aclose()
+
+    assert seen == ["/v1/clans/%232C8L822LQ"]
+    assert clan["tag"] == "#2C8L822LQ"
+    assert clan["name"] == "미니언즈"
+
+
+async def test_클랜_정보에_클랜원_목록은_섞지_않는다():
+    """memberList 는 fetch_members 가 맡는다. 둘을 갈라 두어야 부르는 쪽이
+    무엇을 받는지 분명해진다."""
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, json=CLAN_PAYLOAD)
+
+    api = _api(handler)
+    clan = await api.fetch_clan()
+    await api.aclose()
+
+    assert "memberList" not in clan
+
+
+async def test_클랜_정보도_실패하면_이유를_담아_올린다():
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(404, json={"reason": "notFound", "message": "없는 클랜"})
+
+    api = _api(handler)
+    with pytest.raises(CocApiError) as caught:
+        await api.fetch_clan()
+    await api.aclose()
+
+    assert caught.value.status == 404
