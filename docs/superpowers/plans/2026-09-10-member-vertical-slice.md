@@ -600,6 +600,8 @@ MSG
 
 from __future__ import annotations
 
+from dataclasses import FrozenInstanceError
+
 import pytest
 
 from coc_core.member.models import ClanMember, ClanRole, MemberStatus
@@ -644,7 +646,9 @@ def test_클랜원은_고칠_수_없다():
         updated_at="2026-09-10T05:30:00Z",
     )
 
-    with pytest.raises(Exception):
+    # 예외를 좁혀 잡는다. Exception 으로 두면 오타 같은 엉뚱한 오류에도
+    # 테스트가 통과한다(ruff B017 이 그것을 막는다).
+    with pytest.raises(FrozenInstanceError):
         member.name = "다른 이름"  # type: ignore[misc]
 ```
 
