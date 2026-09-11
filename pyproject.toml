@@ -42,6 +42,11 @@ line-length = 100
 select = ["E", "F", "I", "UP", "B"]
 
 [tool.pytest.ini_options]
+# 파일 이름이 아니라 경로로 테스트 모듈을 구분한다. 기본 방식은 tests/ 에
+# __init__.py 가 없으면 파일 이름을 그대로 모듈 이름으로 삼아서, 앱이 다른
+# 두 곳에 같은 이름(test_cli.py 등)이 생기면 저장소 전체를 한 번에 돌릴 때
+# "import file mismatch" 로 수집 단계에서 멈춘다. 두 번 겪고 나서 넣었다.
+addopts = "--import-mode=importlib"
 testpaths = ["apps/web/tests", "apps/api/tests", "packages/core/tests"]
 asyncio_mode = "auto"
 # packages/core/src 를 앞에 둔다. apps/api/src/coc_core 는 deploy.sh 가 만드는
