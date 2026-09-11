@@ -6,7 +6,7 @@ compatibility_date = "2026-09-01"
 compatibility_flags = ["python_workers"]
 
 [vars]
-API_VERSION = "0.5.0"
+API_VERSION = "0.6.0"
 
 [[d1_databases]]
 binding = "DB"

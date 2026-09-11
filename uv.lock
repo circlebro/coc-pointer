@@ -92,7 +92,7 @@ wheels = [
 
 [[package]]
 name = "coc-api"
-version = "0.5.0"
+version = "0.6.0"
 source = { virtual = "apps/api" }
 dependencies = [
     { name = "fastapi" },
@@ -131,7 +131,7 @@ dev = [
 
 [[package]]
 name = "coc-core"
-version = "0.5.0"
+version = "0.6.0"
 source = { editable = "packages/core" }
 dependencies = [
     { name = "pyyaml" },
@@ -156,7 +156,7 @@ dev = [
 
 [[package]]
 name = "coc-pointer"
-version = "0.5.0"
+version = "0.6.0"
 source = { editable = "apps/web" }
 dependencies = [
     { name = "coc-core" },
