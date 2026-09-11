@@ -82,20 +82,27 @@ CREATE INDEX IF NOT EXISTS idx_monthly_scores_month ON monthly_scores(month);
 
 DROP TABLE IF EXISTS members;
 
+-- role 과 status 에 값 목록을 못 박아 둔다. 표가 스스로를 지켜야 하기
+-- 때문이다. 읽어 들이는 쪽은 이 문자열을 우리 자료형으로 바로 바꾸므로,
+-- 목록에 없는 값이 한 행에라도 섞이면 그 한 행 때문에 조회가 통째로
+-- 실패한다. SQLite 에는 제약만 나중에 덧붙이는 ALTER TABLE 이 없어, 처음
+-- 지을 때 넣지 않으면 표를 다시 짓는 수밖에 없다.
 CREATE TABLE clan_members (
   id                 TEXT PRIMARY KEY,
   tag                TEXT NOT NULL UNIQUE,
   name               TEXT NOT NULL,
 
   -- CoC API 가 채운다
-  role               TEXT NOT NULL,
+  role               TEXT NOT NULL  -- ClanRole 과 함께 고친다
+                     CHECK (role IN ('LEADER', 'COLEADER', 'ADMIN', 'MEMBER', 'UNKNOWN')),
   townhall           INTEGER,
   trophies           INTEGER,
   donations          INTEGER,
   donations_received INTEGER,
 
   -- 우리가 판정한다
-  status             TEXT NOT NULL DEFAULT 'ACTIVE',
+  status             TEXT NOT NULL DEFAULT 'ACTIVE'  -- MemberStatus 와 함께 고친다
+                     CHECK (status IN ('ACTIVE', 'INACTIVE')),
   created_at         TEXT NOT NULL,
   updated_at         TEXT NOT NULL,
 

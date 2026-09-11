@@ -60,14 +60,16 @@ CREATE TABLE clan_members (
   name               TEXT NOT NULL,
 
   -- CoC API 가 채운다
-  role               TEXT NOT NULL,
+  role               TEXT NOT NULL  -- ClanRole 과 함께 고친다
+                     CHECK (role IN ('LEADER', 'COLEADER', 'ADMIN', 'MEMBER', 'UNKNOWN')),
   townhall           INTEGER,
   trophies           INTEGER,
   donations          INTEGER,
   donations_received INTEGER,
 
   -- 우리가 판정한다
-  status             TEXT NOT NULL DEFAULT 'ACTIVE',
+  status             TEXT NOT NULL DEFAULT 'ACTIVE'  -- MemberStatus 와 함께 고친다
+                     CHECK (status IN ('ACTIVE', 'INACTIVE')),
   created_at         TEXT NOT NULL,
   updated_at         TEXT NOT NULL,
 
