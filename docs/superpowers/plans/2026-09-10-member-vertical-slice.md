@@ -1203,7 +1203,9 @@ async def test_태그를_인코딩해_부른다():
     seen: list[str] = []
 
     def handler(request: httpx.Request) -> httpx.Response:
-        seen.append(request.url.path)
+        # raw_path 를 본다. url.path 는 httpx 가 디코딩한 값이라
+        # %23 이 # 로 되돌아와 인코딩 여부를 그대로 확인할 수 없다
+        seen.append(request.url.raw_path.decode())
         return httpx.Response(200, json=CLAN_PAYLOAD)
 
     api = _api(handler)
