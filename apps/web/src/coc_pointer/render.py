@@ -204,7 +204,10 @@ def build_site(
     write("index.html", "month.html", root="", view=by_key[current_key], current_key=current_key)
     for view in months:
         write(f"{view.key}/index.html", "month.html", root="../", view=view, current_key=view.key)
-    write("members/index.html", "members.html", root="../", current_key=current_key)
+    # members/ 는 여기서 만들지 않는다. React 앱(apps/web/src/pages/Members.tsx)이
+    # 그 자리를 맡고, 워크플로가 두 빌드를 site/ 에 합친다. 두 빌드가 같은 자리를
+    # 다투면 어느 쪽이 남는지 알 수 없다.
+    # month.html 안의 "길드원" 탭은 그대로 둔다. 그것은 달마다 다른 화면이다.
     css_dst = out_dir / "style.css"
     css_dst.write_bytes(css_bytes)
     written.append(css_dst)

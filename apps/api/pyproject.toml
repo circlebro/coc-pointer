@@ -1,6 +1,6 @@
 [project]
 name = "coc-api"
-version = "0.5.0"
+version = "0.6.0"
 description = "coc-pointer API 서버 (Cloudflare Python Workers)"
 authors = [
     { name = "박원형", email = "circle@mz.co.kr" }

@@ -51,6 +51,31 @@ jobs:
       - name: Build site
         run: uv run coc-pointer build
 
+      # 화면이 두 벌이다. 파이썬(Jinja2)이 만드는 옛 페이지들과, React 가 맡은
+      # /members/ 다. 둘을 차례로 돌려 site/ 에 합친다. 한 페이지씩 React 로
+      # 옮겨 가는 중이라 당분간 이 모양이다.
+      - name: Node 준비
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+
+      - name: 클랜원 화면 빌드
+        working-directory: apps/web
+        run: |
+          npm ci
+          npm run build
+
+      - name: 빌드 결과를 site/members/ 로
+        run: |
+          # 먼저 지운다. 파이썬 빌드가 옛 members/ 를 남겼을 수 있고, 그것이
+          # 남아 있으면 새 화면이 덮이지 않는다.
+          rm -rf site/members
+          mkdir -p site/members
+          cp -R apps/web/dist/. site/members/
+          test -f site/members/index.html
+
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: coc-pointer API
-  version: 0.5.0
+  version: 0.6.0
   description: |
     클래시 오브 클랜 클랜 "미니언즈"의 클랜원과 점수를 다루는 API.
 

@@ -1,6 +1,6 @@
 [project]
 name = "coc-core"
-version = "0.5.0"
+version = "0.6.0"
 description = "coc-pointer 공용 코드: 자료형, 설정, 점수 계산, 보상 판정"
 authors = [
     { name = "박원형", email = "circle@mz.co.kr" }

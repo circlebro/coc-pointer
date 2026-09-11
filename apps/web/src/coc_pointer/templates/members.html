@@ -1,6 +1,0 @@
-{% extends "base.html" %}
-{% from "_tables.html" import members_table with context %}
-{% block title %}클랜원 목록 · {{ clan_name }}{% endblock %}
-{% block content %}
-{{ members_table(snapshot, members, config) }}
-{% endblock %}
