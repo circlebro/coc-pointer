@@ -18,6 +18,7 @@ from fastapi import Depends, FastAPI, Path, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 import db
+from routes.clan import router as clan_router
 from routes.member import router as member_router
 
 # 명세를 스스로 발행하지 않는다. API 스펙은 api/openapi.yaml 한 벌뿐이고
@@ -40,6 +41,7 @@ app.add_middleware(
 )
 
 app.include_router(member_router)
+app.include_router(clan_router)
 
 
 def get_env(request: Request) -> Any:
