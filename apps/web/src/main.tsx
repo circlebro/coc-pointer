@@ -1,5 +1,6 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import { ClanTitle } from "./pages/ClanTitle";
 import { Members } from "./pages/Members";
 
 const root = document.getElementById("root");
@@ -9,7 +10,7 @@ if (root === null) {
 
 createRoot(root).render(
   <StrictMode>
-    <h1>클랜원</h1>
+    <ClanTitle />
     <Members />
   </StrictMode>,
 );
