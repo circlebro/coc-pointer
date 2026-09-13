@@ -1,6 +1,6 @@
 """명령줄에서 도는 일.
 
-지금은 클랜원 동기화 하나뿐이다. 예약 실행(Cron)은 클랜전 수집을 옮길 때
+지금은 클랜원과 클랜 동기화 둘이다. 예약 실행(Cron)은 클랜전 수집을 옮길 때
 함께 붙인다.
 
     cd apps/rest-api && uv run python src/cli.py refresh-members
@@ -21,10 +21,36 @@ from datetime import UTC, datetime
 from typing import Any
 
 import httpx
+from coc_core.clan.models import Clan
+from coc_core.clan.service import ClanService
 from coc_core.member.service import MemberService, SyncResult
 
+from adapters.clan_repository import D1ClanRepository
 from adapters.coc_api import CocApi
 from adapters.member_repository import D1MemberRepository
+
+
+async def refresh_clan(
+    db: Any,
+    token: str,
+    clan_tag: str,
+    now: str,
+    transport: httpx.AsyncBaseTransport | None = None,
+) -> Clan:
+    """CoC API 에서 클랜 정보를 받아 D1 에 맞춘다.
+
+    클랜원과 같은 요청에서 나오지만 부르는 자리는 갈라 둔다. 클랜만 갱신하고
+    싶을 때 클랜원까지 건드리지 않는다.
+    """
+    coc_api = CocApi(token=token, clan_tag=clan_tag, transport=transport)
+    try:
+        service = ClanService(
+            repository=D1ClanRepository(db),
+            source=coc_api,
+        )
+        return await service.sync(now=now)
+    finally:
+        await coc_api.aclose()
 
 
 async def refresh_members(
@@ -57,8 +83,9 @@ def main() -> int:
     D1 에 붙는 방법은 아직 정하지 않았다. 로컬에서는 wrangler 를 거치고
     Workers 안에서는 바인딩을 쓴다. 지금은 안내만 하고 빠진다.
     """
-    if len(sys.argv) < 2 or sys.argv[1] != "refresh-members":
-        print("쓰임: uv run python src/cli.py refresh-members")
+    commands = ("refresh-members", "refresh-clan")
+    if len(sys.argv) < 2 or sys.argv[1] not in commands:
+        print(f"쓰임: uv run python src/cli.py [{' | '.join(commands)}]")
         return 2
 
     token = os.environ.get("COC_API_TOKEN")

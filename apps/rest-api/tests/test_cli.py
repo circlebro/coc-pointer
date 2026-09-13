@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import httpx
 
-from cli import refresh_members
+from cli import refresh_clan, refresh_members
 
 NOW = "2026-09-10T05:30:00Z"
 
@@ -95,3 +95,47 @@ async def test_넘긴_시각이_그대로_담긴다(fake_db):
     ).all()
 
     assert [(r.created_at, r.updated_at) for r in rows.results] == [(NOW, NOW), (NOW, NOW)]
+
+
+async def test_클랜도_동기화한다(fake_db):
+    clan = await refresh_clan(
+        db=fake_db,
+        token="test-token",
+        clan_tag="#2C8L822LQ",
+        now=NOW,
+        transport=_transport(),
+    )
+
+    assert clan.external_id == "#2C8L822LQ"
+    assert clan.display_name == "미니언즈"  # 첫 동기화 때 CoC 이름으로 채운다
+    assert clan.created_at == NOW
+
+
+async def test_클랜이_실제로_저장된다(fake_db):
+    await refresh_clan(
+        db=fake_db,
+        token="test-token",
+        clan_tag="#2C8L822LQ",
+        now=NOW,
+        transport=_transport(),
+    )
+
+    rows = await fake_db.prepare("SELECT external_id, display_name, status FROM clans").all()
+
+    assert [(r.external_id, r.display_name, r.status) for r in rows.results] == [
+        ("#2C8L822LQ", "미니언즈", "ACTIVE")
+    ]
+
+
+async def test_클랜과_클랜원을_따로_부를_수_있다(fake_db):
+    """한 번의 CoC 요청에서 둘 다 나오지만 부르는 자리는 갈라 둔다.
+
+    클랜만 갱신하고 싶을 때 클랜원까지 건드리지 않는다.
+    """
+    await refresh_clan(
+        db=fake_db, token="t", clan_tag="#2C8L822LQ", now=NOW, transport=_transport()
+    )
+
+    members = await fake_db.prepare("SELECT COUNT(*) AS n FROM clan_members").first()
+
+    assert members.n == 0  # 클랜만 넣었으니 클랜원은 비어 있다
