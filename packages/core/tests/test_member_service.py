@@ -40,7 +40,7 @@ class FakeRepository:
         return self.rows.get(external_id)
 
     async def update_managed(self, member: ClanMember) -> None:
-        """실제 저장소처럼 우리가 정하는 값과 갱신 시각만 덮는다.
+        """실제 저장소처럼 사람이 정하는 값과 갱신 시각만 덮는다.
 
         CoC 가 주인인 열을 함께 덮으면, 서비스가 그것을 건드려도 테스트가
         알아채지 못한다.
@@ -49,8 +49,7 @@ class FakeRepository:
         self.rows[member.external_id] = ClanMember(
             **{
                 **before.__dict__,
-                "grade": member.grade,
-                "grade_reason": member.grade_reason,
+                "display_name": member.display_name,
                 "warnings": member.warnings,
                 "description": member.description,
                 "updated_at": member.updated_at,
@@ -165,6 +164,7 @@ async def test_동기화가_등급을_덮지_않는다():
     before = ClanMember(
         id="uuid-1",
         external_id="#A",
+        display_name=None,
         name="도토리",
         role=ClanRole.MEMBER,
         status=MemberStatus.ACTIVE,
@@ -208,6 +208,7 @@ def _member(**overrides) -> ClanMember:
     base = {
         "id": "uuid-1",
         "external_id": "#A",
+        "display_name": None,
         "name": "도토리",
         "role": ClanRole.MEMBER,
         "status": MemberStatus.ACTIVE,
@@ -231,50 +232,62 @@ LATER = "2026-09-14T09:00:00Z"
 
 
 async def test_보낸_값만_바꾼다():
-    """등급만 고치는 요청이 관리자 메모까지 지우면 안 된다."""
-    repository = FakeRepository([_member(description="부캐 아님", warnings=2)])
+    """경고만 올리는 요청이 관리자 메모까지 지우면 안 된다."""
+    repository = FakeRepository([_member(description="부캐 아님", display_name="도토리형")])
 
-    after = await MemberService(repository).update_managed("uuid-1", LATER, grade=MemberGrade.FIXED)
+    after = await MemberService(repository).update_managed("uuid-1", LATER, warnings=2)
 
     assert after is not None
-    assert after.grade is MemberGrade.FIXED
-    assert after.description == "부캐 아님"
     assert after.warnings == 2
+    assert after.description == "부캐 아님"
+    assert after.display_name == "도토리형"
     assert after.updated_at == LATER
 
 
 async def test_None_을_보내면_비운다():
     """'안 보냈다'와 '비워 달라'는 다른 요청이다."""
-    repository = FakeRepository([_member(grade_reason="길드장")])
+    repository = FakeRepository([_member(display_name="도토리형")])
 
-    after = await MemberService(repository).update_managed("uuid-1", LATER, grade_reason=None)
+    after = await MemberService(repository).update_managed("uuid-1", LATER, display_name=None)
 
     assert after is not None
-    assert after.grade_reason is None
+    assert after.display_name is None
 
 
 async def test_고친_값이_저장소에_남는다():
     repository = FakeRepository([_member()])
 
     await MemberService(repository).update_managed(
-        "uuid-1", LATER, grade=MemberGrade.EXCLUDED, grade_reason="쉬는 계정"
+        "uuid-1", LATER, display_name="도토리형", description="쉬는 계정"
     )
 
     saved = repository.rows["#A"]
-    assert saved.grade is MemberGrade.EXCLUDED
-    assert saved.grade_reason == "쉬는 계정"
+    assert saved.display_name == "도토리형"
+    assert saved.description == "쉬는 계정"
 
 
 async def test_CoC_가_주인인_값은_건드리지_않는다():
     """이름과 직책은 동기화가 맡는다. 수정이 함께 덮으면 두 자리가 같은 값을 쓴다."""
     repository = FakeRepository([_member(name="도토리", trophies=4200)])
 
-    await MemberService(repository).update_managed("uuid-1", LATER, grade=MemberGrade.FIXED)
+    await MemberService(repository).update_managed("uuid-1", LATER, display_name="도토리형")
 
     saved = repository.rows["#A"]
     assert saved.name == "도토리"
     assert saved.role is ClanRole.MEMBER
     assert saved.trophies == 4200
+
+
+async def test_등급은_수정으로_바뀌지_않는다():
+    """등급은 그달 점수가 정하는 값이라 사람이 손대는 자리가 없다."""
+    repository = FakeRepository([_member(grade=MemberGrade.FIXED, grade_reason="길드장")])
+
+    await MemberService(repository).update_managed("uuid-1", LATER, warnings=1)
+
+    saved = repository.rows["#A"]
+    assert saved.grade is MemberGrade.FIXED
+    assert saved.grade_reason == "길드장"
+
 
 
 async def test_없는_식별자면_None():
@@ -290,3 +303,24 @@ async def test_경고_횟수는_음수가_될_수_없다():
         await MemberService(repository).update_managed("uuid-1", LATER, warnings=-1)
 
     assert repository.rows["#A"].warnings == 0
+
+
+async def test_동기화는_사람이_정한_표기를_채우지도_덮지도_않는다():
+    """채우면 사람이 정한 것인지 동기화가 쓴 것인지 구분할 수 없다."""
+    repository = FakeRepository([_member(display_name="도토리형")])
+    source = FakeSource([_raw("#A", "도토리")])
+
+    await MemberService(repository, source).sync(now=NOW)
+
+    assert repository.rows["#A"].display_name == "도토리형"
+
+
+async def test_처음_보는_사람의_표기는_비어_있다():
+    repository = FakeRepository()
+    source = FakeSource([_raw("#A", "도토리")])
+
+    await MemberService(repository, source).sync(now=NOW)
+
+    added = repository.rows["#A"]
+    assert added.display_name is None
+    assert added.name == "도토리"

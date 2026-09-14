@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { fetchMembers, type MemberWithProfile } from "../api/client";
-import { gradeLabel, roleLabel, statusLabel } from "../labels";
+import { roleLabel, statusLabel } from "../labels";
 
 type State =
   | { kind: "loading" }
@@ -12,7 +12,8 @@ export function Members() {
 
   const load = () => {
     setState({ kind: "loading" });
-    // 이 표는 닉네임과 직책, 홀·트로피·기부를 보여주므로 profile 이 필요하다.
+    // 이 표는 직책과 홀·트로피·기부를 보여주고, 표기가 비었을 때 CoC 이름으로
+    // 대신해야 하므로 profile 이 필요하다.
     fetchMembers(["profile"])
       .then((body) =>
         setState({ kind: "ready", members: body.members as MemberWithProfile[] }),
@@ -48,7 +49,6 @@ export function Members() {
           <th>닉네임</th>
           <th>태그</th>
           <th>직책</th>
-          <th>등급</th>
           <th>상태</th>
           <th>홀</th>
           <th>트로피</th>
@@ -58,10 +58,11 @@ export function Members() {
       <tbody>
         {state.members.map((member) => (
           <tr key={member.id}>
-            <td>{member.profile.name}</td>
+            {/* 사람이 정한 표기가 없으면 CoC 이름으로 대신한다. 서버는 "없다"는
+                사실만 내보내고, 무엇을 대신 보여줄지는 화면이 정한다. */}
+            <td>{member.displayName ?? member.profile.name}</td>
             <td>{member.externalId}</td>
             <td>{roleLabel(member.profile.role)}</td>
-            <td>{gradeLabel(member.grade)}</td>
             <td>{statusLabel(member.status)}</td>
             <td>{member.profile.townhall ?? "-"}</td>
             <td>{member.profile.trophies ?? "-"}</td>

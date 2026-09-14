@@ -67,13 +67,19 @@ class ClanMember:
     grade·grade_reason·warnings 는 우리가 정하는 값이라 동기화가 덮어쓰지 않는다.
     CoC 는 이런 것을 모른다.
 
+    display_name 과 name 도 다르다. 앞은 사람이 정한 표기라 아무도 고치지 않았으면
+    None 이고, 뒤는 CoC 가 지금 들고 있는 이름이라 동기화가 늘 덮는다. 동기화는
+    display_name 을 채우지 않는다. 채우면 그 값이 사람이 정한 것인지 동기화가 써
+    넣은 것인지 구분할 수 없다. 비었을 때 무엇을 보여줄지는 화면이 정한다.
+
     updated_at 과 synced_at 은 다르다. 앞은 이 행이 마지막으로 바뀐 시각이라
-    등급을 고쳐도 올라가고, 뒤는 CoC 가 준 값을 받아 적은 시각이라 동기화만
-    올린다. 둘을 하나로 두면 등급만 고친 뒤에도 "방금 받은 값"처럼 보인다.
+    메모를 고쳐도 올라가고, 뒤는 CoC 가 준 값을 받아 적은 시각이라 동기화만
+    올린다. 둘을 하나로 두면 메모만 고친 뒤에도 "방금 받은 값"처럼 보인다.
     """
 
     id: str
     external_id: str
+    display_name: str | None
     name: str
     role: ClanRole
     status: MemberStatus

@@ -19,6 +19,7 @@ def _member(external_id: str, name: str, **overrides) -> ClanMember:
     base = {
         "id": f"uuid-{external_id.lstrip('#')}",
         "external_id": external_id,
+        "display_name": None,
         "name": name,
         "role": ClanRole.MEMBER,
         "status": MemberStatus.ACTIVE,
@@ -173,7 +174,7 @@ async def test_없는_식별자면_None(fake_db):
     assert await repository.find_by_id("uuid-없음") is None
 
 
-async def test_우리가_정하는_값만_덮는다(fake_db):
+async def test_사람이_정하는_값만_덮는다(fake_db):
     """수정이 이름과 트로피까지 덮으면 동기화와 같은 열을 두 자리에서 쓰게 된다."""
     repository = D1MemberRepository(fake_db)
     await repository.upsert_many([_member("#A", "도토리")])
@@ -182,8 +183,7 @@ async def test_우리가_정하는_값만_덮는다(fake_db):
         _member(
             "#A",
             "바뀐이름",
-            grade=MemberGrade.FIXED,
-            grade_reason="길드장",
+            display_name="도토리형",
             warnings=3,
             description="메모",
             trophies=9999,
@@ -193,8 +193,7 @@ async def test_우리가_정하는_값만_덮는다(fake_db):
 
     found = await repository.find_by_external_id("#A")
     assert found is not None
-    assert found.grade is MemberGrade.FIXED
-    assert found.grade_reason == "길드장"
+    assert found.display_name == "도토리형"
     assert found.warnings == 3
     assert found.description == "메모"
     assert found.updated_at == LATER
@@ -202,9 +201,29 @@ async def test_우리가_정하는_값만_덮는다(fake_db):
     assert found.trophies == 4200
 
 
-async def test_수정도_모르는_등급은_표가_거부한다(fake_db):
+async def test_수정은_등급을_건드리지_않는다(fake_db):
+    """등급은 그달 점수가 정하는 값이라 수정 경로에 자리가 없다."""
+    repository = D1MemberRepository(fake_db)
+    await repository.upsert_many([_member("#A", "도토리", grade=MemberGrade.FIXED)])
+
+    await repository.update_managed(
+        _member("#A", "도토리", grade=MemberGrade.EXCLUDED, warnings=1, updated_at=LATER)
+    )
+
+    found = await repository.find_by_external_id("#A")
+    assert found is not None
+    assert found.warnings == 1
+    assert found.grade is MemberGrade.FIXED
+
+
+async def test_동기화는_사람이_정한_표기를_덮지_않는다(fake_db):
     repository = D1MemberRepository(fake_db)
     await repository.upsert_many([_member("#A", "도토리")])
+    await repository.update_managed(_member("#A", "도토리", display_name="도토리형"))
 
-    with pytest.raises(Exception, match="CHECK|constraint"):
-        await repository.update_managed(_member("#A", "도토리", grade="RESERVE"))  # type: ignore[arg-type]
+    await repository.upsert_many([_member("#A", "바뀐이름", display_name=None)])
+
+    found = await repository.find_by_external_id("#A")
+    assert found is not None
+    assert found.display_name == "도토리형"
+    assert found.name == "바뀐이름"

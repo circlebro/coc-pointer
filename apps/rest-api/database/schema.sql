@@ -76,7 +76,7 @@ CREATE TABLE clan_members (
   -- 관리자가 적는다. 동기화가 덮어쓰지 않는다
   description        TEXT
 , grade TEXT NOT NULL DEFAULT 'COMPETING'
-  CHECK (grade IN ('FIXED', 'COMPETING', 'EXCLUDED')), grade_reason TEXT, warnings INTEGER NOT NULL DEFAULT 0, synced_at TEXT);
+  CHECK (grade IN ('FIXED', 'COMPETING', 'EXCLUDED')), grade_reason TEXT, warnings INTEGER NOT NULL DEFAULT 0, synced_at TEXT, display_name TEXT);
 CREATE INDEX idx_clan_members_status ON clan_members(status);
 CREATE TABLE users (
   id            TEXT PRIMARY KEY,

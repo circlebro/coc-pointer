@@ -82,6 +82,9 @@ class MemberService:
                 ClanMember(
                     id=before.id if before else str(uuid.uuid4()),
                     external_id=external_id,
+                    # 사람이 정한 표기는 건드리지 않고, 없으면 없는 대로 둔다.
+                    # 채워 넣으면 사람이 정한 것인지 동기화가 쓴 것인지 알 수 없다.
+                    display_name=before.display_name if before else None,
                     name=raw["name"],
                     role=role,
                     status=MemberStatus.ACTIVE,
@@ -132,15 +135,17 @@ class MemberService:
         member_id: str,
         now: str,
         *,
-        grade: MemberGrade | Unset = UNSET,
-        grade_reason: str | None | Unset = UNSET,
+        display_name: str | None | Unset = UNSET,
         warnings: int | Unset = UNSET,
         description: str | None | Unset = UNSET,
     ) -> ClanMember | None:
-        """우리가 정하는 값을 고친다. 그 식별자를 가진 사람이 없으면 None.
+        """사람이 정하는 값을 고친다. 그 식별자를 가진 사람이 없으면 None.
 
-        넘기지 않은 값은 그대로 둔다. 그래서 등급만 바꾸려는 요청이 관리자
+        넘기지 않은 값은 그대로 둔다. 그래서 경고만 올리려는 요청이 관리자
         메모를 함께 지우는 일이 생기지 않는다.
+
+        등급은 여기서 고치지 않는다. 그달 점수가 정하는 값이라 사람이 손대는
+        것이 아니다. 수동 예외(확정 ●·제외 ✕)는 나중에 더한다.
 
         경고 횟수는 음수가 될 수 없다. 횟수를 세는 값이라 음수는 뜻을 갖지 않고,
         한번 들어가면 화면과 집계가 함께 어긋난다.
@@ -154,8 +159,7 @@ class MemberService:
 
         after = replace(
             before,
-            grade=before.grade if isinstance(grade, Unset) else grade,
-            grade_reason=before.grade_reason if isinstance(grade_reason, Unset) else grade_reason,
+            display_name=before.display_name if isinstance(display_name, Unset) else display_name,
             warnings=before.warnings if isinstance(warnings, Unset) else warnings,
             description=before.description if isinstance(description, Unset) else description,
             updated_at=now,

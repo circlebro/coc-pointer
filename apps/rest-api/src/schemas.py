@@ -53,12 +53,6 @@ class ClanRole(StrEnum):
     UNKNOWN = "UNKNOWN"
 
 
-class MemberGrade(StrEnum):
-    FIXED = "FIXED"
-    COMPETING = "COMPETING"
-    EXCLUDED = "EXCLUDED"
-
-
 class MemberStatus(StrEnum):
     ACTIVE = "ACTIVE"
     INACTIVE = "INACTIVE"
@@ -83,11 +77,10 @@ class MemberProfile(BaseModel):
 
 
 class MemberUpdate(BaseModel):
-    grade: MemberGrade | None = None
-    gradeReason: str | None = Field(
+    displayName: str | None = Field(
         None,
-        description='왜 그 등급인지. "길드장", "쉬는 계정" 같은 메모',
-        examples=["길드장"],
+        description="사람이 정한 표기. null 을 보내면 지우고 화면은 CoC 이름으로 돌아간다",
+        examples=["히로형"],
     )
     warnings: conint(ge=0) | None = Field(None, description="경고 횟수")
     description: str | None = Field(None, description="관리자 메모")
@@ -108,13 +101,12 @@ class Member(BaseModel):
         description="CoC 플레이어 태그. 이 값으로 CoC API 를 부른다",
         examples=["#2ABC123"],
     )
-    status: MemberStatus
-    grade: MemberGrade
-    gradeReason: str | None = Field(
+    displayName: str | None = Field(
         None,
-        description='왜 그 등급인지. "길드장", "쉬는 계정" 같은 메모',
-        examples=["길드장"],
+        description="사람이 정한 표기. 아무도 고치지 않았으면 null 이다",
+        examples=["히로형"],
     )
+    status: MemberStatus
     warnings: int = Field(..., description="경고 횟수. 표시만 하고 점수에 영향을 주지 않는다")
     description: str | None = Field(None, description="관리자 메모. 동기화가 덮어쓰지 않는다")
     createdAt: str = Field(

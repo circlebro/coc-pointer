@@ -7,8 +7,8 @@
 ``includes=profile`` 로 부를 때만 실린다. 명단만 필요한 요청에 그 비용을 얹지
 않으려는 것이며, 앞으로 사본을 걷어내면 그 덩어리가 진짜 CoC 호출이 된다.
 
-고칠 수 있는 값은 우리가 정하는 넷뿐이다(등급·등급 사유·경고 횟수·메모).
-이름이나 직책은 CoC 가 주인이라 여기서 받지 않는다.
+고칠 수 있는 값은 사람이 정하는 셋뿐이다(표기·경고 횟수·메모). 이름이나 직책은
+CoC 가 주인이라 여기서 받지 않고, 등급은 그달 점수가 정하는 값이라 받지 않는다.
 """
 
 from __future__ import annotations
@@ -102,9 +102,8 @@ def _to_schema(member: ClanMember, includes: set[MemberInclude]) -> MemberSchema
     fields = {
         "id": member.id,
         "externalId": member.external_id,
+        "displayName": member.display_name,
         "status": member.status,
-        "grade": member.grade,
-        "gradeReason": member.grade_reason,
         "warnings": member.warnings,
         "description": member.description,
         "createdAt": member.created_at,
@@ -159,18 +158,16 @@ async def update_member(
     if not sent:
         raise HTTPException(status_code=400, detail="고칠 값을 하나 이상 보내야 합니다")
 
-    # 스펙에서 등급과 경고 횟수는 비울 수 없는 값이다. 다만 생성 모델은 선택
-    # 사항인 필드를 모두 ``| None`` 으로 적으므로 null 이 그대로 들어온다.
-    # 여기서 막지 않으면 등급이 없는 클랜원이 만들어진다.
-    for field_name in ("grade", "warnings"):
-        if field_name in sent and getattr(body, field_name) is None:
-            raise HTTPException(status_code=400, detail=f"{field_name} 은 비울 수 없습니다")
+    # 스펙에서 경고 횟수는 비울 수 없는 값이다. 다만 생성 모델은 선택 사항인
+    # 필드를 모두 ``| None`` 으로 적으므로 null 이 그대로 들어온다. 여기서 막지
+    # 않으면 경고 횟수가 없는 클랜원이 만들어진다.
+    if "warnings" in sent and body.warnings is None:
+        raise HTTPException(status_code=400, detail="warnings 는 비울 수 없습니다")
 
     updated = await service.update_managed(
         memberId,
         _now(),
-        grade=body.grade if "grade" in sent else UNSET,
-        grade_reason=body.gradeReason if "gradeReason" in sent else UNSET,
+        display_name=body.displayName if "displayName" in sent else UNSET,
         warnings=body.warnings if "warnings" in sent else UNSET,
         description=body.description if "description" in sent else UNSET,
     )

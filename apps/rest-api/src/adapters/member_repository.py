@@ -17,8 +17,9 @@ from typing import Any
 from coc_core.member.models import ClanMember, ClanRole, MemberGrade, MemberStatus
 
 _COLUMNS = (
-    "id, external_id, name, role, townhall, trophies, donations, donations_received, "
-    "status, grade, grade_reason, warnings, created_at, updated_at, synced_at, description"
+    "id, external_id, display_name, name, role, townhall, trophies, donations, "
+    "donations_received, status, grade, grade_reason, warnings, created_at, updated_at, "
+    "synced_at, description"
 )
 
 _FIND_ALL = f"SELECT {_COLUMNS} FROM clan_members ORDER BY name"
@@ -29,15 +30,16 @@ _FIND_BY_EXTERNAL_ID = f"SELECT {_COLUMNS} FROM clan_members WHERE external_id =
 
 _COUNT_BY_EXTERNAL_ID = "SELECT COUNT(*) AS n FROM clan_members WHERE external_id = ?"
 
-# description·created_at·grade·grade_reason·warnings 는 갱신하지 않는다.
-# 우리가 정하는 값이라 동기화가 덮으면 안 된다. 처음 본 시각도 한 번만 정해진다.
+# display_name·description·created_at·grade·grade_reason·warnings 는 갱신하지 않는다.
+# 사람이 정하는 값이라 동기화가 덮으면 안 된다. 처음 본 시각도 한 번만 정해진다.
 # 그 값들을 바꾸는 일은 _UPDATE_MANAGED 가 따로 맡는다.
 _UPSERT = """
 INSERT INTO clan_members (
-  id, external_id, name, role, townhall, trophies, donations, donations_received,
-  status, grade, grade_reason, warnings, created_at, updated_at, synced_at, description
+  id, external_id, display_name, name, role, townhall, trophies, donations,
+  donations_received, status, grade, grade_reason, warnings, created_at, updated_at,
+  synced_at, description
 )
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 ON CONFLICT(external_id) DO UPDATE SET
   name               = excluded.name,
   role               = excluded.role,
@@ -50,12 +52,15 @@ ON CONFLICT(external_id) DO UPDATE SET
   synced_at          = excluded.synced_at
 """
 
-# 거꾸로 여기서는 우리가 정하는 값만 덮는다. 이름·직책·트로피를 함께 적으면
+# 거꾸로 여기서는 사람이 정하는 값만 덮는다. 이름·직책·트로피를 함께 적으면
 # 동기화와 이 경로가 같은 열을 두 자리에서 쓰게 되고, 나중에 어느 쪽이 마지막
 # 값을 넣었는지 알 수 없게 된다.
+#
+# grade·grade_reason 은 아직 여기 없다. 등급은 그달 점수가 정하는 값이라 사람이
+# 고치지 않는다. 수동 예외(확정 ●·제외 ✕)는 나중에 더한다.
 _UPDATE_MANAGED = """
 UPDATE clan_members
-   SET grade = ?, grade_reason = ?, warnings = ?, description = ?, updated_at = ?
+   SET display_name = ?, warnings = ?, description = ?, updated_at = ?
  WHERE id = ?
 """
 
@@ -66,6 +71,7 @@ def _to_member(row: Any) -> ClanMember:
     return ClanMember(
         id=row.id,
         external_id=row.external_id,
+        display_name=row.display_name,
         name=row.name,
         role=ClanRole(row.role),
         status=MemberStatus(row.status),
@@ -105,8 +111,7 @@ class D1MemberRepository:
         await (
             self._db.prepare(_UPDATE_MANAGED)
             .bind(
-                str(member.grade),
-                member.grade_reason,
+                member.display_name,
                 member.warnings,
                 member.description,
                 member.updated_at,
@@ -126,6 +131,7 @@ class D1MemberRepository:
                 .bind(
                     m.id,
                     m.external_id,
+                    m.display_name,
                     m.name,
                     str(m.role),
                     m.townhall,

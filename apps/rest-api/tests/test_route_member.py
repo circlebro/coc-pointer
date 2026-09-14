@@ -27,6 +27,7 @@ def _member(external_id: str, name: str, **overrides) -> ClanMember:
     base = {
         "id": f"uuid-{external_id.lstrip('#')}",
         "external_id": external_id,
+        "display_name": None,
         "name": name,
         "role": ClanRole.MEMBER,
         "status": MemberStatus.ACTIVE,
@@ -123,19 +124,19 @@ def test_없는_식별자면_404(client, fake_db):
     assert "detail" in response.json()
 
 
-def test_등급을_고친다(client, fake_db):
+def test_표기를_고친다(client, fake_db):
     _seed(fake_db, [_member("#A", "도토리")])
 
     response = client.patch(
         "/api/v1/members/uuid-A",
-        json={"grade": "FIXED", "gradeReason": "길드장"},
+        json={"displayName": "도토리형", "description": "부캐 아님"},
     )
 
     assert response.status_code == 200
     body = response.json()
-    assert body["grade"] == "FIXED"
-    assert body["gradeReason"] == "길드장"
-    assert client.get("/api/v1/members/uuid-A").json()["grade"] == "FIXED"
+    assert body["displayName"] == "도토리형"
+    assert body["description"] == "부캐 아님"
+    assert client.get("/api/v1/members/uuid-A").json()["displayName"] == "도토리형"
 
 
 def test_보내지_않은_값은_그대로다(client, fake_db):
@@ -148,11 +149,12 @@ def test_보내지_않은_값은_그대로다(client, fake_db):
 
 
 def test_null_을_보내면_비운다(client, fake_db):
-    _seed(fake_db, [_member("#A", "도토리", grade_reason="길드장")])
+    """표기를 지우면 화면은 CoC 이름으로 돌아간다."""
+    _seed(fake_db, [_member("#A", "도토리", display_name="도토리형")])
 
-    body = client.patch("/api/v1/members/uuid-A", json={"gradeReason": None}).json()
+    body = client.patch("/api/v1/members/uuid-A", json={"displayName": None}).json()
 
-    assert body["gradeReason"] is None
+    assert body["displayName"] is None
 
 
 def test_고친_뒤_갱신_시각이_올라간다(client, fake_db):
@@ -171,10 +173,10 @@ def test_CoC_가_주인인_값은_고칠_수_없다(client, fake_db):
     body = client.patch(
         "/api/v1/members/uuid-A",
         params={"includes": "profile"},
-        json={"grade": "FIXED", "name": "바뀐이름"},
+        json={"warnings": 1, "name": "바뀐이름"},
     ).json()
 
-    assert body["grade"] == "FIXED"
+    assert body["warnings"] == 1
     assert body["profile"]["name"] == "도토리"
 
 
@@ -194,7 +196,6 @@ def test_고칠_값을_하나도_안_보내면_400(client, fake_db):
 def test_비울_수_없는_값에_null_을_보내면_400(client, fake_db):
     _seed(fake_db, [_member("#A", "도토리")])
 
-    assert client.patch("/api/v1/members/uuid-A", json={"grade": None}).status_code == 400
     assert client.patch("/api/v1/members/uuid-A", json={"warnings": None}).status_code == 400
 
 
@@ -205,16 +206,20 @@ def test_경고_횟수가_음수면_422(client, fake_db):
     assert client.patch("/api/v1/members/uuid-A", json={"warnings": -1}).status_code == 422
 
 
-def test_모르는_등급이면_422(client, fake_db):
-    _seed(fake_db, [_member("#A", "도토리")])
+def test_등급은_고칠_수_없다(client, fake_db):
+    """등급은 그달 점수가 정하는 값이라 수정 본문에 자리가 없다.
 
-    assert client.patch("/api/v1/members/uuid-A", json={"grade": "RESERVE"}).status_code == 422
+    모르는 키라 조용히 무시되고, 남은 값이 없으므로 400 이 된다.
+    """
+    _seed(fake_db, [_member("#A", "도토리", grade=MemberGrade.COMPETING)])
+
+    assert client.patch("/api/v1/members/uuid-A", json={"grade": "FIXED"}).status_code == 400
 
 
 def test_없는_사람을_고치면_404(client, fake_db):
     _seed(fake_db, [_member("#A", "도토리")])
 
-    response = client.patch("/api/v1/members/uuid-없음", json={"grade": "FIXED"})
+    response = client.patch("/api/v1/members/uuid-없음", json={"warnings": 1})
 
     assert response.status_code == 404
 
@@ -229,9 +234,8 @@ def test_기본_응답에는_profile_이_없다(client, fake_db):
     assert set(member) == {
         "id",
         "externalId",
+        "displayName",
         "status",
-        "grade",
-        "gradeReason",
         "warnings",
         "description",
         "createdAt",
@@ -271,10 +275,10 @@ def test_고친_뒤에도_profile_을_고른다(client, fake_db):
     body = client.patch(
         "/api/v1/members/uuid-A",
         params={"includes": "profile"},
-        json={"grade": "FIXED"},
+        json={"displayName": "도토리형"},
     ).json()
 
-    assert body["grade"] == "FIXED"
+    assert body["displayName"] == "도토리형"
     assert body["profile"]["name"] == "도토리"
 
 
@@ -303,7 +307,7 @@ def test_동기화_시각과_갱신_시각은_따로_움직인다(client, fake_d
     body = client.patch(
         "/api/v1/members/uuid-A",
         params={"includes": "profile"},
-        json={"grade": "FIXED"},
+        json={"warnings": 1},
     ).json()
 
     assert body["updatedAt"] > NOW

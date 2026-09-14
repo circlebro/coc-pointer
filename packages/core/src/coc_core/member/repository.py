@@ -36,11 +36,13 @@ class MemberRepository(Protocol):
         ...
 
     async def update_managed(self, member: ClanMember) -> None:
-        """우리가 정하는 값만 덮어쓴다.
+        """사람이 정하는 값만 덮어쓴다.
 
-        grade, grade_reason, warnings, description, updated_at 다섯이다.
+        display_name, warnings, description, updated_at 넷이다.
         이름·직책·트로피처럼 CoC 가 주인인 값은 건드리지 않는다. 그런 값은
         동기화가 맡으므로, 여기서 함께 덮으면 두 자리가 같은 값을 쓰게 된다.
+
+        등급은 여기 없다. 그달 점수가 정하는 값이라 사람이 고치지 않는다.
         """
         ...
 

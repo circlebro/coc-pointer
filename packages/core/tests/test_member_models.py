@@ -37,6 +37,7 @@ def _member(**overrides) -> ClanMember:
     base = {
         "id": "0198f0c1-0000-7000-8000-000000000001",
         "external_id": "#2ABC123",
+        "display_name": None,
         "name": "도토리",
         "role": ClanRole.ADMIN,
         "status": MemberStatus.ACTIVE,

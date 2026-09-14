@@ -2,7 +2,6 @@ import type { components } from "./api/schema";
 
 type ClanRole = components["schemas"]["ClanRole"];
 type MemberStatus = components["schemas"]["MemberStatus"];
-type MemberGrade = components["schemas"]["MemberGrade"];
 
 // Record 로 적어 두면 서버가 값을 늘렸을 때 여기 빠진 것이 빌드에서 걸린다.
 // 그것이 없으면 화면에 "VETERAN" 같은 코드가 그대로 나와 버그처럼 보인다.
@@ -12,14 +11,6 @@ const ROLE_LABEL: Record<ClanRole, string> = {
   ADMIN: "장로",
   MEMBER: "멤버",
   UNKNOWN: "알 수 없음",
-};
-
-// 시트가 쓰던 기호를 그대로 쓴다. 운영진이 읽던 표기라 설명이 필요 없다.
-// 예비 ◎ 는 여기 없다. 그달 점수 순위로 갈리는 값이라 서버가 따로 알려준다.
-const GRADE_LABEL: Record<MemberGrade, string> = {
-  FIXED: "확정 ●",
-  COMPETING: "경쟁 △",
-  EXCLUDED: "제외 ✕",
 };
 
 const STATUS_LABEL: Record<MemberStatus, string> = {
@@ -33,6 +24,3 @@ export const roleLabel = (role: string): string =>
 
 export const statusLabel = (status: string): string =>
   STATUS_LABEL[status as MemberStatus] ?? "알 수 없음";
-
-export const gradeLabel = (grade: string): string =>
-  GRADE_LABEL[grade as MemberGrade] ?? "알 수 없음";

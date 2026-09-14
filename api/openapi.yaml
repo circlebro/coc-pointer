@@ -88,7 +88,7 @@ paths:
         "400":
           description: |
             본문이 규칙에 맞지 않다. 고칠 값을 하나도 보내지 않았거나,
-            비울 수 없는 값(grade, warnings)에 null 을 보냈다
+            비울 수 없는 값(warnings)에 null 을 보냈다
           content:
             application/json:
               schema:
@@ -211,18 +211,6 @@ components:
         UNKNOWN 은 CoC 가 우리가 모르는 값을 보냈다는 뜻이다.
       enum: [LEADER, COLEADER, ADMIN, MEMBER, UNKNOWN]
 
-    MemberGrade:
-      type: string
-      description: |
-        리그전 선발에서의 자리. 넷 가운데 둘만 여기 담는다.
-
-        사람이 매기는 것 — FIXED(확정 ●), EXCLUDED(제외 ✕)
-        계산되는 것 — 경쟁 △, 예비 ◎ 는 그 달 점수 순위가 가른다.
-        30위 안이면 경쟁, 밖이면 예비다. 매달 바뀌므로 담지 않는다.
-
-        아무것도 매기지 않으면 COMPETING 이다.
-      enum: [FIXED, COMPETING, EXCLUDED]
-
     MemberStatus:
       type: string
       description: |
@@ -234,6 +222,15 @@ components:
       type: string
       description: |
         includes 로 고를 수 있는 덩어리 이름.
+
+        어휘는 둘로 정해져 있다.
+
+          profile  CoC 가 주인인 값 — 이름·직책·홀·트로피·기부
+          league   리그전 관련 — 그달 등급·점수·순위
+
+        league 는 아직 여기 없다. 그달 점수가 있어야 나오는데 클랜전 기록이
+        아직 들어오지 않았다. 그 티켓에서 값을 더한다. 없는 것을 미리 적어 두면
+        부르는 쪽이 있다고 믿는다.
       enum: [profile]
 
     Member:
@@ -241,20 +238,24 @@ components:
       description: |
         클랜원 한 명. 게임 계정 하나를 가리키며 사람이 아니다.
 
-        여기 담는 것은 우리 DB 한 행을 읽으면 나오는 값뿐이다. CoC 를 부르지도
-        않고 무엇을 계산하지도 않는다. 명단만 필요한 요청에 그 비용을 얹지
+        여기 담는 것은 우리가 주인인 값뿐이다. DB 한 행을 읽으면 나오고, CoC 를
+        부르지도 무엇을 계산하지도 않는다. 명단만 필요한 요청에 그 비용을 얹지
         않으려는 것이다.
 
         id 는 우리 식별자이고 externalId 는 CoC 세계의 식별자다. 주소에서
         '#' 을 인코딩하지 않으려고 따로 둔다. Clan 과 같은 규칙이다.
 
         이름과 직책은 여기 없다. CoC 가 주인인 값이라 profile 로 내렸다.
-        includes=profile 로 부르면 실려 온다.
+        등급도 여기 없다. 그달 점수가 정하는 값이라 league 가 맡는다.
+
+        displayName 은 사람이 정한 표기이며 동기화가 채우지 않는다. 채우면 그
+        값이 사람이 정한 것인지 동기화가 써 넣은 것인지 구분할 수 없다. 비었을
+        때 무엇을 보여줄지는 화면이 정한다 — profile.name 으로 대신하는 것이
+        보통이다.
       required:
         - id
         - externalId
         - status
-        - grade
         - warnings
         - createdAt
         - updatedAt
@@ -267,15 +268,13 @@ components:
           type: string
           description: CoC 플레이어 태그. 이 값으로 CoC API 를 부른다
           example: "#2ABC123"
-        status:
-          $ref: "#/components/schemas/MemberStatus"
-        grade:
-          $ref: "#/components/schemas/MemberGrade"
-        gradeReason:
+        displayName:
           type: string
           nullable: true
-          description: 왜 그 등급인지. "길드장", "쉬는 계정" 같은 메모
-          example: "길드장"
+          description: 사람이 정한 표기. 아무도 고치지 않았으면 null 이다
+          example: "히로형"
+        status:
+          $ref: "#/components/schemas/MemberStatus"
         warnings:
           type: integer
           description: 경고 횟수. 표시만 하고 점수에 영향을 주지 않는다
@@ -332,19 +331,19 @@ components:
     MemberUpdate:
       type: object
       description: |
-        클랜원에게서 우리가 정하는 값. PATCH 의 본문이다.
+        클랜원에게서 사람이 정하는 값. PATCH 의 본문이다.
 
         전부 선택 사항이며, 보낸 것만 바뀐다. 값을 비우려면 null 을 보낸다.
         하나도 보내지 않으면 고칠 것이 없으므로 거절한다.
+
+        등급은 여기 없다. 그달 점수가 정하는 값이라 사람이 고치지 않는다.
       minProperties: 1
       properties:
-        grade:
-          $ref: "#/components/schemas/MemberGrade"
-        gradeReason:
+        displayName:
           type: string
           nullable: true
-          description: 왜 그 등급인지. "길드장", "쉬는 계정" 같은 메모
-          example: "길드장"
+          description: 사람이 정한 표기. null 을 보내면 지우고 화면은 CoC 이름으로 돌아간다
+          example: "히로형"
         warnings:
           type: integer
           minimum: 0
