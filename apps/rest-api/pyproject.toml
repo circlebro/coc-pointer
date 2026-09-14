@@ -1,0 +1,74 @@
+[project]
+name = "coc-api"
+version = "0.6.0"
+description = "coc-pointer API 서버 (Cloudflare Python Workers)"
+authors = [
+    { name = "박원형", email = "circle@mz.co.kr" }
+]
+requires-python = ">=3.13"
+# coc_core 는 여기 의존성으로 넣지 않는다. deploy.sh 4단계가 packages/core의
+# 소스를 그대로 src/coc_core 로 복사해 번들에 넣기 때문에(PyPI에 없는 로컬
+# 전용 패키지라 pywrangler 가 대신 받아 줄 수 없다) 설치가 필요 없다. 넣어
+# 두면 `pywrangler sync`/`deploy` 가 coc-core 를 pip 설치하려다 wasm 휠이
+# 없어 "can't be installed because it is marked as --no-build but has no
+# binary distribution" 로 실패한다. 로컬 테스트에서 coc_core 를 여전히 쓸 수
+# 있는 건 워크스페이스의 다른 멤버(apps/web)가 이 패키지를 의존성으로 갖고
+# 있어 같은 .venv 에 이미 설치되어 있기 때문이다.
+dependencies = [
+    "fastapi>=0.115",
+    # coc_core 가 쓰는 것을 여기에 대신 적는다. 위 주석대로 coc_core 자체는
+    # 의존성으로 넣지 않고 deploy.sh 가 소스를 복사하므로, 그 안에서 무엇을
+    # 부르는지 pywrangler 가 알 방법이 없다. 그래서 번들에 실리지 않고
+    # /api/health 가 "No module named 'yaml'" 로 실패한다. 실제 배포에서
+    # 겪었다. coc_core 에 바깥 꾸러미를 새로 들이면 여기에도 함께 적어야 한다.
+    # 하한을 6.0 으로 두는 까닭은 packages/core/pyproject.toml 에 적혀 있다.
+    "pyyaml>=6.0",
+    # coc_core.scoring 의 KST = ZoneInfo("Asia/Seoul") 이 시간대 자료를 읽는다.
+    # zoneinfo 는 표준 라이브러리지만 자료까지 들고 있지는 않아서, 보통은
+    # 운영체제가 가진 것을 쓴다. Workers(Pyodide)에는 그것이 없어 이 꾸러미를
+    # 실어야 한다. 없으면 ZoneInfoNotFoundError 가 난다. 실제 배포에서 겪었다.
+    "tzdata",
+]
+
+# [project.scripts] 를 두지 않는다. 바로 아래 [tool.uv] 가 package = false 라
+# 이 앱은 설치되지 않으므로 진입점을 적어도 .venv/bin 에 생기지 않는다. 실제로
+# 적어 두었다가 `uv run coc-api` 가 "Failed to spawn" 으로 죽는 것을 확인했다.
+# 명령을 부르는 방법은 src/cli.py 의 설명글에 적어 두었다.
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "ruff>=0.16.6",
+    "httpx>=0.28.1",
+    "pytest-asyncio>=1.0",
+    "workers-py",
+    "workers-runtime-sdk",
+    "datamodel-code-generator>=0.28",
+]
+
+# apps/rest-api 는 파이썬 휠이 아니라 Cloudflare Workers 번들로 배포된다 (deploy.sh 가
+# pywrangler 를 거쳐 올린다). src/ 에 db.py·worker.py 가 모듈로 직접 놓여
+# `uv_build` 가 기대하는 src/<패키지명>/ 구조가 아니므로 uv 의 빌드·설치
+# 대상에서 빼고, 의존성만 워크스페이스에 반영되게 한다.
+[tool.uv]
+package = false
+
+[tool.ruff]
+# py313: 이 앱은 Cloudflare Workers(Pyodide, 파이썬 3.13.2)에 배포된다.
+# py314로 두면 ruff가 3.14 전용 문법으로 재포맷해 배포를 막을 수 있다.
+target-version = "py313"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.pytest.ini_options]
+# 루트 pyproject.toml 과 같은 이유로 둔다. pytest 는 인자에 따라 다른 설정
+# 파일을 고르므로 범위마다 같은 설정이 있어야 한다.
+addopts = "--import-mode=importlib"
+testpaths = ["tests"]
+asyncio_mode = "auto"
+# packages/core/src 를 앞에 둔다. src/coc_core 는 deploy.sh 가 만드는 배포용
+# 복사본이라 하위 패키지가 빠져 있을 수 있고, 그것이 먼저 발견되면 테스트가
+# 옛 사본을 보게 된다. 루트 pyproject.toml 에도 같은 이유로 같은 순서를 둔다.
+pythonpath = ["../../packages/core/src", "src"]

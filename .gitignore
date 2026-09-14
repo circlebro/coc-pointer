@@ -8,7 +8,7 @@ dist/
 .superpowers/
 site/
 data/in-progress/
-apps/api/src/coc_core/
+apps/rest-api/src/coc_core/
 node_modules/
-apps/api/.venv-workers/
-apps/api/python_modules/
+apps/rest-api/.venv-workers/
+apps/rest-api/python_modules/

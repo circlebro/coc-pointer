@@ -20,7 +20,7 @@ uv run ruff format .             # format (use --check in CI)
 uv add <pkg>                     # add a runtime dependency
 uv add --dev <pkg>               # add a dev-only dependency
 
-./scripts/generate-from-contract.sh   # contracts/openapi.yaml -> server models + TS types
+./scripts/generate-from-spec.sh   # api/openapi.yaml -> server models + TS types
 ./scripts/dump-schema.sh              # migrations -> database/schema.sql snapshot
 cd apps/web && npm run build          # type-check and build the React app into dist/
 ```
@@ -46,7 +46,7 @@ under `packages/`, and shared inputs at the root.
 - `packages/core/`: Python package `coc_core` — models, config, scoring, rewards, plus
   `testing.py` with the War/WarMember builders both test suites use. Depends on nothing
   in `apps/`; both apps depend on it.
-- `apps/api/`: Python app on Cloudflare Workers — the API server and the scheduled
+- `apps/rest-api/`: Python app on Cloudflare Workers — the API server and the scheduled
   collector. `src/worker.py` wires the app, `src/routes/` holds the HTTP paths and
   `src/adapters/` the driven adapters (CoC API, D1). `database/migrations/` is the
   source of truth for the schema — numbered files applied in order, which D1 records
@@ -63,7 +63,7 @@ under `packages/`, and shared inputs at the root.
 **Every app treats every other app as a stranger.** They talk over HTTP and nothing else,
 so any one of them could be split out and deployed on its own without the others noticing.
 
-- **The contract is the only seam.** `contracts/openapi.yaml` is written by hand and is the
+- **The contract is the only seam.** `api/openapi.yaml` is written by hand and is the
   single source of truth; server models and frontend types are generated from it and are
   never hand-edited. One spec, not one per side — two specs mean neither is the contract.
 - **The frontend is a stranger too.** Browsers cache old JavaScript, so a deployed frontend
@@ -98,20 +98,20 @@ services ever diverge.
 
 ## Deploying the API
 
-`apps/api/` deploys to Cloudflare Workers via `./apps/api/deploy.sh`. Design: `docs/superpowers/specs/2026-09-10-backend-server-design.md`.
+`apps/rest-api/` deploys to Cloudflare Workers via `./apps/rest-api/deploy.sh`. Design: `docs/superpowers/specs/2026-09-10-backend-server-design.md`.
 
-**Why `pywrangler` and not `wrangler`** — `apps/api` depends on FastAPI, a third-party package. Plain `wrangler deploy` does not bundle third-party packages into a Python Worker, so the deployed code fails at `import fastapi`. `pywrangler` (devDependency `workers-py`) reads `apps/api/pyproject.toml` and vendors the dependencies before deploying. Never revert `deploy.sh` to plain `wrangler deploy` — it will look like it worked and then fail on every request.
+**Why `pywrangler` and not `wrangler`** — `apps/rest-api` depends on FastAPI, a third-party package. Plain `wrangler deploy` does not bundle third-party packages into a Python Worker, so the deployed code fails at `import fastapi`. `pywrangler` (devDependency `workers-py`) reads `apps/rest-api/pyproject.toml` and vendors the dependencies before deploying. Never revert `deploy.sh` to plain `wrangler deploy` — it will look like it worked and then fail on every request.
 
-**Cloudflare Workers Python is pinned to 3.13.2** (Pyodide 0.28.3 — not our choice, not configurable). `apps/api` and `packages/core` (which it depends on, and which `apps/web`/GitHub Actions also use at 3.14) must therefore stay importable under Python 3.13: no 3.14-only syntax — e.g. PEP 758's unparenthesized `except TypeError, ValueError:` — anywhere in `packages/core/src/coc_core/` or `apps/api/src/`. `requires-python` in both `packages/core/pyproject.toml` and `apps/api/pyproject.toml` is `>=3.13` for this reason; leave it there even though the workspace root and `apps/web` stay on `>=3.14`. `packages/core/tests/test_py313_syntax.py` parses every `coc_core` source file with `ast.parse(..., feature_version=(3, 13))` so a 3.14-only construct fails `pytest` immediately instead of surfacing only when `pywrangler sync`/`deploy` runs against the real Workers Python.
+**Cloudflare Workers Python is pinned to 3.13.2** (Pyodide 0.28.3 — not our choice, not configurable). `apps/rest-api` and `packages/core` (which it depends on, and which `apps/web`/GitHub Actions also use at 3.14) must therefore stay importable under Python 3.13: no 3.14-only syntax — e.g. PEP 758's unparenthesized `except TypeError, ValueError:` — anywhere in `packages/core/src/coc_core/` or `apps/rest-api/src/`. `requires-python` in both `packages/core/pyproject.toml` and `apps/rest-api/pyproject.toml` is `>=3.13` for this reason; leave it there even though the workspace root and `apps/web` stay on `>=3.14`. `packages/core/tests/test_py313_syntax.py` parses every `coc_core` source file with `ast.parse(..., feature_version=(3, 13))` so a 3.14-only construct fails `pytest` immediately instead of surfacing only when `pywrangler sync`/`deploy` runs against the real Workers Python.
 
 **First deploy:**
 
 1. Authenticate, one of two ways (see table below). `npx wrangler@4 login` opens a browser; approve it once and the credential is cached under `~/Library/Preferences/.wrangler/` (macOS) — the same spot on every later invocation, so this is a one-time step, like `aws sso login`.
-2. Run `./apps/api/deploy.sh`.
-3. Commit the `database_id` change in `apps/api/wrangler.toml`. The script writes it after creating the D1 database. Skip this and the next clone or worktree creates a second database — data splits across two databases with no way to tell which is authoritative.
-4. Append `/api/health` to the printed URL and open it. Success looks like `coc_core: "ok"` and eight tables.
+2. Run `./apps/rest-api/deploy.sh`.
+3. Commit the `database_id` change in `apps/rest-api/wrangler.toml`. The script writes it after creating the D1 database. Skip this and the next clone or worktree creates a second database — data splits across two databases with no way to tell which is authoritative.
+4. Append `/api/health` to the printed URL and open it. Success looks like `coc_core: "ok"` and nine tables.
 
-**Redeploy:** `./apps/api/deploy.sh` — one line. It re-copies `coc_core`, applies any
+**Redeploy:** `./apps/rest-api/deploy.sh` — one line. It re-copies `coc_core`, applies any
 migration D1 has not recorded yet, and deploys. Migrations that already ran are skipped,
 so running it twice is safe. A migration that has shipped is never edited — add a new
 numbered file instead, and remember SQLite cannot add a constraint to an existing table.
@@ -161,9 +161,9 @@ version put which change in front of the clan.
 - Version is `0.MINOR.PATCH` while the project is still taking shape. A new feature bumps
   MINOR; a fix-only deploy bumps PATCH. `1.0.0` waits until the site fully replaces the
   spreadsheet it was built to replace.
-- Releasing, in order: bump `version` in `apps/web/pyproject.toml`, `apps/api/pyproject.toml` and
-  `packages/core/pyproject.toml`, `info.version` in `contracts/openapi.yaml`, and `API_VERSION`
-  in `apps/api/wrangler.toml` (all track the tag), commit, then tag the squash commit on `main` with `git tag -a v0.6.0 <sha> -m "<한 줄
+- Releasing, in order: bump `version` in `apps/web/pyproject.toml`, `apps/rest-api/pyproject.toml` and
+  `packages/core/pyproject.toml`, `info.version` in `api/openapi.yaml`, and `API_VERSION`
+  in `apps/rest-api/wrangler.toml` (all track the tag), commit, then tag the squash commit on `main` with `git tag -a v0.6.0 <sha> -m "<한 줄
   요약>"`, push tags, and `gh release create` with Korean notes listing the PRs it contains.
 - The site footer prints the installed `apps/web` version and links to that release, so the
   page itself says which build a viewer is looking at. `GET /api/health` reports the same

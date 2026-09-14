@@ -30,7 +30,7 @@
 | 지킬 것 | 왜 |
 |---|---|
 | 소통은 HTTP 로만 | 다른 통로가 생기면 그 순간 분리할 수 없게 된다 |
-| 계약이 유일한 접점 | `contracts/openapi.yaml`. 명세는 하나여야 한다 |
+| 계약이 유일한 접점 | `api/openapi.yaml`. 명세는 하나여야 한다 |
 | 프론트도 남이다 | 브라우저가 옛 자바스크립트를 캐시한다. 배포된 프론트는 그것을 갈아 끼운 배포보다 오래 산다 |
 | 백엔드는 사실만 말한다 | 응답에 "장로"를 담으면 서버가 화면을 알게 되고 다국어를 떠안는다 |
 | 프론트는 서버 속을 짐작하지 않는다 | 명세에 없는 컬럼 이름이나 표 구조를 알면 결합이 생긴다 |
@@ -63,7 +63,7 @@ CoC API → MemberService → MemberRepository → D1 → GET /api/v1/members �
 - CoC API 어댑터와 D1 어댑터
 - `GET /api/v1/members`
 - React 클랜원 목록 화면
-- API 계약(`contracts/openapi.yaml`)과 거기서 나오는 서버 모델·프론트 타입
+- API 계약(`api/openapi.yaml`)과 거기서 나오는 서버 모델·프론트 타입
 
 ### 이번에 하지 않는 것
 
@@ -79,34 +79,34 @@ CoC API → MemberService → MemberRepository → D1 → GET /api/v1/members �
 
 ## 3. API 계약이 먼저다
 
-`contracts/openapi.yaml`을 손으로 쓰고, 거기서 양쪽이 나온다.
+`api/openapi.yaml`을 손으로 쓰고, 거기서 양쪽이 나온다.
 
 ```
-contracts/openapi.yaml          ← 계약. 이것이 기준이다
-    ├──→ apps/api/src/schemas.py     Pydantic 모델   (자동 생성)
+api/openapi.yaml          ← 계약. 이것이 기준이다
+    ├──→ apps/rest-api/src/schemas.py     Pydantic 모델   (자동 생성)
     └──→ apps/web/src/api/schema.d.ts TypeScript 타입 (자동 생성)
 ```
 
 **명세는 하나여야 한다.** 서버용과 프론트용으로 나누면 무엇이 진짜인지 알 수 없게 되고, 계약이 계약이 아니게 된다.
 
-`contracts/`를 루트에 두는 이유는 어느 한쪽 것이 아니기 때문이다. `packages/`가 "두 앱이 함께 쓰는 코드"인 것처럼 `contracts/`는 "두 앱이 함께 지키는 약속"이다.
+`api/`를 루트에 두는 이유는 어느 한쪽 것이 아니기 때문이다. `packages/`가 "두 앱이 함께 쓰는 코드"인 것처럼 `api/`는 "두 앱이 함께 지키는 약속"이다.
 
 ### 3.1 생성 명령
 
 ```bash
 # 서버 모델
 uv run datamodel-codegen \
-  --input contracts/openapi.yaml \
-  --output apps/api/src/schemas.py \
+  --input api/openapi.yaml \
+  --output apps/rest-api/src/schemas.py \
   --output-model-type pydantic_v2.BaseModel
 
 # 프론트 타입
-npx openapi-typescript contracts/openapi.yaml -o apps/web/src/api/schema.d.ts
+npx openapi-typescript api/openapi.yaml -o apps/web/src/api/schema.d.ts
 ```
 
 **생성물은 손으로 고치지 않는다.** 고치고 싶으면 명세를 고치고 다시 생성한다. 파일 맨 위에 그 규칙을 주석으로 남긴다.
 
-**`--output`에는 확장자를 붙인다.** `datamodel-code-generator`는 단일 입력·단일 출력일 때 경로 끝의 슬래시를 버리고 그 경로를 그대로 파일 이름으로 쓴다. `apps/api/src/schemas/`라고 적으면 확장자 없는 `schemas` 파일이 만들어져 파이썬이 모듈로 찾지 못한다. 더 고약한 것은 `ruff`도 확장자 없는 파일을 재귀 탐색에서 건너뛰어, 검사가 통과한 것처럼 보이면서 아무것도 검증하지 않는다는 점이다.
+**`--output`에는 확장자를 붙인다.** `datamodel-code-generator`는 단일 입력·단일 출력일 때 경로 끝의 슬래시를 버리고 그 경로를 그대로 파일 이름으로 쓴다. `apps/rest-api/src/schemas/`라고 적으면 확장자 없는 `schemas` 파일이 만들어져 파이썬이 모듈로 찾지 못한다. 더 고약한 것은 `ruff`도 확장자 없는 파일을 재귀 탐색에서 건너뛰어, 검사가 통과한 것처럼 보이면서 아무것도 검증하지 않는다는 점이다.
 
 
 생성물은 git에 커밋한다. 명세를 고쳤을 때 무엇이 따라 바뀌었는지 PR에서 보이고, 새로 받은 저장소가 생성 없이도 빌드된다.
@@ -222,7 +222,7 @@ WHERE created_at >= '2026-09-01T00:00:00Z'
 ### 5.3 마이그레이션
 
 ```
-apps/api/database/
+apps/rest-api/database/
   schema.sql              현재 전체 구조. 자동 생성물
   migrations/
     0001_init.sql         변경 이력. 손으로 쓴다
@@ -271,7 +271,7 @@ packages/core/src/coc_core/
     repository.py      MemberRepository (Protocol)
     service.py         MemberService
 
-apps/api/
+apps/rest-api/
   database/
     schema.sql
     migrations/0001_init.sql
@@ -408,12 +408,12 @@ async def list_members(service: MemberSvc) -> MemberListResponse: ...
 첫 조각에서는 예약 실행을 붙이지 않는다.
 
 ```bash
-cd apps/api && uv run python src/cli.py refresh-members
+cd apps/rest-api && uv run python src/cli.py refresh-members
 ```
 
-`apps/api/src/cli.py`가 서비스를 조립해 부른다. 서버가 요청을 받아 조립하는 것과 같은 일이라 조립 코드를 함께 쓴다.
+`apps/rest-api/src/cli.py`가 서비스를 조립해 부른다. 서버가 요청을 받아 조립하는 것과 같은 일이라 조립 코드를 함께 쓴다.
 
-처음에는 `[project.scripts]`로 진입점을 두어 `uv run coc-api`로 부르려 했으나 그렇게 되지 않았다. `apps/api`는 `[tool.uv] package = false`라 설치되지 않기 때문이다. Cloudflare Workers 번들로 배포되므로 파이썬 휠로 설치할 수 없고, 설치되지 않으면 진입점을 적어도 `.venv/bin`에 생기지 않아 `Failed to spawn`으로 죽는다. 그래서 파일을 직접 가리켜 부른다.
+처음에는 `[project.scripts]`로 진입점을 두어 `uv run coc-api`로 부르려 했으나 그렇게 되지 않았다. `apps/rest-api`는 `[tool.uv] package = false`라 설치되지 않기 때문이다. Cloudflare Workers 번들로 배포되므로 파이썬 휠로 설치할 수 없고, 설치되지 않으면 진입점을 적어도 `.venv/bin`에 생기지 않아 `Failed to spawn`으로 죽는다. 그래서 파일을 직접 가리켜 부른다.
 
 원격 D1에 쓰는 방법은 구현할 때 확인한다. `wrangler d1 execute --remote`를 거치거나 D1 HTTP API를 부른다. 로컬 D1(`--local`)로 먼저 돌려 보고 원격으로 넘어간다.
 
@@ -500,7 +500,7 @@ React 테스트를 지금 두지 않는 이유는 화면이 표 하나이고, �
 
 | 단계 | 내용 | 끝났을 때 |
 |---|---|---|
-| 1 | `contracts/openapi.yaml`과 생성 절차 | 명세에서 양쪽 타입이 나온다 |
+| 1 | `api/openapi.yaml`과 생성 절차 | 명세에서 양쪽 타입이 나온다 |
 | 2 | 마이그레이션과 `clan_members` 표 | 로컬 D1에 표가 만들어진다 |
 | 3 | `coc_core/member/` — 자료형·인터페이스·서비스 | 가짜 대역 위에서 테스트가 돈다 |
 | 4 | D1 어댑터와 CoC API 어댑터, `refresh-members` | 명령으로 D1을 채울 수 있다 |
