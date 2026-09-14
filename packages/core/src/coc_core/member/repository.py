@@ -19,8 +19,8 @@ class MemberRepository(Protocol):
         """모두. 나간 사람(INACTIVE)도 포함한다."""
         ...
 
-    async def find_by_tag(self, tag: str) -> ClanMember | None:
-        """태그로 한 명. 없으면 None."""
+    async def find_by_external_id(self, external_id: str) -> ClanMember | None:
+        """CoC 태그로 한 명. 없으면 None."""
         ...
 
     async def upsert_many(self, members: list[ClanMember]) -> int:
@@ -31,7 +31,7 @@ class MemberRepository(Protocol):
         """
         ...
 
-    async def mark_inactive(self, tags: list[str], now: str) -> int:
+    async def mark_inactive(self, external_ids: list[str], now: str) -> int:
         """주어진 태그들을 INACTIVE 로 내리고 그 수를 돌려준다."""
         ...
 

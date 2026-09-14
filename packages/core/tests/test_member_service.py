@@ -25,21 +25,21 @@ class FakeRepository:
     """저장소 대역. 태그를 열쇠로 담아 둔다."""
 
     def __init__(self, existing: list[ClanMember] | None = None) -> None:
-        self.rows: dict[str, ClanMember] = {m.tag: m for m in (existing or [])}
+        self.rows: dict[str, ClanMember] = {m.external_id: m for m in (existing or [])}
         self.marked_inactive: list[str] = []
 
     async def find_all(self) -> list[ClanMember]:
         return list(self.rows.values())
 
-    async def find_by_tag(self, tag: str) -> ClanMember | None:
-        return self.rows.get(tag)
+    async def find_by_external_id(self, external_id: str) -> ClanMember | None:
+        return self.rows.get(external_id)
 
     async def upsert_many(self, members: list[ClanMember]) -> int:
         added = 0
         for m in members:
-            if m.tag not in self.rows:
+            if m.external_id not in self.rows:
                 added += 1
-            self.rows[m.tag] = m
+            self.rows[m.external_id] = m
         return added
 
     async def mark_inactive(self, tags: list[str], now: str) -> int:
@@ -52,6 +52,7 @@ class FakeRepository:
 
 
 def _raw(tag: str, name: str, role: str = "member") -> dict:
+    """CoC 가 준 그대로. 바깥 표기라 tag 를 쓴다 — 우리 이름은 external_id 다."""
     return {
         "tag": tag,
         "name": name,
@@ -87,7 +88,7 @@ async def test_모르는_직책이_와도_나머지는_저장된다():
 
     assert result.total == 2
     assert result.unknown_roles == {"veteran": 1}
-    by_tag = {m.tag: m for m in await service.find_all()}
+    by_tag = {m.external_id: m for m in await service.find_all()}
     assert by_tag["#A"].role == ClanRole.UNKNOWN
     assert by_tag["#B"].role == ClanRole.MEMBER
 
@@ -102,7 +103,7 @@ async def test_목록에서_사라지면_INACTIVE_로_내린다():
 
     assert result.left == 1
     assert repository.rows["#A"].status == MemberStatus.INACTIVE
-    assert repository.rows["#A"].tag == "#A"  # 지우지 않는다
+    assert repository.rows["#A"].external_id == "#A"  # 지우지 않는다
 
 
 async def test_돌아온_사람은_다시_ACTIVE():
@@ -125,11 +126,11 @@ async def test_태그로_한_명을_찾는다():
     )
     await service.sync(now=NOW)
 
-    found = await service.find_by_tag("#B")
+    found = await service.find_by_external_id("#B")
 
     assert found is not None
     assert found.name == "히로"
-    assert await service.find_by_tag("#없음") is None
+    assert await service.find_by_external_id("#없음") is None
 
 
 async def test_동기화가_등급을_덮지_않는다():
@@ -140,7 +141,7 @@ async def test_동기화가_등급을_덮지_않는다():
     """
     before = ClanMember(
         id="uuid-1",
-        tag="#A",
+        external_id="#A",
         name="도토리",
         role=ClanRole.MEMBER,
         status=MemberStatus.ACTIVE,

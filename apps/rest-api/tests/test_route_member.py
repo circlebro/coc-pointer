@@ -24,10 +24,10 @@ class FakeEnv:
         self.DB = db
 
 
-def _member(tag: str, name: str, **overrides) -> ClanMember:
+def _member(external_id: str, name: str, **overrides) -> ClanMember:
     base = {
-        "id": f"uuid-{tag.lstrip('#')}",
-        "tag": tag,
+        "id": f"uuid-{external_id.lstrip('#')}",
+        "external_id": external_id,
         "name": name,
         "role": ClanRole.MEMBER,
         "status": MemberStatus.ACTIVE,
@@ -81,7 +81,7 @@ def test_스펙대로_캐멀케이스로_준다(client, fake_db):
 
     member = client.get("/api/v1/members").json()["members"][0]
 
-    assert member["tag"] == "#A"
+    assert member["externalId"] == "#A"
     assert member["role"] == "ADMIN"
     assert member["status"] == "ACTIVE"
     assert member["donationsReceived"] == 50
@@ -89,18 +89,18 @@ def test_스펙대로_캐멀케이스로_준다(client, fake_db):
     assert "donations_received" not in member
 
 
-def test_태그로_좁힌다(client, fake_db):
+def test_외부_식별자로_좁힌다(client, fake_db):
     _seed(fake_db, [_member("#A", "도토리"), _member("#B", "히로")])
 
-    body = client.get("/api/v1/members", params={"tag": "#B"}).json()
+    body = client.get("/api/v1/members", params={"externalId": "#B"}).json()
 
     assert [m["name"] for m in body["members"]] == ["히로"]
 
 
-def test_없는_태그면_빈_목록(client, fake_db):
+def test_없는_식별자면_빈_목록(client, fake_db):
     _seed(fake_db, [_member("#A", "도토리")])
 
-    body = client.get("/api/v1/members", params={"tag": "#없음"}).json()
+    body = client.get("/api/v1/members", params={"externalId": "#없음"}).json()
 
     assert body == {"members": []}
 

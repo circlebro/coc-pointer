@@ -67,7 +67,11 @@ class MemberStatus(StrEnum):
 
 class Member(BaseModel):
     id: UUID = Field(..., description="우리 식별자")
-    tag: str = Field(..., description="CoC 플레이어 태그", examples=["#2ABC123"])
+    externalId: str = Field(
+        ...,
+        description="CoC 플레이어 태그. 이 값으로 CoC API 를 부른다",
+        examples=["#2ABC123"],
+    )
     name: str
     role: ClanRole
     status: MemberStatus

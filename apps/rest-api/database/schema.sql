@@ -56,7 +56,7 @@ CREATE INDEX idx_wars_end_time ON wars(end_time);
 CREATE INDEX idx_monthly_scores_month ON monthly_scores(month);
 CREATE TABLE clan_members (
   id                 TEXT PRIMARY KEY,
-  tag                TEXT NOT NULL UNIQUE,
+  external_id                TEXT NOT NULL UNIQUE,
   name               TEXT NOT NULL,
 
   -- CoC API 가 채운다

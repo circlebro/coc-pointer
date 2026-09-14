@@ -15,10 +15,10 @@ NOW = "2026-09-10T05:30:00Z"
 LATER = "2026-09-11T05:30:00Z"
 
 
-def _member(tag: str, name: str, **overrides) -> ClanMember:
+def _member(external_id: str, name: str, **overrides) -> ClanMember:
     base = {
-        "id": f"uuid-{tag.lstrip('#')}",
-        "tag": tag,
+        "id": f"uuid-{external_id.lstrip('#')}",
+        "external_id": external_id,
         "name": name,
         "role": ClanRole.MEMBER,
         "status": MemberStatus.ACTIVE,
@@ -51,7 +51,7 @@ async def test_자료형이_그대로_돌아온다(fake_db):
     repository = D1MemberRepository(fake_db)
     await repository.upsert_many([_member("#A", "도토리", role=ClanRole.ADMIN)])
 
-    found = await repository.find_by_tag("#A")
+    found = await repository.find_by_external_id("#A")
 
     assert found is not None
     assert found.role is ClanRole.ADMIN
@@ -62,7 +62,7 @@ async def test_자료형이_그대로_돌아온다(fake_db):
 async def test_없는_태그는_None(fake_db):
     repository = D1MemberRepository(fake_db)
 
-    assert await repository.find_by_tag("#없음") is None
+    assert await repository.find_by_external_id("#없음") is None
 
 
 async def test_다시_넣으면_갱신하고_새로_센_수는_0(fake_db):
@@ -72,7 +72,7 @@ async def test_다시_넣으면_갱신하고_새로_센_수는_0(fake_db):
     added = await repository.upsert_many([_member("#A", "도토리2", updated_at=LATER)])
 
     assert added == 0
-    found = await repository.find_by_tag("#A")
+    found = await repository.find_by_external_id("#A")
     assert found is not None
     assert found.name == "도토리2"
     assert found.updated_at == LATER
@@ -84,7 +84,7 @@ async def test_관리자_메모와_처음_본_시각은_지켜진다(fake_db):
 
     await repository.upsert_many([_member("#A", "도토리", description=None, created_at=LATER)])
 
-    found = await repository.find_by_tag("#A")
+    found = await repository.find_by_external_id("#A")
     assert found is not None
     assert found.description == "추방 예정"
     assert found.created_at == NOW
@@ -97,7 +97,7 @@ async def test_INACTIVE_로_내린다(fake_db):
     count = await repository.mark_inactive(["#A"], LATER)
 
     assert count == 1
-    by_tag = {m.tag: m for m in await repository.find_all()}
+    by_tag = {m.external_id: m for m in await repository.find_all()}
     assert by_tag["#A"].status is MemberStatus.INACTIVE
     assert by_tag["#A"].updated_at == LATER
     assert by_tag["#B"].status is MemberStatus.ACTIVE
@@ -107,7 +107,7 @@ async def test_모르는_직책도_담긴다(fake_db):
     repository = D1MemberRepository(fake_db)
     await repository.upsert_many([_member("#A", "도토리", role=ClanRole.UNKNOWN)])
 
-    found = await repository.find_by_tag("#A")
+    found = await repository.find_by_external_id("#A")
 
     assert found is not None
     assert found.role is ClanRole.UNKNOWN
@@ -129,7 +129,7 @@ async def test_등급과_사유와_경고는_갱신하지_않는다(fake_db):
         [_member("#A", "도토리2", grade=MemberGrade.COMPETING, grade_reason=None, warnings=0)]
     )
 
-    found = await repository.find_by_tag("#A")
+    found = await repository.find_by_external_id("#A")
     assert found is not None
     assert found.name == "도토리2"  # 이름은 갱신된다
     assert found.grade is MemberGrade.FIXED  # 등급은 지켜진다
@@ -142,7 +142,7 @@ async def test_아무것도_매기지_않으면_경쟁으로_담긴다(fake_db):
 
     await repository.upsert_many([_member("#B", "히로")])
 
-    found = await repository.find_by_tag("#B")
+    found = await repository.find_by_external_id("#B")
     assert found is not None
     assert found.grade is MemberGrade.COMPETING
 

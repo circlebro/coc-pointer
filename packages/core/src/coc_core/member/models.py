@@ -61,15 +61,15 @@ class MemberStatus(StrEnum):
 class ClanMember:
     """클랜원 한 명.
 
-    id 는 우리 식별자이고 tag 는 CoC 세계의 식별자다. 주소에서 '#' 을 인코딩하지
-    않으려고 id 를 따로 둔다.
+    id 는 우리 식별자이고 external_id 는 CoC 세계의 식별자다. 주소에서 '#' 을
+    인코딩하지 않으려고 id 를 따로 둔다. Clan 과 같은 규칙이다.
 
     grade·grade_reason·warnings 는 우리가 정하는 값이라 동기화가 덮어쓰지 않는다.
     CoC 는 이런 것을 모른다.
     """
 
     id: str
-    tag: str
+    external_id: str
     name: str
     role: ClanRole
     status: MemberStatus

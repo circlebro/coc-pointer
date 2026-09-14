@@ -36,7 +36,7 @@ def _member(**overrides) -> ClanMember:
     """테스트용 클랜원 하나. 바꾸고 싶은 것만 넘긴다."""
     base = {
         "id": "0198f0c1-0000-7000-8000-000000000001",
-        "tag": "#2ABC123",
+        "external_id": "#2ABC123",
         "name": "도토리",
         "role": ClanRole.ADMIN,
         "status": MemberStatus.ACTIVE,

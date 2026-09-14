@@ -20,7 +20,7 @@ from coc_core.member.models import ClanRole, MemberStatus
 MIGRATIONS = Path(__file__).resolve().parent.parent / "database" / "migrations"
 
 _COLUMNS = (
-    "id, tag, name, role, townhall, trophies, donations, donations_received, "
+    "id, external_id, name, role, townhall, trophies, donations, donations_received, "
     "status, created_at, updated_at, description"
 )
 _INSERT = f"INSERT INTO clan_members ({_COLUMNS}) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)"
@@ -36,8 +36,11 @@ def conn() -> sqlite3.Connection:
     return db
 
 
-def _insert(db: sqlite3.Connection, tag: str, role: str, status: str) -> None:
-    db.execute(_INSERT, (f"id{tag}", tag, "아무개", role, 16, 4200, 0, 0, status, NOW, NOW, None))
+def _insert(db: sqlite3.Connection, external_id: str, role: str, status: str) -> None:
+    db.execute(
+        _INSERT,
+        (f"id{external_id}", external_id, "아무개", role, 16, 4200, 0, 0, status, NOW, NOW, None),
+    )
 
 
 @pytest.mark.parametrize("role", [r.value for r in ClanRole])

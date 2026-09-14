@@ -67,9 +67,11 @@ async def test_실제로_저장된다(fake_db):
         transport=_transport(),
     )
 
-    rows = await fake_db.prepare("SELECT tag, name, role FROM clan_members ORDER BY tag").all()
+    rows = await fake_db.prepare(
+        "SELECT external_id, name, role FROM clan_members ORDER BY external_id"
+    ).all()
 
-    assert [(r.tag, r.name, r.role) for r in rows.results] == [
+    assert [(r.external_id, r.name, r.role) for r in rows.results] == [
         ("#A", "도토리", "ADMIN"),
         ("#B", "히로", "UNKNOWN"),
     ]
@@ -91,7 +93,7 @@ async def test_넘긴_시각이_그대로_담긴다(fake_db):
     )
 
     rows = await fake_db.prepare(
-        "SELECT created_at, updated_at FROM clan_members ORDER BY tag"
+        "SELECT created_at, updated_at FROM clan_members ORDER BY external_id"
     ).all()
 
     assert [(r.created_at, r.updated_at) for r in rows.results] == [(NOW, NOW), (NOW, NOW)]

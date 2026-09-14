@@ -6,7 +6,7 @@ info:
     클래시 오브 클랜 클랜 "미니언즈"의 클랜원과 점수를 다루는 API.
 
     이 파일이 API 스펙이다. 서버 모델과 프론트 타입은 여기서 생성하며
-    손으로 고치지 않는다. scripts/generate-from-contract.sh 참고.
+    손으로 고치지 않는다. scripts/generate-from-spec.sh 참고.
 
 servers:
   - url: https://coc-api.coc-api.workers.dev
@@ -19,10 +19,10 @@ paths:
       summary: 클랜원 목록
       tags: [members]
       parameters:
-        - name: tag
+        - name: externalId
           in: query
           required: false
-          description: 플레이어 태그로 좁힌다. '#'을 포함해 넘긴다
+          description: CoC 플레이어 태그로 좁힌다. '#'을 포함해 넘긴다
           schema:
             type: string
             example: "#2ABC123"
@@ -143,9 +143,17 @@ components:
 
     Member:
       type: object
+      description: |
+        클랜원 한 명. 게임 계정 하나를 가리키며 사람이 아니다.
+
+        id 는 우리 식별자이고 externalId 는 CoC 세계의 식별자다. 주소에서
+        '#' 을 인코딩하지 않으려고 따로 둔다. Clan 과 같은 규칙이다.
+
+        grade·gradeReason·warnings·description 은 우리가 정하는 값이라
+        동기화가 덮어쓰지 않는다.
       required:
         - id
-        - tag
+        - externalId
         - name
         - role
         - status
@@ -158,9 +166,9 @@ components:
           type: string
           format: uuid
           description: 우리 식별자
-        tag:
+        externalId:
           type: string
-          description: CoC 플레이어 태그
+          description: CoC 플레이어 태그. 이 값으로 CoC API 를 부른다
           example: "#2ABC123"
         name:
           type: string

@@ -33,7 +33,7 @@ def _to_response(member: ClanMember) -> dict[str, Any]:
     """도메인 자료형을 스펙이 정한 모양으로. 키는 캐멀케이스다."""
     return {
         "id": member.id,
-        "tag": member.tag,
+        "externalId": member.external_id,
         "name": member.name,
         "role": str(member.role),
         "status": str(member.status),
@@ -53,10 +53,10 @@ def _to_response(member: ClanMember) -> dict[str, Any]:
 @router.get("/members")
 async def list_members(
     service: MemberSvc,
-    tag: Annotated[str | None, Query(description="플레이어 태그로 좁힌다")] = None,
+    externalId: Annotated[str | None, Query(description="CoC 플레이어 태그로 좁힌다")] = None,
 ) -> dict[str, Any]:
     """클랜원 목록. 나간 사람(INACTIVE)도 포함한다."""
-    if tag is not None:
-        found = await service.find_by_tag(tag)
+    if externalId is not None:
+        found = await service.find_by_external_id(externalId)
         return {"members": [_to_response(found)] if found else []}
     return {"members": [_to_response(m) for m in await service.find_all()]}

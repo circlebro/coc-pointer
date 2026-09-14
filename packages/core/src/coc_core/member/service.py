@@ -49,7 +49,7 @@ class MemberService:
             raise RuntimeError("동기화하려면 source 가 있어야 합니다")
 
         raw_members = await self._source.fetch_members()
-        existing = {m.tag: m for m in await self._repository.find_all()}
+        existing = {m.external_id: m for m in await self._repository.find_all()}
 
         unknown_roles: dict[str, int] = {}
         members: list[ClanMember] = []
@@ -60,12 +60,12 @@ class MemberService:
             if role is ClanRole.UNKNOWN:
                 unknown_roles[raw_role] = unknown_roles.get(raw_role, 0) + 1
 
-            tag = raw["tag"]
-            before = existing.get(tag)
+            external_id = raw["tag"]  # CoC 가 주는 이름은 tag 다
+            before = existing.get(external_id)
             members.append(
                 ClanMember(
                     id=before.id if before else str(uuid.uuid4()),
-                    tag=tag,
+                    external_id=external_id,
                     name=raw["name"],
                     role=role,
                     status=MemberStatus.ACTIVE,
@@ -86,11 +86,11 @@ class MemberService:
 
         added = await self._repository.upsert_many(members)
 
-        seen = {m.tag for m in members}
+        seen = {m.external_id for m in members}
         gone = [
-            tag
-            for tag, m in existing.items()
-            if tag not in seen and m.status is MemberStatus.ACTIVE
+            external_id
+            for external_id, m in existing.items()
+            if external_id not in seen and m.status is MemberStatus.ACTIVE
         ]
         left = await self._repository.mark_inactive(gone, now) if gone else 0
 
@@ -104,5 +104,5 @@ class MemberService:
     async def find_all(self) -> list[ClanMember]:
         return await self._repository.find_all()
 
-    async def find_by_tag(self, tag: str) -> ClanMember | None:
-        return await self._repository.find_by_tag(tag)
+    async def find_by_external_id(self, external_id: str) -> ClanMember | None:
+        return await self._repository.find_by_external_id(external_id)

@@ -121,6 +121,15 @@ export interface components {
          * @enum {string}
          */
         MemberStatus: "ACTIVE" | "INACTIVE";
+        /**
+         * @description 클랜원 한 명. 게임 계정 하나를 가리키며 사람이 아니다.
+         *
+         *     id 는 우리 식별자이고 externalId 는 CoC 세계의 식별자다. 주소에서
+         *     '#' 을 인코딩하지 않으려고 따로 둔다. Clan 과 같은 규칙이다.
+         *
+         *     grade·gradeReason·warnings·description 은 우리가 정하는 값이라
+         *     동기화가 덮어쓰지 않는다.
+         */
         Member: {
             /**
              * Format: uuid
@@ -128,10 +137,10 @@ export interface components {
              */
             id: string;
             /**
-             * @description CoC 플레이어 태그
+             * @description CoC 플레이어 태그. 이 값으로 CoC API 를 부른다
              * @example #2ABC123
              */
-            tag: string;
+            externalId: string;
             name: string;
             role: components["schemas"]["ClanRole"];
             status: components["schemas"]["MemberStatus"];
@@ -172,8 +181,8 @@ export interface operations {
     listMembers: {
         parameters: {
             query?: {
-                /** @description 플레이어 태그로 좁힌다. '#'을 포함해 넘긴다 */
-                tag?: string;
+                /** @description CoC 플레이어 태그로 좁힌다. '#'을 포함해 넘긴다 */
+                externalId?: string;
             };
             header?: never;
             path?: never;

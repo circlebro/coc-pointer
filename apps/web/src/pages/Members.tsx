@@ -55,7 +55,7 @@ export function Members() {
         {state.members.map((member) => (
           <tr key={member.id}>
             <td>{member.name}</td>
-            <td>{member.tag}</td>
+            <td>{member.externalId}</td>
             <td>{roleLabel(member.role)}</td>
             <td>{statusLabel(member.status)}</td>
             <td>{member.townhall ?? "-"}</td>
