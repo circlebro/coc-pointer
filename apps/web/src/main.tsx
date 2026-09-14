@@ -10,7 +10,7 @@ if (root === null) {
 
 createRoot(root).render(
   <StrictMode>
-    <ClanTitle />
+    <ClanTitle page="클랜원" />
     <Members />
   </StrictMode>,
 );
