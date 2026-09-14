@@ -19,6 +19,10 @@ class MemberRepository(Protocol):
         """모두. 나간 사람(INACTIVE)도 포함한다."""
         ...
 
+    async def find_by_id(self, member_id: str) -> ClanMember | None:
+        """우리 식별자로 한 명. 없으면 None."""
+        ...
+
     async def find_by_external_id(self, external_id: str) -> ClanMember | None:
         """CoC 태그로 한 명. 없으면 None."""
         ...
@@ -28,6 +32,15 @@ class MemberRepository(Protocol):
 
         description 과 created_at 은 갱신하지 않는다. 관리자가 적은 메모가
         동기화에 지워지면 안 되고, 처음 본 시각은 처음 한 번만 정해진다.
+        """
+        ...
+
+    async def update_managed(self, member: ClanMember) -> None:
+        """우리가 정하는 값만 덮어쓴다.
+
+        grade, grade_reason, warnings, description, updated_at 다섯이다.
+        이름·직책·트로피처럼 CoC 가 주인인 값은 건드리지 않는다. 그런 값은
+        동기화가 맡으므로, 여기서 함께 덮으면 두 자리가 같은 값을 쓰게 된다.
         """
         ...
 

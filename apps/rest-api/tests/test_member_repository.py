@@ -153,3 +153,57 @@ async def test_모르는_등급은_표가_거부한다(fake_db):
 
     with pytest.raises(Exception, match="CHECK|constraint"):
         await repository.upsert_many([_member("#C", "아무개", grade="RESERVE")])  # type: ignore[arg-type]
+
+
+async def test_우리_식별자로_찾는다(fake_db):
+    repository = D1MemberRepository(fake_db)
+    await repository.upsert_many([_member("#A", "도토리"), _member("#B", "히로")])
+
+    found = await repository.find_by_id("uuid-B")
+
+    assert found is not None
+    assert found.name == "히로"
+
+
+async def test_없는_식별자면_None(fake_db):
+    repository = D1MemberRepository(fake_db)
+    await repository.upsert_many([_member("#A", "도토리")])
+
+    assert await repository.find_by_id("uuid-없음") is None
+
+
+async def test_우리가_정하는_값만_덮는다(fake_db):
+    """수정이 이름과 트로피까지 덮으면 동기화와 같은 열을 두 자리에서 쓰게 된다."""
+    repository = D1MemberRepository(fake_db)
+    await repository.upsert_many([_member("#A", "도토리")])
+
+    await repository.update_managed(
+        _member(
+            "#A",
+            "바뀐이름",
+            grade=MemberGrade.FIXED,
+            grade_reason="길드장",
+            warnings=3,
+            description="메모",
+            trophies=9999,
+            updated_at=LATER,
+        )
+    )
+
+    found = await repository.find_by_external_id("#A")
+    assert found is not None
+    assert found.grade is MemberGrade.FIXED
+    assert found.grade_reason == "길드장"
+    assert found.warnings == 3
+    assert found.description == "메모"
+    assert found.updated_at == LATER
+    assert found.name == "도토리"  # CoC 가 주인인 값은 그대로다
+    assert found.trophies == 4200
+
+
+async def test_수정도_모르는_등급은_표가_거부한다(fake_db):
+    repository = D1MemberRepository(fake_db)
+    await repository.upsert_many([_member("#A", "도토리")])
+
+    with pytest.raises(Exception, match="CHECK|constraint"):
+        await repository.update_managed(_member("#A", "도토리", grade="RESERVE"))  # type: ignore[arg-type]

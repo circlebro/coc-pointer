@@ -5,6 +5,8 @@
 
 from __future__ import annotations
 
+import pytest
+
 from coc_core.member.models import ClanMember, ClanRole, MemberGrade, MemberStatus
 from coc_core.member.service import MemberService
 
@@ -31,8 +33,29 @@ class FakeRepository:
     async def find_all(self) -> list[ClanMember]:
         return list(self.rows.values())
 
+    async def find_by_id(self, member_id: str) -> ClanMember | None:
+        return next((m for m in self.rows.values() if m.id == member_id), None)
+
     async def find_by_external_id(self, external_id: str) -> ClanMember | None:
         return self.rows.get(external_id)
+
+    async def update_managed(self, member: ClanMember) -> None:
+        """실제 저장소처럼 우리가 정하는 값과 갱신 시각만 덮는다.
+
+        CoC 가 주인인 열을 함께 덮으면, 서비스가 그것을 건드려도 테스트가
+        알아채지 못한다.
+        """
+        before = self.rows[member.external_id]
+        self.rows[member.external_id] = ClanMember(
+            **{
+                **before.__dict__,
+                "grade": member.grade,
+                "grade_reason": member.grade_reason,
+                "warnings": member.warnings,
+                "description": member.description,
+                "updated_at": member.updated_at,
+            }
+        )
 
     async def upsert_many(self, members: list[ClanMember]) -> int:
         added = 0
@@ -177,3 +200,91 @@ async def test_처음_보는_사람은_경쟁이다():
     assert added.grade is MemberGrade.COMPETING
     assert added.grade_reason is None
     assert added.warnings == 0
+
+
+def _member(**overrides) -> ClanMember:
+    """저장소에 이미 담겨 있는 클랜원 한 명."""
+    base = {
+        "id": "uuid-1",
+        "external_id": "#A",
+        "name": "도토리",
+        "role": ClanRole.MEMBER,
+        "status": MemberStatus.ACTIVE,
+        "grade": MemberGrade.COMPETING,
+        "grade_reason": None,
+        "warnings": 0,
+        "townhall": 16,
+        "trophies": 4200,
+        "donations": 100,
+        "donations_received": 50,
+        "description": None,
+        "created_at": NOW,
+        "updated_at": NOW,
+    }
+    base.update(overrides)
+    return ClanMember(**base)
+
+
+LATER = "2026-09-14T09:00:00Z"
+
+
+async def test_보낸_값만_바꾼다():
+    """등급만 고치는 요청이 관리자 메모까지 지우면 안 된다."""
+    repository = FakeRepository([_member(description="부캐 아님", warnings=2)])
+
+    after = await MemberService(repository).update_managed("uuid-1", LATER, grade=MemberGrade.FIXED)
+
+    assert after is not None
+    assert after.grade is MemberGrade.FIXED
+    assert after.description == "부캐 아님"
+    assert after.warnings == 2
+    assert after.updated_at == LATER
+
+
+async def test_None_을_보내면_비운다():
+    """'안 보냈다'와 '비워 달라'는 다른 요청이다."""
+    repository = FakeRepository([_member(grade_reason="길드장")])
+
+    after = await MemberService(repository).update_managed("uuid-1", LATER, grade_reason=None)
+
+    assert after is not None
+    assert after.grade_reason is None
+
+
+async def test_고친_값이_저장소에_남는다():
+    repository = FakeRepository([_member()])
+
+    await MemberService(repository).update_managed(
+        "uuid-1", LATER, grade=MemberGrade.EXCLUDED, grade_reason="쉬는 계정"
+    )
+
+    saved = repository.rows["#A"]
+    assert saved.grade is MemberGrade.EXCLUDED
+    assert saved.grade_reason == "쉬는 계정"
+
+
+async def test_CoC_가_주인인_값은_건드리지_않는다():
+    """이름과 직책은 동기화가 맡는다. 수정이 함께 덮으면 두 자리가 같은 값을 쓴다."""
+    repository = FakeRepository([_member(name="도토리", trophies=4200)])
+
+    await MemberService(repository).update_managed("uuid-1", LATER, grade=MemberGrade.FIXED)
+
+    saved = repository.rows["#A"]
+    assert saved.name == "도토리"
+    assert saved.role is ClanRole.MEMBER
+    assert saved.trophies == 4200
+
+
+async def test_없는_식별자면_None():
+    repository = FakeRepository([_member()])
+
+    assert await MemberService(repository).update_managed("없는-uuid", LATER) is None
+
+
+async def test_경고_횟수는_음수가_될_수_없다():
+    repository = FakeRepository([_member()])
+
+    with pytest.raises(ValueError):
+        await MemberService(repository).update_managed("uuid-1", LATER, warnings=-1)
+
+    assert repository.rows["#A"].warnings == 0

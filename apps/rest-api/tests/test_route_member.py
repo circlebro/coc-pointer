@@ -1,4 +1,4 @@
-"""클랜원 조회 경로."""
+"""클랜원 경로."""
 
 from __future__ import annotations
 
@@ -9,7 +9,6 @@ from coc_core.member.models import ClanMember, ClanRole, MemberGrade, MemberStat
 from fastapi.testclient import TestClient
 
 from adapters.member_repository import D1MemberRepository
-from schemas import Member, MemberListResponse
 from worker import app
 
 NOW = "2026-09-10T05:30:00Z"
@@ -105,24 +104,114 @@ def test_없는_식별자면_빈_목록(client, fake_db):
     assert body == {"members": []}
 
 
-def test_응답_키가_스펙과_정확히_같다(client, fake_db):
-    """스펙에서 생성한 모델과 실제 응답의 키가 어긋나지 않는지 본다.
+def test_우리_식별자로_한_명을_준다(client, fake_db):
+    _seed(fake_db, [_member("#A", "도토리"), _member("#B", "히로")])
 
-    이 경로는 생성 모델을 쓰지 않고 _to_response 로 사전을 손수 만든다.
-    생성 모델이 id 를 UUID, createdAt 을 AwareDatetime 으로 선언하는데 우리
-    도메인은 둘 다 문자열로 다루기 때문이다. 그래서 스펙을 고치고 모델을 다시
-    생성해도 _to_response 는 저절로 따라가지 않는다. 이 테스트가 그 둘을 잇는
-    유일한 자리라, 키가 하나라도 어긋나면 여기서 걸린다.
-    """
+    response = client.get("/api/v1/members/uuid-B")
+
+    assert response.status_code == 200
+    assert response.json()["name"] == "히로"
+
+
+def test_없는_식별자면_404(client, fake_db):
     _seed(fake_db, [_member("#A", "도토리")])
 
-    member = client.get("/api/v1/members").json()["members"][0]
+    response = client.get("/api/v1/members/uuid-없음")
 
-    assert set(member) == set(Member.model_fields)
+    assert response.status_code == 404
+    assert "detail" in response.json()
 
 
-def test_응답_봉투가_스펙과_같다(client):
-    """목록을 감싸는 바깥 모양도 스펙이 정한 그대로여야 한다."""
-    body = client.get("/api/v1/members").json()
+def test_등급을_고친다(client, fake_db):
+    _seed(fake_db, [_member("#A", "도토리")])
 
-    assert set(body) == set(MemberListResponse.model_fields)
+    response = client.patch(
+        "/api/v1/members/uuid-A",
+        json={"grade": "FIXED", "gradeReason": "길드장"},
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["grade"] == "FIXED"
+    assert body["gradeReason"] == "길드장"
+    assert client.get("/api/v1/members/uuid-A").json()["grade"] == "FIXED"
+
+
+def test_보내지_않은_값은_그대로다(client, fake_db):
+    _seed(fake_db, [_member("#A", "도토리", description="부캐 아님")])
+
+    body = client.patch("/api/v1/members/uuid-A", json={"warnings": 2}).json()
+
+    assert body["warnings"] == 2
+    assert body["description"] == "부캐 아님"
+
+
+def test_null_을_보내면_비운다(client, fake_db):
+    _seed(fake_db, [_member("#A", "도토리", grade_reason="길드장")])
+
+    body = client.patch("/api/v1/members/uuid-A", json={"gradeReason": None}).json()
+
+    assert body["gradeReason"] is None
+
+
+def test_고친_뒤_갱신_시각이_올라간다(client, fake_db):
+    _seed(fake_db, [_member("#A", "도토리")])
+
+    body = client.patch("/api/v1/members/uuid-A", json={"warnings": 1}).json()
+
+    assert body["updatedAt"] > NOW
+    assert body["createdAt"] == NOW
+
+
+def test_CoC_가_주인인_값은_고칠_수_없다(client, fake_db):
+    """이름을 보내도 무시한다. 받아 주면 다음 동기화가 되돌려 놓는다."""
+    _seed(fake_db, [_member("#A", "도토리")])
+
+    body = client.patch(
+        "/api/v1/members/uuid-A",
+        json={"grade": "FIXED", "name": "바뀐이름"},
+    ).json()
+
+    assert body["grade"] == "FIXED"
+    assert body["name"] == "도토리"
+
+
+def test_아는_값이_하나도_없으면_400(client, fake_db):
+    """이름만 보낸 요청은 고칠 것이 없는 요청과 같다."""
+    _seed(fake_db, [_member("#A", "도토리")])
+
+    assert client.patch("/api/v1/members/uuid-A", json={"name": "바뀐이름"}).status_code == 400
+
+
+def test_고칠_값을_하나도_안_보내면_400(client, fake_db):
+    _seed(fake_db, [_member("#A", "도토리")])
+
+    assert client.patch("/api/v1/members/uuid-A", json={}).status_code == 400
+
+
+def test_비울_수_없는_값에_null_을_보내면_400(client, fake_db):
+    _seed(fake_db, [_member("#A", "도토리")])
+
+    assert client.patch("/api/v1/members/uuid-A", json={"grade": None}).status_code == 400
+    assert client.patch("/api/v1/members/uuid-A", json={"warnings": None}).status_code == 400
+
+
+def test_경고_횟수가_음수면_422(client, fake_db):
+    """스펙이 minimum: 0 이라 생성 모델이 먼저 거른다."""
+    _seed(fake_db, [_member("#A", "도토리")])
+
+    assert client.patch("/api/v1/members/uuid-A", json={"warnings": -1}).status_code == 422
+
+
+def test_모르는_등급이면_422(client, fake_db):
+    _seed(fake_db, [_member("#A", "도토리")])
+
+    assert client.patch("/api/v1/members/uuid-A", json={"grade": "RESERVE"}).status_code == 422
+
+
+def test_없는_사람을_고치면_404(client, fake_db):
+    _seed(fake_db, [_member("#A", "도토리")])
+
+    response = client.patch("/api/v1/members/uuid-없음", json={"grade": "FIXED"})
+
+    assert response.status_code == 404

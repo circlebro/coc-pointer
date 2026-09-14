@@ -34,6 +34,69 @@ paths:
               schema:
                 $ref: "#/components/schemas/MemberListResponse"
 
+  /api/v1/members/{memberId}:
+    parameters:
+      - name: memberId
+        in: path
+        required: true
+        description: 우리 식별자. CoC 태그가 아니다
+        schema:
+          type: string
+    get:
+      operationId: getMember
+      summary: 클랜원 한 명
+      tags: [members]
+      responses:
+        "200":
+          description: 클랜원
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Member"
+        "404":
+          description: 그 식별자를 가진 클랜원이 없다
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    patch:
+      operationId: updateMember
+      summary: 클랜원의 우리 값 수정
+      description: |
+        우리가 정하는 값만 고친다. 이름·직책·트로피처럼 CoC 가 주인인 값은
+        여기서 고칠 수 없다. 고쳐 봐야 다음 동기화가 되돌린다.
+
+        보낸 필드만 바뀐다. 보내지 않은 필드는 그대로 두고, null 을 보내면
+        비운다.
+      tags: [members]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MemberUpdate"
+      responses:
+        "200":
+          description: 고친 뒤의 클랜원
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Member"
+        "400":
+          description: |
+            본문이 규칙에 맞지 않다. 고칠 값을 하나도 보내지 않았거나,
+            비울 수 없는 값(grade, warnings)에 null 을 보냈다
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: 그 식별자를 가진 클랜원이 없다
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
   /api/v1/clans:
     get:
       operationId: listClans
@@ -164,8 +227,8 @@ components:
       properties:
         id:
           type: string
-          format: uuid
-          description: 우리 식별자
+          description: 우리 식별자(UUID 문자열)
+          example: "3f2a1b4c-5d6e-4f70-8a91-b2c3d4e5f607"
         externalId:
           type: string
           description: CoC 플레이어 태그. 이 값으로 CoC API 를 부른다
@@ -205,10 +268,37 @@ components:
           description: 관리자 메모. 동기화가 덮어쓰지 않는다
         createdAt:
           type: string
-          format: date-time
+          description: 처음 본 시각. ISO 8601(UTC)
+          example: "2026-09-11T07:18:57Z"
         updatedAt:
           type: string
-          format: date-time
+          description: 마지막으로 갱신한 시각. ISO 8601(UTC)
+          example: "2026-09-11T07:18:57Z"
+
+    MemberUpdate:
+      type: object
+      description: |
+        클랜원에게서 우리가 정하는 값. PATCH 의 본문이다.
+
+        전부 선택 사항이며, 보낸 것만 바뀐다. 값을 비우려면 null 을 보낸다.
+        하나도 보내지 않으면 고칠 것이 없으므로 거절한다.
+      minProperties: 1
+      properties:
+        grade:
+          $ref: "#/components/schemas/MemberGrade"
+        gradeReason:
+          type: string
+          nullable: true
+          description: 왜 그 등급인지. "길드장", "쉬는 계정" 같은 메모
+          example: "길드장"
+        warnings:
+          type: integer
+          minimum: 0
+          description: 경고 횟수
+        description:
+          type: string
+          nullable: true
+          description: 관리자 메모
 
     MemberListResponse:
       type: object
@@ -218,3 +308,14 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Member"
+
+    Error:
+      type: object
+      description: |
+        요청을 받아들이지 못했을 때의 본문. FastAPI 가 HTTPException 을
+        내보내는 모양과 같다.
+      required: [detail]
+      properties:
+        detail:
+          type: string
+          example: "그 클랜원이 없습니다"

@@ -3,9 +3,8 @@
 from __future__ import annotations
 
 from enum import StrEnum
-from uuid import UUID
 
-from pydantic import AwareDatetime, BaseModel, Field
+from pydantic import BaseModel, Field, conint
 
 
 class ClanStatus(StrEnum):
@@ -66,7 +65,11 @@ class MemberStatus(StrEnum):
 
 
 class Member(BaseModel):
-    id: UUID = Field(..., description="우리 식별자")
+    id: str = Field(
+        ...,
+        description="우리 식별자(UUID 문자열)",
+        examples=["3f2a1b4c-5d6e-4f70-8a91-b2c3d4e5f607"],
+    )
     externalId: str = Field(
         ...,
         description="CoC 플레이어 태그. 이 값으로 CoC API 를 부른다",
@@ -87,9 +90,32 @@ class Member(BaseModel):
     donations: int | None = None
     donationsReceived: int | None = None
     description: str | None = Field(None, description="관리자 메모. 동기화가 덮어쓰지 않는다")
-    createdAt: AwareDatetime
-    updatedAt: AwareDatetime
+    createdAt: str = Field(
+        ...,
+        description="처음 본 시각. ISO 8601(UTC)",
+        examples=["2026-09-11T07:18:57Z"],
+    )
+    updatedAt: str = Field(
+        ...,
+        description="마지막으로 갱신한 시각. ISO 8601(UTC)",
+        examples=["2026-09-11T07:18:57Z"],
+    )
+
+
+class MemberUpdate(BaseModel):
+    grade: MemberGrade | None = None
+    gradeReason: str | None = Field(
+        None,
+        description='왜 그 등급인지. "길드장", "쉬는 계정" 같은 메모',
+        examples=["길드장"],
+    )
+    warnings: conint(ge=0) | None = Field(None, description="경고 횟수")
+    description: str | None = Field(None, description="관리자 메모")
 
 
 class MemberListResponse(BaseModel):
     members: list[Member]
+
+
+class Error(BaseModel):
+    detail: str = Field(..., examples=["그 클랜원이 없습니다"])

@@ -23,13 +23,15 @@ _COLUMNS = (
 
 _FIND_ALL = f"SELECT {_COLUMNS} FROM clan_members ORDER BY name"
 
+_FIND_BY_ID = f"SELECT {_COLUMNS} FROM clan_members WHERE id = ?"
+
 _FIND_BY_EXTERNAL_ID = f"SELECT {_COLUMNS} FROM clan_members WHERE external_id = ?"
 
 _COUNT_BY_EXTERNAL_ID = "SELECT COUNT(*) AS n FROM clan_members WHERE external_id = ?"
 
 # description·created_at·grade·grade_reason·warnings 는 갱신하지 않는다.
 # 우리가 정하는 값이라 동기화가 덮으면 안 된다. 처음 본 시각도 한 번만 정해진다.
-# 등급을 바꾸는 일은 update_grade 가 따로 맡는다.
+# 그 값들을 바꾸는 일은 _UPDATE_MANAGED 가 따로 맡는다.
 _UPSERT = """
 INSERT INTO clan_members (
   id, external_id, name, role, townhall, trophies, donations, donations_received,
@@ -45,6 +47,15 @@ ON CONFLICT(external_id) DO UPDATE SET
   donations_received = excluded.donations_received,
   status             = excluded.status,
   updated_at         = excluded.updated_at
+"""
+
+# 거꾸로 여기서는 우리가 정하는 값만 덮는다. 이름·직책·트로피를 함께 적으면
+# 동기화와 이 경로가 같은 열을 두 자리에서 쓰게 되고, 나중에 어느 쪽이 마지막
+# 값을 넣었는지 알 수 없게 된다.
+_UPDATE_MANAGED = """
+UPDATE clan_members
+   SET grade = ?, grade_reason = ?, warnings = ?, description = ?, updated_at = ?
+ WHERE id = ?
 """
 
 _MARK_INACTIVE = "UPDATE clan_members SET status = 'INACTIVE', updated_at = ? WHERE external_id = ?"
@@ -80,9 +91,27 @@ class D1MemberRepository:
         result = await self._db.prepare(_FIND_ALL).all()
         return [_to_member(row) for row in result.results]
 
+    async def find_by_id(self, member_id: str) -> ClanMember | None:
+        row = await self._db.prepare(_FIND_BY_ID).bind(member_id).first()
+        return _to_member(row) if row is not None else None
+
     async def find_by_external_id(self, external_id: str) -> ClanMember | None:
         row = await self._db.prepare(_FIND_BY_EXTERNAL_ID).bind(external_id).first()
         return _to_member(row) if row is not None else None
+
+    async def update_managed(self, member: ClanMember) -> None:
+        await (
+            self._db.prepare(_UPDATE_MANAGED)
+            .bind(
+                str(member.grade),
+                member.grade_reason,
+                member.warnings,
+                member.description,
+                member.updated_at,
+                member.id,
+            )
+            .run()
+        )
 
     async def upsert_many(self, members: list[ClanMember]) -> int:
         added = 0

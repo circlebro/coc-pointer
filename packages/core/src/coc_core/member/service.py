@@ -13,10 +13,26 @@
 from __future__ import annotations
 
 import uuid
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
+from typing import Final
 
 from coc_core.member.models import ClanMember, ClanRole, MemberGrade, MemberStatus
 from coc_core.member.repository import MemberRepository, MemberSource
+
+
+class Unset:
+    """값을 주지 않았다는 표시.
+
+    수정에서는 "안 보냈다"와 "비워 달라"가 서로 다른 뜻이다. 둘 다 None 으로
+    적으면 사유를 지우려는 요청과 사유를 건드리지 않으려는 요청을 가릴 수 없다.
+    그래서 "안 보냈다" 쪽에 이 표시를 따로 쓴다.
+    """
+
+    def __repr__(self) -> str:
+        return "UNSET"
+
+
+UNSET: Final = Unset()
 
 
 @dataclass(frozen=True)
@@ -104,5 +120,44 @@ class MemberService:
     async def find_all(self) -> list[ClanMember]:
         return await self._repository.find_all()
 
+    async def find_by_id(self, member_id: str) -> ClanMember | None:
+        return await self._repository.find_by_id(member_id)
+
     async def find_by_external_id(self, external_id: str) -> ClanMember | None:
         return await self._repository.find_by_external_id(external_id)
+
+    async def update_managed(
+        self,
+        member_id: str,
+        now: str,
+        *,
+        grade: MemberGrade | Unset = UNSET,
+        grade_reason: str | None | Unset = UNSET,
+        warnings: int | Unset = UNSET,
+        description: str | None | Unset = UNSET,
+    ) -> ClanMember | None:
+        """우리가 정하는 값을 고친다. 그 식별자를 가진 사람이 없으면 None.
+
+        넘기지 않은 값은 그대로 둔다. 그래서 등급만 바꾸려는 요청이 관리자
+        메모를 함께 지우는 일이 생기지 않는다.
+
+        경고 횟수는 음수가 될 수 없다. 횟수를 세는 값이라 음수는 뜻을 갖지 않고,
+        한번 들어가면 화면과 집계가 함께 어긋난다.
+        """
+        if not isinstance(warnings, Unset) and warnings < 0:
+            raise ValueError("경고 횟수는 0 이상이어야 합니다")
+
+        before = await self._repository.find_by_id(member_id)
+        if before is None:
+            return None
+
+        after = replace(
+            before,
+            grade=before.grade if isinstance(grade, Unset) else grade,
+            grade_reason=before.grade_reason if isinstance(grade_reason, Unset) else grade_reason,
+            warnings=before.warnings if isinstance(warnings, Unset) else warnings,
+            description=before.description if isinstance(description, Unset) else description,
+            updated_at=now,
+        )
+        await self._repository.update_managed(after)
+        return after
