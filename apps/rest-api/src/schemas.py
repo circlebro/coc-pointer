@@ -54,6 +54,12 @@ class ClanRole(StrEnum):
     UNKNOWN = "UNKNOWN"
 
 
+class MemberGrade(StrEnum):
+    FIXED = "FIXED"
+    COMPETING = "COMPETING"
+    EXCLUDED = "EXCLUDED"
+
+
 class MemberStatus(StrEnum):
     ACTIVE = "ACTIVE"
     INACTIVE = "INACTIVE"
@@ -65,6 +71,13 @@ class Member(BaseModel):
     name: str
     role: ClanRole
     status: MemberStatus
+    grade: MemberGrade
+    gradeReason: str | None = Field(
+        None,
+        description='왜 그 등급인지. "길드장", "쉬는 계정" 같은 메모',
+        examples=["길드장"],
+    )
+    warnings: int = Field(..., description="경고 횟수. 표시만 하고 점수에 영향을 주지 않는다")
     townhall: int | None = None
     trophies: int | None = None
     donations: int | None = None

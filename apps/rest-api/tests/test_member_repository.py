@@ -6,7 +6,8 @@
 
 from __future__ import annotations
 
-from coc_core.member.models import ClanMember, ClanRole, MemberStatus
+import pytest
+from coc_core.member.models import ClanMember, ClanRole, MemberGrade, MemberStatus
 
 from adapters.member_repository import D1MemberRepository
 
@@ -21,6 +22,9 @@ def _member(tag: str, name: str, **overrides) -> ClanMember:
         "name": name,
         "role": ClanRole.MEMBER,
         "status": MemberStatus.ACTIVE,
+        "grade": MemberGrade.COMPETING,
+        "grade_reason": None,
+        "warnings": 0,
         "townhall": 16,
         "trophies": 4200,
         "donations": 100,
@@ -107,3 +111,45 @@ async def test_모르는_직책도_담긴다(fake_db):
 
     assert found is not None
     assert found.role is ClanRole.UNKNOWN
+
+
+async def test_등급과_사유와_경고는_갱신하지_않는다(fake_db):
+    """운영진이 매긴 값이라 동기화가 덮으면 안 된다.
+
+    서비스도 같은 판단을 하지만 여기서 한 번 더 막는다. 저장소를 직접 부르는
+    자리(관리 화면, 일회성 스크립트)가 생겨도 값이 지켜져야 한다.
+    """
+    repository = D1MemberRepository(fake_db)
+    await repository.upsert_many(
+        [_member("#A", "도토리", grade=MemberGrade.FIXED, grade_reason="길드장", warnings=2)]
+    )
+
+    # 동기화가 기본값을 들고 다시 들어온다
+    await repository.upsert_many(
+        [_member("#A", "도토리2", grade=MemberGrade.COMPETING, grade_reason=None, warnings=0)]
+    )
+
+    found = await repository.find_by_tag("#A")
+    assert found is not None
+    assert found.name == "도토리2"  # 이름은 갱신된다
+    assert found.grade is MemberGrade.FIXED  # 등급은 지켜진다
+    assert found.grade_reason == "길드장"
+    assert found.warnings == 2
+
+
+async def test_아무것도_매기지_않으면_경쟁으로_담긴다(fake_db):
+    repository = D1MemberRepository(fake_db)
+
+    await repository.upsert_many([_member("#B", "히로")])
+
+    found = await repository.find_by_tag("#B")
+    assert found is not None
+    assert found.grade is MemberGrade.COMPETING
+
+
+async def test_모르는_등급은_표가_거부한다(fake_db):
+    """읽을 때 죽는 대신 넣을 때 막는다. 예비를 담으려 해도 걸린다."""
+    repository = D1MemberRepository(fake_db)
+
+    with pytest.raises(Exception, match="CHECK|constraint"):
+        await repository.upsert_many([_member("#C", "아무개", grade="RESERVE")])  # type: ignore[arg-type]

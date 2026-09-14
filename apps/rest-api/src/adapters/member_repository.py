@@ -14,11 +14,11 @@ from __future__ import annotations
 
 from typing import Any
 
-from coc_core.member.models import ClanMember, ClanRole, MemberStatus
+from coc_core.member.models import ClanMember, ClanRole, MemberGrade, MemberStatus
 
 _COLUMNS = (
     "id, tag, name, role, townhall, trophies, donations, donations_received, "
-    "status, created_at, updated_at, description"
+    "status, grade, grade_reason, warnings, created_at, updated_at, description"
 )
 
 _FIND_ALL = f"SELECT {_COLUMNS} FROM clan_members ORDER BY name"
@@ -27,14 +27,15 @@ _FIND_BY_TAG = f"SELECT {_COLUMNS} FROM clan_members WHERE tag = ?"
 
 _COUNT_BY_TAG = "SELECT COUNT(*) AS n FROM clan_members WHERE tag = ?"
 
-# description 과 created_at 은 갱신하지 않는다. 관리자가 적은 메모가 동기화에
-# 지워지면 안 되고, 처음 본 시각은 처음 한 번만 정해진다.
+# description·created_at·grade·grade_reason·warnings 는 갱신하지 않는다.
+# 우리가 정하는 값이라 동기화가 덮으면 안 된다. 처음 본 시각도 한 번만 정해진다.
+# 등급을 바꾸는 일은 update_grade 가 따로 맡는다.
 _UPSERT = """
 INSERT INTO clan_members (
   id, tag, name, role, townhall, trophies, donations, donations_received,
-  status, created_at, updated_at, description
+  status, grade, grade_reason, warnings, created_at, updated_at, description
 )
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 ON CONFLICT(tag) DO UPDATE SET
   name               = excluded.name,
   role               = excluded.role,
@@ -56,6 +57,9 @@ def _to_member(row: Any) -> ClanMember:
         name=row.name,
         role=ClanRole(row.role),
         status=MemberStatus(row.status),
+        grade=MemberGrade(row.grade),
+        grade_reason=row.grade_reason,
+        warnings=row.warnings,
         townhall=row.townhall,
         trophies=row.trophies,
         donations=row.donations,
@@ -98,6 +102,9 @@ class D1MemberRepository:
                     m.donations,
                     m.donations_received,
                     str(m.status),
+                    str(m.grade),
+                    m.grade_reason,
+                    m.warnings,
                     m.created_at,
                     m.updated_at,
                     m.description,

@@ -32,6 +32,24 @@ class ClanRole(StrEnum):
             return cls.UNKNOWN
 
 
+class MemberGrade(StrEnum):
+    """리그전 선발에서의 자리.
+
+    시트는 넷으로 적는다(확정 ● · 경쟁 △ · 예비 ◎ · 제외 ✕). 여기 담는 것은
+    셋뿐이다.
+
+    - 사람이 매기는 것: FIXED, EXCLUDED
+    - 계산되는 것: 경쟁과 예비는 그 달 점수 순위가 가른다. 30위 안이면 경쟁,
+      밖이면 예비다. 매달 바뀌는 값이라 담지 않는다
+
+    담아 두면 점수가 바뀔 때마다 맞춰 줘야 하고, 그러다 어긋난다.
+    """
+
+    FIXED = "FIXED"  # 확정 ●. 길드장·부길드장·명예
+    COMPETING = "COMPETING"  # 경쟁 △. 아무것도 매기지 않으면 이것이다
+    EXCLUDED = "EXCLUDED"  # 제외 ✕. 부캐, 쉬는 계정
+
+
 class MemberStatus(StrEnum):
     """클랜 소속 여부. CoC API 가 주지 않고 우리가 판정한다."""
 
@@ -45,6 +63,9 @@ class ClanMember:
 
     id 는 우리 식별자이고 tag 는 CoC 세계의 식별자다. 주소에서 '#' 을 인코딩하지
     않으려고 id 를 따로 둔다.
+
+    grade·grade_reason·warnings 는 우리가 정하는 값이라 동기화가 덮어쓰지 않는다.
+    CoC 는 이런 것을 모른다.
     """
 
     id: str
@@ -52,6 +73,9 @@ class ClanMember:
     name: str
     role: ClanRole
     status: MemberStatus
+    grade: MemberGrade
+    grade_reason: str | None
+    warnings: int
     townhall: int | None
     trophies: int | None
     donations: int | None

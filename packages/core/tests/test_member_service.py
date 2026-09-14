@@ -5,7 +5,7 @@
 
 from __future__ import annotations
 
-from coc_core.member.models import ClanMember, ClanRole, MemberStatus
+from coc_core.member.models import ClanMember, ClanRole, MemberGrade, MemberStatus
 from coc_core.member.service import MemberService
 
 NOW = "2026-09-10T05:30:00Z"
@@ -130,3 +130,49 @@ async def test_태그로_한_명을_찾는다():
     assert found is not None
     assert found.name == "히로"
     assert await service.find_by_tag("#없음") is None
+
+
+async def test_동기화가_등급을_덮지_않는다():
+    """운영진이 매긴 확정·사유·경고는 우리가 정한 값이다.
+
+    CoC 는 이런 것을 모르므로, 30분마다 도는 동기화가 덮으면 매길 때마다
+    지워진다. 관리자 메모(description)와 같은 규칙이다.
+    """
+    before = ClanMember(
+        id="uuid-1",
+        tag="#A",
+        name="도토리",
+        role=ClanRole.MEMBER,
+        status=MemberStatus.ACTIVE,
+        grade=MemberGrade.FIXED,
+        grade_reason="길드장",
+        warnings=2,
+        townhall=16,
+        trophies=4200,
+        donations=100,
+        donations_received=50,
+        description=None,
+        created_at=NOW,
+        updated_at=NOW,
+    )
+    repository = FakeRepository([before])
+    source = FakeSource([_raw("#A", "도토리")])
+
+    await MemberService(repository, source).sync(now=NOW)
+
+    after = repository.rows["#A"]
+    assert after.grade is MemberGrade.FIXED
+    assert after.grade_reason == "길드장"
+    assert after.warnings == 2
+
+
+async def test_처음_보는_사람은_경쟁이다():
+    repository = FakeRepository()
+    source = FakeSource([_raw("#A", "도토리")])
+
+    await MemberService(repository, source).sync(now=NOW)
+
+    added = repository.rows["#A"]
+    assert added.grade is MemberGrade.COMPETING
+    assert added.grade_reason is None
+    assert added.warnings == 0

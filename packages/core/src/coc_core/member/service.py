@@ -15,7 +15,7 @@ from __future__ import annotations
 import uuid
 from dataclasses import dataclass, field
 
-from coc_core.member.models import ClanMember, ClanRole, MemberStatus
+from coc_core.member.models import ClanMember, ClanRole, MemberGrade, MemberStatus
 from coc_core.member.repository import MemberRepository, MemberSource
 
 
@@ -69,6 +69,11 @@ class MemberService:
                     name=raw["name"],
                     role=role,
                     status=MemberStatus.ACTIVE,
+                    # 등급·사유·경고는 우리가 정하는 값이라 동기화가 덮지 않는다.
+                    # 처음 보는 사람은 경쟁으로 둔다.
+                    grade=before.grade if before else MemberGrade.COMPETING,
+                    grade_reason=before.grade_reason if before else None,
+                    warnings=before.warnings if before else 0,
                     townhall=raw.get("townHallLevel"),
                     trophies=raw.get("trophies"),
                     donations=raw.get("donations"),

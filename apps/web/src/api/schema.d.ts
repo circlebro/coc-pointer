@@ -105,6 +105,17 @@ export interface components {
          */
         ClanRole: "LEADER" | "COLEADER" | "ADMIN" | "MEMBER" | "UNKNOWN";
         /**
+         * @description 리그전 선발에서의 자리. 넷 가운데 둘만 여기 담는다.
+         *
+         *     사람이 매기는 것 — FIXED(확정 ●), EXCLUDED(제외 ✕)
+         *     계산되는 것 — 경쟁 △, 예비 ◎ 는 그 달 점수 순위가 가른다.
+         *     30위 안이면 경쟁, 밖이면 예비다. 매달 바뀌므로 담지 않는다.
+         *
+         *     아무것도 매기지 않으면 COMPETING 이다.
+         * @enum {string}
+         */
+        MemberGrade: "FIXED" | "COMPETING" | "EXCLUDED";
+        /**
          * @description 클랜 소속 여부. CoC API 가 주지 않고 우리가 판정한다.
          *     목록에 있으면 ACTIVE, 사라지면 INACTIVE 로 내린다.
          * @enum {string}
@@ -124,6 +135,17 @@ export interface components {
             name: string;
             role: components["schemas"]["ClanRole"];
             status: components["schemas"]["MemberStatus"];
+            grade: components["schemas"]["MemberGrade"];
+            /**
+             * @description 왜 그 등급인지. "길드장", "쉬는 계정" 같은 메모
+             * @example 길드장
+             */
+            gradeReason?: string | null;
+            /**
+             * @description 경고 횟수. 표시만 하고 점수에 영향을 주지 않는다
+             * @default 0
+             */
+            warnings: number;
             townhall?: number | null;
             trophies?: number | null;
             donations?: number | null;

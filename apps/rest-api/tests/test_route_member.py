@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 
 import pytest
-from coc_core.member.models import ClanMember, ClanRole, MemberStatus
+from coc_core.member.models import ClanMember, ClanRole, MemberGrade, MemberStatus
 from fastapi.testclient import TestClient
 
 from adapters.member_repository import D1MemberRepository
@@ -31,6 +31,9 @@ def _member(tag: str, name: str, **overrides) -> ClanMember:
         "name": name,
         "role": ClanRole.MEMBER,
         "status": MemberStatus.ACTIVE,
+        "grade": MemberGrade.COMPETING,
+        "grade_reason": None,
+        "warnings": 0,
         "townhall": 16,
         "trophies": 4200,
         "donations": 100,

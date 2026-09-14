@@ -27,7 +27,12 @@ SAMPLE_ROWS = {
         ("u1", "admin", "해시", "관리자", "admin", None, "2026-09-11T00:00:00Z", None),
     ),
     "clan_members": (
-        "INSERT INTO clan_members VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        # 열 이름을 적어 둔다. VALUES 만 쓰면 열이 늘 때마다 여기도 고쳐야 하고,
+        # 순서가 어긋나도 모른 채 지나간다.
+        "INSERT INTO clan_members"
+        " (id, tag, name, role, townhall, trophies, donations, donations_received,"
+        " status, created_at, updated_at, description)"
+        " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         (
             "id1",
             "#A",
