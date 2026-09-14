@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>미니언즈 — 화면 셋</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;800&display=swap">
+<style>
+  :root {
+    --ink:#12171F; --paper:#FBFAF7; --cut:#C8102E; --fixed:#B8860B; --star:#F2B705;
+    --muted:#726C63; --line:#E6E1D8; --soft:#F1EDE5; --shell:#EDE8DE; --new:#1E6B52;
+    --kr:-apple-system, BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic","Segoe UI",Roboto,sans-serif;
+    --num:"Archivo", var(--kr);
+  }
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+    --ink:#ECE8E1; --paper:#14171C; --cut:#E85D6E; --fixed:#D9A82E; --star:#F5C544;
+    --muted:#938C82; --line:#2A2E35; --soft:#1D2127; --shell:#0E1115; --new:#4E9B7E; } }
+  :root[data-theme="dark"]{
+    --ink:#ECE8E1; --paper:#14171C; --cut:#E85D6E; --fixed:#D9A82E; --star:#F5C544;
+    --muted:#938C82; --line:#2A2E35; --soft:#1D2127; --shell:#0E1115; --new:#4E9B7E; }
+
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--shell);color:var(--ink);font-family:var(--kr);
+       font-size:15px;line-height:1.65;-webkit-font-smoothing:antialiased}
+  .page{max-width:1120px;margin:0 auto;padding:40px 20px 80px}
+
+  .intro{max-width:64ch;margin:0 0 32px}
+  .intro h1{margin:0 0 8px;font-size:26px;font-weight:700;letter-spacing:-.02em}
+  .intro p{margin:0 0 6px;color:var(--muted);font-size:14px}
+  .intro b{color:var(--ink);font-weight:600}
+
+  .menu{background:var(--paper);border:1px solid var(--line);border-radius:5px;
+        padding:0 20px;display:flex;gap:26px;align-items:center;flex-wrap:wrap;margin:0 0 10px}
+  .menu a{padding:14px 0;text-decoration:none;color:var(--muted);font-size:14px;
+          border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap}
+  .menu a.on{color:var(--ink);font-weight:600;border-bottom-color:var(--ink)}
+  .menu .adm{margin-left:auto;font-size:13px;color:var(--muted)}
+  .menu-note{margin:0 0 36px;font-size:12.5px;color:var(--muted)}
+
+  .screen{margin:0 0 38px}
+  .sh{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:0 0 4px}
+  .sh h2{margin:0;font-size:19px;font-weight:700;letter-spacing:-.01em}
+  .sh .src{font-size:12.5px;color:var(--muted)}
+  .sd{margin:0 0 12px;font-size:13.5px;color:var(--muted);max-width:68ch}
+
+  .win{background:var(--paper);border:1px solid var(--line);border-radius:5px;overflow:hidden}
+  .bar{padding:14px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+       border-bottom:1px solid var(--soft)}
+  .bar h3{margin:0;font-size:15px;font-weight:600}
+  .bar .meta{font-size:12px;color:var(--muted);margin-left:auto}
+
+  /* 셀렉트 — 달이 늘어나도 자리를 차지하지 않는다 */
+  .sel{display:inline-flex;align-items:center;gap:7px;font:500 13px/1 var(--num);
+       padding:7px 11px;border:1px solid var(--line);border-radius:4px;background:var(--paper);
+       color:var(--ink);cursor:default}
+  .sel::after{content:"▾";color:var(--muted);font-size:11px;margin-left:2px}
+  .sel .lb{font:500 11.5px/1 var(--kr);color:var(--muted)}
+  .sel.new{border-color:var(--new)}
+
+  .fld{display:inline-flex;align-items:center;gap:6px;font:600 12px/1 var(--num);
+       padding:6px 10px;border:1px solid var(--new);border-radius:4px;color:var(--new);
+       background:color-mix(in srgb,var(--new) 8%,transparent)}
+  .fld .lb{font:500 11px/1 var(--kr);color:var(--new);opacity:.85}
+
+  .scroll{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;min-width:100%}
+  thead th{font:500 11px/1 var(--kr);color:var(--muted);text-align:right;
+           padding:11px 14px 9px 0;border-bottom:1px solid var(--soft);white-space:nowrap}
+  thead th:first-child{padding-left:20px}
+  thead th.l{text-align:left}
+  thead th.grp{text-align:center;font:600 11px/1 var(--num);color:var(--ink);
+               border-bottom:1px solid var(--line);padding-bottom:6px}
+  tbody td{padding:7px 14px 7px 0;border-bottom:1px solid var(--soft);white-space:nowrap;font-size:13.5px}
+  tbody td:first-child{padding-left:20px}
+  td.rk{font:600 13px/1 var(--num);color:var(--muted);font-variant-numeric:tabular-nums;text-align:right;width:42px}
+  td.v{text-align:right;font:500 13px/1 var(--num);font-variant-numeric:tabular-nums;color:var(--muted)}
+  td.sc{text-align:right;font:600 14px/1 var(--num);font-variant-numeric:tabular-nums}
+  td.st{text-align:right;font:500 12.5px/1 var(--num);color:var(--star)}
+  tr.dim td{color:var(--muted)}
+
+  .g{display:inline-block;margin-left:6px;padding:1px 5px;border-radius:2px;
+     font:600 10px/1.5 var(--num);vertical-align:1px}
+  .g.f{background:color-mix(in srgb,var(--fixed) 16%,transparent);color:var(--fixed)}
+  .g.x{background:var(--soft);color:var(--muted);text-decoration:line-through}
+  .g.r{background:var(--soft);color:var(--muted)}
+
+  tr.cut td{padding:0;border:0;height:0;position:relative}
+  tr.cut td::before{content:"";position:absolute;left:0;right:0;top:0;border-top:2px solid var(--cut)}
+  tr.cut td::after{content:"30명 · 여기까지";position:absolute;right:20px;top:3px;
+                   font:600 10.5px/1 var(--kr);color:var(--cut);background:var(--paper);padding-left:8px}
+  tr.cut + tr td{padding-top:19px}
+
+  .foot{padding:11px 20px 15px;font-size:12.5px;color:var(--muted);border-top:1px solid var(--soft)}
+  .foot b{color:var(--new);font-weight:600}
+
+  .merged{margin:0 0 38px;padding:14px 18px;background:var(--paper);
+          border:1px solid var(--line);border-left:3px solid var(--muted);border-radius:4px;
+          font-size:13.5px;color:var(--muted);max-width:72ch}
+  .merged b{color:var(--ink);font-weight:600}
+
+  .legend{margin:30px 0 0;padding-top:20px;border-top:1px solid var(--line)}
+  .legend h3{margin:0 0 12px;font-size:16px;font-weight:700}
+  .legend ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px;max-width:70ch}
+  .legend li{font-size:13.5px;color:var(--muted)}
+  .legend li b{color:var(--ink);font-weight:600}
+  .sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="intro">
+    <h1>화면 셋</h1>
+    <p>시트 탭을 옮기되 같은 일을 하는 둘은 합쳤습니다. 달과 연도는 모두 <b>셀렉트로 고릅니다</b> — 몇 해가 지나도 자리를 차지하지 않습니다.</p>
+    <p><span class="fld"><span class="lb">예</span>이렇게</span> 표시한 것은 시트에 있지만 사이트에 아직 없는 것입니다.</p>
+  </div>
+
+  <nav class="menu">
+    <a href="#s1" class="on">클랜원 인원</a>
+    <a href="#s2">월별 점수</a>
+    <a href="#s3">리그전 명단</a>
+    <span class="adm">운영진</span>
+  </nav>
+  <p class="menu-note">대시보드는 아직 두지 않았습니다. 이 셋이 정해진 뒤에 그중 무엇을 요약할지 고릅니다.</p>
+
+  <!-- ─────────── 1 ─────────── -->
+  <section class="screen" id="s1">
+    <div class="sh"><h2>클랜원 인원</h2><span class="src">시트의 클랜인원관리</span></div>
+    <p class="sd">지금 클랜에 있는 사람과 등급, 그리고 그 달 클랜전마다의 별 수입니다. 시트에서 <b>사람이 손으로 채우는 유일한 탭</b>이고, 나머지 두 화면이 이것을 읽어 계산됩니다.</p>
+
+    <div class="win">
+      <div class="bar">
+        <h3>클랜원</h3>
+        <span class="sel"><span class="lb">기간</span>2026 / 09</span>
+        <span class="meta">49명 · 9월 14일 기준</span>
+      </div>
+      <div class="scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>순번</th><th>홀</th><th class="l">닉네임</th><th class="l">등급</th><th>경고</th>
+              <th>공격</th><th>미공격</th><th>별합</th><th>별평균</th><th>점수</th>
+              <th class="grp" colspan="4">9월 클랜전</th>
+            </tr>
+            <tr>
+              <th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th>
+              <th>9/2</th><th>9/5</th><th>9/8~11</th><th>9/13</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td class="rk">1</td><td class="v">18</td><td>도토리<span class="g f">확정</span></td><td class="v">길드장</td><td class="v"></td><td class="v">27</td><td class="v"></td><td class="st">81★</td><td class="v">3.00</td><td class="sc">100.0</td><td class="v">3/3</td><td class="v">3/3</td><td class="v">3/2</td><td class="v">3/3</td></tr>
+            <tr><td class="rk">2</td><td class="v">18</td><td>히로<span class="g f">확정</span></td><td class="v">명예</td><td class="v"></td><td class="v">27</td><td class="v"></td><td class="st">78★</td><td class="v">2.89</td><td class="sc">98.8</td><td class="v">3/2</td><td class="v">3/3</td><td class="v">2/3</td><td class="v">3/3</td></tr>
+            <tr><td class="rk">3</td><td class="v">18</td><td>✨Mad✨</td><td class="v"></td><td class="v"></td><td class="v">26</td><td class="v">1</td><td class="st">74★</td><td class="v">2.85</td><td class="sc">96.4</td><td class="v">3/3</td><td class="v">x</td><td class="v">3/2</td><td class="v">3/3</td></tr>
+            <tr><td class="rk">4</td><td class="v">18</td><td>빡곰</td><td class="v"></td><td class="v">1</td><td class="v">25</td><td class="v">2</td><td class="st">71★</td><td class="v">2.84</td><td class="sc">94.2</td><td class="v">3/2</td><td class="v">2/3</td><td class="v">x</td><td class="v">3/3</td></tr>
+            <tr class="dim"><td class="rk">48</td><td class="v">14</td><td>나이프건<span class="g x">제외</span></td><td class="v"></td><td class="v"></td><td class="v">2</td><td class="v">6</td><td class="st">4★</td><td class="v">2.00</td><td class="sc">50.0</td><td class="v">—</td><td class="v">x</td><td class="v">—</td><td class="v">2/x</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="foot">3/3 = 두 번 쳐서 각 3별 · x = 안 침 · — = 명단에 없음 &nbsp;|&nbsp; 등급은 <b>운영진 화면</b>에서 매깁니다</div>
+    </div>
+  </section>
+
+  <!-- ─────────── 2 ─────────── -->
+  <section class="screen" id="s2">
+    <div class="sh"><h2>월별 점수</h2><span class="src">시트의 [자동]월별점수 · [자동]월별 명단 조회</span></div>
+    <p class="sd">고른 달의 점수와 순위입니다. 등급도 함께 보여 주어 누가 확정이고 누가 제외인지 알 수 있습니다.</p>
+
+    <div class="win">
+      <div class="bar">
+        <h3>월별 점수</h3>
+        <span class="sel"><span class="lb">기간</span>2026 / 09</span>
+        <span class="meta">클랜전 4회 반영</span>
+      </div>
+      <div class="scroll">
+        <table>
+          <thead>
+            <tr><th>순위</th><th class="l">닉네임</th><th class="l">등급</th><th>공격</th><th>미공격</th><th>별합</th><th>별평균</th><th>점수</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="rk">1</td><td>도토리</td><td class="v">확정 ●</td><td class="v">27</td><td class="v">0</td><td class="st">81★</td><td class="v">3.00</td><td class="sc">100.0</td></tr>
+            <tr><td class="rk">2</td><td>히로</td><td class="v">확정 ●</td><td class="v">27</td><td class="v">0</td><td class="st">78★</td><td class="v">2.89</td><td class="sc">98.8</td></tr>
+            <tr><td class="rk">3</td><td>✨Mad✨</td><td class="v">경쟁 △</td><td class="v">26</td><td class="v">1</td><td class="st">74★</td><td class="v">2.85</td><td class="sc">96.4</td></tr>
+            <tr><td class="rk">4</td><td>빡곰</td><td class="v">경쟁 △</td><td class="v">25</td><td class="v">2</td><td class="st">71★</td><td class="v">2.84</td><td class="sc">94.2</td></tr>
+            <tr><td class="rk">31</td><td>쌈탉</td><td class="v">예비 ◎</td><td class="v">15</td><td class="v">4</td><td class="st">39★</td><td class="v">2.35</td><td class="sc">70.1</td></tr>
+            <tr class="dim"><td class="rk">48</td><td>나이프건</td><td class="v">제외 ✕</td><td class="v">2</td><td class="v">6</td><td class="st">4★</td><td class="v">2.00</td><td class="sc">50.0</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="foot">등급 가운데 <b>경쟁</b>과 <b>예비</b>는 이 순위가 정합니다. 30위 안이면 경쟁, 밖이면 예비입니다</div>
+    </div>
+  </section>
+
+  <!-- ─────────── 3 ─────────── -->
+  <section class="screen" id="s3">
+    <div class="sh"><h2>리그전 명단</h2><span class="src">시트의 [자동]리그전 명단(월별)</span></div>
+    <p class="sd">그 달 점수로 다음 달 리그전에 나갈 30명을 뽑습니다. <b>이 사이트가 존재하는 까닭</b>입니다.</p>
+
+    <div class="win">
+      <div class="bar">
+        <h3>리그전 명단</h3>
+        <span class="sel"><span class="lb">기준</span>2026 / 09</span>
+        <span class="fld"><span class="lb">공격</span>10회 이상</span>
+        <span class="fld"><span class="lb">점수</span>70 초과</span>
+        <span class="meta">10월 리그전</span>
+      </div>
+      <div class="scroll">
+        <table>
+          <thead>
+            <tr><th>순위</th><th class="l">닉네임</th><th>홀</th><th>공격</th><th>미공격</th><th>별평균</th><th>점수</th><th class="l">선발 근거</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="rk">1</td><td>도토리<span class="g f">확정</span></td><td class="v">18</td><td class="v">27</td><td class="v">0</td><td class="v">3.00</td><td class="sc">100.0</td><td class="v">길드장</td></tr>
+            <tr><td class="rk">2</td><td>히로<span class="g f">확정</span></td><td class="v">18</td><td class="v">27</td><td class="v">0</td><td class="v">2.89</td><td class="sc">98.8</td><td class="v">명예</td></tr>
+            <tr><td class="rk">3</td><td>✨Mad✨</td><td class="v">18</td><td class="v">26</td><td class="v">1</td><td class="v">2.85</td><td class="sc">96.4</td><td class="v">점수 순</td></tr>
+            <tr><td class="rk">29</td><td>Love2</td><td class="v">17</td><td class="v">16</td><td class="v">3</td><td class="v">2.42</td><td class="sc">73.6</td><td class="v">점수 순</td></tr>
+            <tr><td class="rk">30</td><td>띵수</td><td class="v">16</td><td class="v">15</td><td class="v">4</td><td class="v">2.38</td><td class="sc">71.2</td><td class="v">점수 순</td></tr>
+            <tr class="cut"><td colspan="8"></td></tr>
+            <tr class="dim"><td class="rk">31</td><td>쌈탉<span class="g r">예비 1</span></td><td class="v">18</td><td class="v">15</td><td class="v">4</td><td class="v">2.35</td><td class="sc">70.1</td><td class="v">30위 밖</td></tr>
+            <tr class="dim"><td class="rk">32</td><td>완두콩<span class="g r">예비 2</span></td><td class="v">18</td><td class="v">14</td><td class="v">5</td><td class="v">2.28</td><td class="sc">68.4</td><td class="v">30위 밖</td></tr>
+            <tr class="dim"><td class="rk">33</td><td>청사과<span class="g r">예비 3</span></td><td class="v">18</td><td class="v">14</td><td class="v">5</td><td class="v">2.21</td><td class="sc">66.9</td><td class="v">30위 밖</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="foot"><b>커트라인</b>을 화면에서 고칩니다. 지금은 코드에 박혀 있어 바꾸려면 배포해야 합니다</div>
+    </div>
+  </section>
+
+  <p class="merged">
+    <b>시트 탭 다섯 가운데 둘을 합쳤습니다.</b> [자동]월별점수와 [자동]월별 명단 조회가 같은 일을 합니다 —
+    달을 골라 그 달 점수를 보는 것입니다. 시트에서 탭이 나뉜 것은 수식을 짜다 보니 그렇게 된 것으로 보입니다.
+    [자동]리그전 명단(이전버전)은 옛것이라 옮기지 않습니다.
+  </p>
+
+  <div class="legend">
+    <h3>표시 약속</h3>
+    <ul>
+      <li><b>기간은 셀렉트 하나로 고릅니다.</b> <span class="sel"><span class="lb">기간</span>2026 / 09</span> 달이 몇 해 치로 늘어나도 자리를 차지하지 않습니다.</li>
+      <li><span class="sw" style="background:#C8102E"></span><b>선발선</b> — 30위와 31위를 가릅니다. 이 화면들에서 유일하게 힘을 준 것입니다.</li>
+      <li><span class="sw" style="background:#B8860B"></span><b>확정</b> — 길드장·부길드장·명예에게만 붙습니다. 사람이 매기는 등급입니다.</li>
+      <li><span class="sw" style="background:#F2B705"></span><b>별</b> — 공격 성과이자 점수의 바탕입니다.</li>
+      <li><span class="sw" style="background:#1E6B52"></span><b>초록 테두리</b> — 시트에는 있고 사이트에는 아직 없는 것입니다.</li>
+      <li><b>등급을 매기는 자리는 여기가 아닙니다.</b> 이 셋은 보기만 하고, 확정·제외를 붙이는 일은 운영진 화면이 맡습니다.</li>
+    </ul>
+  </div>
+
+</div>
+</body>
+</html>
