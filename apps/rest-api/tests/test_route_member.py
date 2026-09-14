@@ -40,6 +40,7 @@ def _member(external_id: str, name: str, **overrides) -> ClanMember:
         "description": None,
         "created_at": NOW,
         "updated_at": NOW,
+        "synced_at": NOW,
     }
     base.update(overrides)
     return ClanMember(**base)
@@ -70,22 +71,22 @@ def test_아무도_없으면_빈_목록(client):
 def test_이름_순으로_돌려준다(client, fake_db):
     _seed(fake_db, [_member("#B", "히로"), _member("#A", "도토리")])
 
-    body = client.get("/api/v1/members").json()
+    body = client.get("/api/v1/members", params={"includes": "profile"}).json()
 
-    assert [m["name"] for m in body["members"]] == ["도토리", "히로"]
+    assert [m["profile"]["name"] for m in body["members"]] == ["도토리", "히로"]
 
 
 def test_스펙대로_캐멀케이스로_준다(client, fake_db):
     _seed(fake_db, [_member("#A", "도토리", role=ClanRole.ADMIN)])
 
-    member = client.get("/api/v1/members").json()["members"][0]
+    member = client.get("/api/v1/members", params={"includes": "profile"}).json()["members"][0]
 
     assert member["externalId"] == "#A"
-    assert member["role"] == "ADMIN"
     assert member["status"] == "ACTIVE"
-    assert member["donationsReceived"] == 50
     assert member["createdAt"] == NOW
-    assert "donations_received" not in member
+    assert member["profile"]["role"] == "ADMIN"
+    assert member["profile"]["donationsReceived"] == 50
+    assert "donations_received" not in member["profile"]
 
 
 def test_외부_식별자로_좁힌다(client, fake_db):
@@ -93,7 +94,7 @@ def test_외부_식별자로_좁힌다(client, fake_db):
 
     body = client.get("/api/v1/members", params={"externalId": "#B"}).json()
 
-    assert [m["name"] for m in body["members"]] == ["히로"]
+    assert [m["externalId"] for m in body["members"]] == ["#B"]
 
 
 def test_없는_식별자면_빈_목록(client, fake_db):
@@ -110,7 +111,7 @@ def test_우리_식별자로_한_명을_준다(client, fake_db):
     response = client.get("/api/v1/members/uuid-B")
 
     assert response.status_code == 200
-    assert response.json()["name"] == "히로"
+    assert response.json()["externalId"] == "#B"
 
 
 def test_없는_식별자면_404(client, fake_db):
@@ -169,11 +170,12 @@ def test_CoC_가_주인인_값은_고칠_수_없다(client, fake_db):
 
     body = client.patch(
         "/api/v1/members/uuid-A",
+        params={"includes": "profile"},
         json={"grade": "FIXED", "name": "바뀐이름"},
     ).json()
 
     assert body["grade"] == "FIXED"
-    assert body["name"] == "도토리"
+    assert body["profile"]["name"] == "도토리"
 
 
 def test_아는_값이_하나도_없으면_400(client, fake_db):
@@ -215,3 +217,94 @@ def test_없는_사람을_고치면_404(client, fake_db):
     response = client.patch("/api/v1/members/uuid-없음", json={"grade": "FIXED"})
 
     assert response.status_code == 404
+
+
+def test_기본_응답에는_profile_이_없다(client, fake_db):
+    """키 자체가 없어야 한다. null 로 채우면 묻지 않은 것과 값이 없는 것이 같아 보인다."""
+    _seed(fake_db, [_member("#A", "도토리")])
+
+    member = client.get("/api/v1/members").json()["members"][0]
+
+    assert "profile" not in member
+    assert set(member) == {
+        "id",
+        "externalId",
+        "status",
+        "grade",
+        "gradeReason",
+        "warnings",
+        "description",
+        "createdAt",
+        "updatedAt",
+    }
+
+
+def test_profile_을_부르면_CoC_값이_실린다(client, fake_db):
+    _seed(fake_db, [_member("#A", "도토리", role=ClanRole.ADMIN)])
+
+    member = client.get("/api/v1/members", params={"includes": "profile"}).json()["members"][0]
+
+    assert member["profile"] == {
+        "name": "도토리",
+        "role": "ADMIN",
+        "townhall": 16,
+        "trophies": 4200,
+        "donations": 100,
+        "donationsReceived": 50,
+        "fetchedAt": NOW,
+    }
+
+
+def test_한_명을_부를_때도_profile_을_고른다(client, fake_db):
+    _seed(fake_db, [_member("#A", "도토리")])
+
+    without = client.get("/api/v1/members/uuid-A").json()
+    with_profile = client.get("/api/v1/members/uuid-A", params={"includes": "profile"}).json()
+
+    assert "profile" not in without
+    assert with_profile["profile"]["name"] == "도토리"
+
+
+def test_고친_뒤에도_profile_을_고른다(client, fake_db):
+    _seed(fake_db, [_member("#A", "도토리")])
+
+    body = client.patch(
+        "/api/v1/members/uuid-A",
+        params={"includes": "profile"},
+        json={"grade": "FIXED"},
+    ).json()
+
+    assert body["grade"] == "FIXED"
+    assert body["profile"]["name"] == "도토리"
+
+
+def test_모르는_includes_는_400(client, fake_db):
+    """조용히 버리면 오타인지 값이 없는 것인지 부르는 쪽이 알 수 없다."""
+    _seed(fake_db, [_member("#A", "도토리")])
+
+    response = client.get("/api/v1/members", params={"includes": "standing"})
+
+    assert response.status_code == 400
+    assert "standing" in response.json()["detail"]
+
+
+def test_빈_includes_는_기본_응답과_같다(client, fake_db):
+    _seed(fake_db, [_member("#A", "도토리")])
+
+    body = client.get("/api/v1/members", params={"includes": ""}).json()
+
+    assert "profile" not in body["members"][0]
+
+
+def test_동기화_시각과_갱신_시각은_따로_움직인다(client, fake_db):
+    """등급만 고쳤는데 'CoC 에서 방금 받았다'로 보이면 안 된다."""
+    _seed(fake_db, [_member("#A", "도토리")])
+
+    body = client.patch(
+        "/api/v1/members/uuid-A",
+        params={"includes": "profile"},
+        json={"grade": "FIXED"},
+    ).json()
+
+    assert body["updatedAt"] > NOW
+    assert body["profile"]["fetchedAt"] == NOW

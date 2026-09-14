@@ -1,19 +1,22 @@
 import { useEffect, useState } from "react";
-import { fetchMembers, type Member } from "../api/client";
-import { roleLabel, statusLabel } from "../labels";
+import { fetchMembers, type MemberWithProfile } from "../api/client";
+import { gradeLabel, roleLabel, statusLabel } from "../labels";
 
 type State =
   | { kind: "loading" }
   | { kind: "error"; message: string }
-  | { kind: "ready"; members: Member[] };
+  | { kind: "ready"; members: MemberWithProfile[] };
 
 export function Members() {
   const [state, setState] = useState<State>({ kind: "loading" });
 
   const load = () => {
     setState({ kind: "loading" });
-    fetchMembers()
-      .then((body) => setState({ kind: "ready", members: body.members }))
+    // 이 표는 닉네임과 직책, 홀·트로피·기부를 보여주므로 profile 이 필요하다.
+    fetchMembers(["profile"])
+      .then((body) =>
+        setState({ kind: "ready", members: body.members as MemberWithProfile[] }),
+      )
       .catch((error: Error) => setState({ kind: "error", message: error.message }));
   };
 
@@ -45,6 +48,7 @@ export function Members() {
           <th>닉네임</th>
           <th>태그</th>
           <th>직책</th>
+          <th>등급</th>
           <th>상태</th>
           <th>홀</th>
           <th>트로피</th>
@@ -54,13 +58,14 @@ export function Members() {
       <tbody>
         {state.members.map((member) => (
           <tr key={member.id}>
-            <td>{member.name}</td>
+            <td>{member.profile.name}</td>
             <td>{member.externalId}</td>
-            <td>{roleLabel(member.role)}</td>
+            <td>{roleLabel(member.profile.role)}</td>
+            <td>{gradeLabel(member.grade)}</td>
             <td>{statusLabel(member.status)}</td>
-            <td>{member.townhall ?? "-"}</td>
-            <td>{member.trophies ?? "-"}</td>
-            <td>{member.donations ?? "-"}</td>
+            <td>{member.profile.townhall ?? "-"}</td>
+            <td>{member.profile.trophies ?? "-"}</td>
+            <td>{member.profile.donations ?? "-"}</td>
           </tr>
         ))}
       </tbody>

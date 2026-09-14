@@ -66,6 +66,10 @@ class ClanMember:
 
     grade·grade_reason·warnings 는 우리가 정하는 값이라 동기화가 덮어쓰지 않는다.
     CoC 는 이런 것을 모른다.
+
+    updated_at 과 synced_at 은 다르다. 앞은 이 행이 마지막으로 바뀐 시각이라
+    등급을 고쳐도 올라가고, 뒤는 CoC 가 준 값을 받아 적은 시각이라 동기화만
+    올린다. 둘을 하나로 두면 등급만 고친 뒤에도 "방금 받은 값"처럼 보인다.
     """
 
     id: str
@@ -83,3 +87,4 @@ class ClanMember:
     description: str | None
     created_at: str
     updated_at: str
+    synced_at: str | None

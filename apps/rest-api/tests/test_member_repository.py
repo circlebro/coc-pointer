@@ -32,6 +32,7 @@ def _member(external_id: str, name: str, **overrides) -> ClanMember:
         "description": None,
         "created_at": NOW,
         "updated_at": NOW,
+        "synced_at": NOW,
     }
     base.update(overrides)
     return ClanMember(**base)

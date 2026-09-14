@@ -97,6 +97,7 @@ class MemberService:
                     description=before.description if before else None,
                     created_at=before.created_at if before else now,
                     updated_at=now,
+                    synced_at=now,
                 )
             )
 

@@ -64,41 +64,21 @@ class MemberStatus(StrEnum):
     INACTIVE = "INACTIVE"
 
 
-class Member(BaseModel):
-    id: str = Field(
-        ...,
-        description="우리 식별자(UUID 문자열)",
-        examples=["3f2a1b4c-5d6e-4f70-8a91-b2c3d4e5f607"],
-    )
-    externalId: str = Field(
-        ...,
-        description="CoC 플레이어 태그. 이 값으로 CoC API 를 부른다",
-        examples=["#2ABC123"],
-    )
+class MemberInclude(StrEnum):
+    profile = "profile"
+
+
+class MemberProfile(BaseModel):
     name: str
     role: ClanRole
-    status: MemberStatus
-    grade: MemberGrade
-    gradeReason: str | None = Field(
-        None,
-        description='왜 그 등급인지. "길드장", "쉬는 계정" 같은 메모',
-        examples=["길드장"],
-    )
-    warnings: int = Field(..., description="경고 횟수. 표시만 하고 점수에 영향을 주지 않는다")
     townhall: int | None = None
     trophies: int | None = None
     donations: int | None = None
     donationsReceived: int | None = None
-    description: str | None = Field(None, description="관리자 메모. 동기화가 덮어쓰지 않는다")
-    createdAt: str = Field(
-        ...,
-        description="처음 본 시각. ISO 8601(UTC)",
-        examples=["2026-09-11T07:18:57Z"],
-    )
-    updatedAt: str = Field(
-        ...,
-        description="마지막으로 갱신한 시각. ISO 8601(UTC)",
-        examples=["2026-09-11T07:18:57Z"],
+    fetchedAt: str | None = Field(
+        None,
+        description="CoC 가 준 값을 받아 적은 시각. ISO 8601(UTC)",
+        examples=["2026-09-14T09:00:00Z"],
     )
 
 
@@ -113,9 +93,42 @@ class MemberUpdate(BaseModel):
     description: str | None = Field(None, description="관리자 메모")
 
 
-class MemberListResponse(BaseModel):
-    members: list[Member]
-
-
 class Error(BaseModel):
     detail: str = Field(..., examples=["그 클랜원이 없습니다"])
+
+
+class Member(BaseModel):
+    id: str = Field(
+        ...,
+        description="우리 식별자(UUID 문자열)",
+        examples=["3f2a1b4c-5d6e-4f70-8a91-b2c3d4e5f607"],
+    )
+    externalId: str = Field(
+        ...,
+        description="CoC 플레이어 태그. 이 값으로 CoC API 를 부른다",
+        examples=["#2ABC123"],
+    )
+    status: MemberStatus
+    grade: MemberGrade
+    gradeReason: str | None = Field(
+        None,
+        description='왜 그 등급인지. "길드장", "쉬는 계정" 같은 메모',
+        examples=["길드장"],
+    )
+    warnings: int = Field(..., description="경고 횟수. 표시만 하고 점수에 영향을 주지 않는다")
+    description: str | None = Field(None, description="관리자 메모. 동기화가 덮어쓰지 않는다")
+    createdAt: str = Field(
+        ...,
+        description="처음 본 시각. ISO 8601(UTC)",
+        examples=["2026-09-11T07:18:57Z"],
+    )
+    updatedAt: str = Field(
+        ...,
+        description="마지막으로 바뀐 시각. CoC 에서 받은 시각은 profile.fetchedAt 이다",
+        examples=["2026-09-11T07:18:57Z"],
+    )
+    profile: MemberProfile | None = None
+
+
+class MemberListResponse(BaseModel):
+    members: list[Member]

@@ -178,6 +178,7 @@ async def test_동기화가_등급을_덮지_않는다():
         description=None,
         created_at=NOW,
         updated_at=NOW,
+        synced_at=NOW,
     )
     repository = FakeRepository([before])
     source = FakeSource([_raw("#A", "도토리")])
@@ -220,6 +221,7 @@ def _member(**overrides) -> ClanMember:
         "description": None,
         "created_at": NOW,
         "updated_at": NOW,
+        "synced_at": NOW,
     }
     base.update(overrides)
     return ClanMember(**base)

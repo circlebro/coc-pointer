@@ -18,7 +18,7 @@ from coc_core.member.models import ClanMember, ClanRole, MemberGrade, MemberStat
 
 _COLUMNS = (
     "id, external_id, name, role, townhall, trophies, donations, donations_received, "
-    "status, grade, grade_reason, warnings, created_at, updated_at, description"
+    "status, grade, grade_reason, warnings, created_at, updated_at, synced_at, description"
 )
 
 _FIND_ALL = f"SELECT {_COLUMNS} FROM clan_members ORDER BY name"
@@ -35,9 +35,9 @@ _COUNT_BY_EXTERNAL_ID = "SELECT COUNT(*) AS n FROM clan_members WHERE external_i
 _UPSERT = """
 INSERT INTO clan_members (
   id, external_id, name, role, townhall, trophies, donations, donations_received,
-  status, grade, grade_reason, warnings, created_at, updated_at, description
+  status, grade, grade_reason, warnings, created_at, updated_at, synced_at, description
 )
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 ON CONFLICT(external_id) DO UPDATE SET
   name               = excluded.name,
   role               = excluded.role,
@@ -46,7 +46,8 @@ ON CONFLICT(external_id) DO UPDATE SET
   donations          = excluded.donations,
   donations_received = excluded.donations_received,
   status             = excluded.status,
-  updated_at         = excluded.updated_at
+  updated_at         = excluded.updated_at,
+  synced_at          = excluded.synced_at
 """
 
 # 거꾸로 여기서는 우리가 정하는 값만 덮는다. 이름·직책·트로피를 함께 적으면
@@ -78,6 +79,7 @@ def _to_member(row: Any) -> ClanMember:
         description=row.description,
         created_at=row.created_at,
         updated_at=row.updated_at,
+        synced_at=row.synced_at,
     )
 
 
@@ -136,6 +138,7 @@ class D1MemberRepository:
                     m.warnings,
                     m.created_at,
                     m.updated_at,
+                    m.synced_at,
                     m.description,
                 )
                 .run()

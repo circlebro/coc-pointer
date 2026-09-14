@@ -1,7 +1,14 @@
 import type { components, paths } from "./schema";
 
 export type Member = components["schemas"]["Member"];
+export type MemberInclude = components["schemas"]["MemberInclude"];
 export type MemberListResponse = components["schemas"]["MemberListResponse"];
+
+// profile 을 부른 응답. 부르지 않으면 키가 아예 없으므로, 화면이 이름이나 직책을
+// 쓰려면 이 자료형으로 받아야 한다.
+export type MemberWithProfile = Member & {
+  profile: NonNullable<Member["profile"]>;
+};
 export type Clan = components["schemas"]["Clan"];
 export type ClanListResponse = components["schemas"]["ClanListResponse"];
 
@@ -21,8 +28,13 @@ async function get<T>(path: string): Promise<T> {
   return response.json();
 }
 
-export async function fetchMembers(): Promise<MemberListResponse> {
-  return get<MemberListResponse>(MEMBERS);
+// 기본 응답은 우리 DB 값만 담는다. 이름·직책·홀·트로피는 CoC 가 주인이라
+// includes=profile 로 따로 청해야 실려 온다.
+export async function fetchMembers(
+  includes: MemberInclude[] = [],
+): Promise<MemberListResponse> {
+  const query = includes.length > 0 ? `?includes=${includes.join(",")}` : "";
+  return get<MemberListResponse>(`${MEMBERS}${query}`);
 }
 
 export async function fetchClans(): Promise<ClanListResponse> {

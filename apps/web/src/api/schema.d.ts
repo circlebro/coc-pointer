@@ -150,13 +150,22 @@ export interface components {
          */
         MemberStatus: "ACTIVE" | "INACTIVE";
         /**
+         * @description includes 로 고를 수 있는 덩어리 이름.
+         * @enum {string}
+         */
+        MemberInclude: "profile";
+        /**
          * @description 클랜원 한 명. 게임 계정 하나를 가리키며 사람이 아니다.
+         *
+         *     여기 담는 것은 우리 DB 한 행을 읽으면 나오는 값뿐이다. CoC 를 부르지도
+         *     않고 무엇을 계산하지도 않는다. 명단만 필요한 요청에 그 비용을 얹지
+         *     않으려는 것이다.
          *
          *     id 는 우리 식별자이고 externalId 는 CoC 세계의 식별자다. 주소에서
          *     '#' 을 인코딩하지 않으려고 따로 둔다. Clan 과 같은 규칙이다.
          *
-         *     grade·gradeReason·warnings·description 은 우리가 정하는 값이라
-         *     동기화가 덮어쓰지 않는다.
+         *     이름과 직책은 여기 없다. CoC 가 주인인 값이라 profile 로 내렸다.
+         *     includes=profile 로 부르면 실려 온다.
          */
         Member: {
             /**
@@ -169,8 +178,6 @@ export interface components {
              * @example #2ABC123
              */
             externalId: string;
-            name: string;
-            role: components["schemas"]["ClanRole"];
             status: components["schemas"]["MemberStatus"];
             grade: components["schemas"]["MemberGrade"];
             /**
@@ -183,10 +190,6 @@ export interface components {
              * @default 0
              */
             warnings: number;
-            townhall?: number | null;
-            trophies?: number | null;
-            donations?: number | null;
-            donationsReceived?: number | null;
             /** @description 관리자 메모. 동기화가 덮어쓰지 않는다 */
             description?: string | null;
             /**
@@ -195,10 +198,33 @@ export interface components {
              */
             createdAt: string;
             /**
-             * @description 마지막으로 갱신한 시각. ISO 8601(UTC)
+             * @description 마지막으로 바뀐 시각. CoC 에서 받은 시각은 profile.fetchedAt 이다
              * @example 2026-09-11T07:18:57Z
              */
             updatedAt: string;
+            profile?: components["schemas"]["MemberProfile"];
+        };
+        /**
+         * @description CoC 가 주인인 값. includes=profile 로 부를 때만 실린다.
+         *
+         *     지금은 동기화가 받아 둔 사본을 읽는다. 앞으로 사본을 걷어내면 이 덩어리가
+         *     CoC 호출이 된다. 그때 부르는 쪽을 고치지 않아도 되도록 지금 갈라 둔다.
+         *
+         *     fetchedAt 이 이 값들의 나이를 말해 준다. 30분마다 도는 동기화가 채우며,
+         *     아직 한 번도 동기화하지 않았으면 null 이다.
+         */
+        MemberProfile: {
+            name: string;
+            role: components["schemas"]["ClanRole"];
+            townhall?: number | null;
+            trophies?: number | null;
+            donations?: number | null;
+            donationsReceived?: number | null;
+            /**
+             * @description CoC 가 준 값을 받아 적은 시각. ISO 8601(UTC)
+             * @example 2026-09-14T09:00:00Z
+             */
+            fetchedAt?: string | null;
         };
         /**
          * @description 클랜원에게서 우리가 정하는 값. PATCH 의 본문이다.
@@ -231,7 +257,21 @@ export interface components {
         };
     };
     responses: never;
-    parameters: never;
+    parameters: {
+        /**
+         * @description 기본 응답에 함께 실을 덩어리. 쉼표로 여럿 적는다.
+         *
+         *     기본 응답은 우리 DB 한 행만 읽는다. CoC 를 부르지도, 무엇을 계산하지도
+         *     않는다. 명단만 필요한 요청에 그 비용을 얹지 않으려는 것이다.
+         *
+         *     부르지 않은 덩어리는 키 자체가 없다. null 로 채우지 않는다. 묻지 않은
+         *     것과 값이 없는 것은 다르기 때문이다.
+         *
+         *       profile  CoC 가 주인인 값 — 이름·직책·홀·트로피·기부
+         * @example profile
+         */
+        Includes: components["schemas"]["MemberInclude"][];
+    };
     requestBodies: never;
     headers: never;
     pathItems: never;
@@ -243,6 +283,19 @@ export interface operations {
             query?: {
                 /** @description CoC 플레이어 태그로 좁힌다. '#'을 포함해 넘긴다 */
                 externalId?: string;
+                /**
+                 * @description 기본 응답에 함께 실을 덩어리. 쉼표로 여럿 적는다.
+                 *
+                 *     기본 응답은 우리 DB 한 행만 읽는다. CoC 를 부르지도, 무엇을 계산하지도
+                 *     않는다. 명단만 필요한 요청에 그 비용을 얹지 않으려는 것이다.
+                 *
+                 *     부르지 않은 덩어리는 키 자체가 없다. null 로 채우지 않는다. 묻지 않은
+                 *     것과 값이 없는 것은 다르기 때문이다.
+                 *
+                 *       profile  CoC 가 주인인 값 — 이름·직책·홀·트로피·기부
+                 * @example profile
+                 */
+                includes?: components["parameters"]["Includes"];
             };
             header?: never;
             path?: never;
@@ -263,7 +316,21 @@ export interface operations {
     };
     getMember: {
         parameters: {
-            query?: never;
+            query?: {
+                /**
+                 * @description 기본 응답에 함께 실을 덩어리. 쉼표로 여럿 적는다.
+                 *
+                 *     기본 응답은 우리 DB 한 행만 읽는다. CoC 를 부르지도, 무엇을 계산하지도
+                 *     않는다. 명단만 필요한 요청에 그 비용을 얹지 않으려는 것이다.
+                 *
+                 *     부르지 않은 덩어리는 키 자체가 없다. null 로 채우지 않는다. 묻지 않은
+                 *     것과 값이 없는 것은 다르기 때문이다.
+                 *
+                 *       profile  CoC 가 주인인 값 — 이름·직책·홀·트로피·기부
+                 * @example profile
+                 */
+                includes?: components["parameters"]["Includes"];
+            };
             header?: never;
             path: {
                 /** @description 우리 식별자. CoC 태그가 아니다 */
