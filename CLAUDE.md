@@ -69,6 +69,11 @@ so any one of them could be split out and deployed on its own without the others
 - **The frontend is a stranger too.** Browsers cache old JavaScript, so a deployed frontend
   outlives the deploy that replaced it. That is why paths carry `/api/v1/` even though only
   our own page calls them. This repo has already been bitten once by a cached `style.css`.
+- **The backend opens capabilities; the product decides which ones to use.** The API may
+  serve a list of clans while the UI shows exactly one — that is the UI's choice, not a
+  gap in the API. Do not narrow a server endpoint because today's screen needs less;
+  narrowing it later costs a migration, and widening it later costs a redeploy the
+  frontend cannot wait for.
 - **The backend states facts; the frontend decides how they look.** The API returns
   `"role": "ADMIN"`, never `"장로"`. Putting display strings in a response drags i18n into
   the server and makes a copy change a backend deploy.
