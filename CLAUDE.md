@@ -66,6 +66,9 @@ so any one of them could be split out and deployed on its own without the others
 - **The contract is the only seam.** `api/openapi.yaml` is written by hand and is the
   single source of truth; server models and frontend types are generated from it and are
   never hand-edited. One spec, not one per side — two specs mean neither is the contract.
+  `docs/api-guide.md` holds the rules the spec follows — URL shape, custom methods,
+  `?include=` chunks, partial updates, error codes, naming. Read it before adding a path,
+  and add to it whenever a new rule gets decided.
 - **The frontend is a stranger too.** Browsers cache old JavaScript, so a deployed frontend
   outlives the deploy that replaced it. That is why paths carry `/api/v1/` even though only
   our own page calls them. This repo has already been bitten once by a cached `style.css`.
