@@ -30,7 +30,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from adapters.coc_api import CocApi
 from adapters.member_repository import D1MemberRepository
 from schemas import Member as MemberSchema
-from schemas import MemberInclude, MemberListResponse, MemberUpdate
+from schemas import MemberInclude, MemberListResponse, MemberSyncResult, MemberUpdate
 from schemas import MemberProfile as MemberProfileSchema
 
 # 접두사를 붙이지 않는다. 어느 표면에 놓일지는 worker.py 가 한 자리에서 정하고,
@@ -43,14 +43,16 @@ def get_member_service(request: Request) -> MemberService:
     """요청마다 조립한다. 스프링 컨테이너가 하던 일을 여기서 직접 한다.
 
     CoC 클라이언트를 끼우되, 자격 증명이 없으면 비워 둔다. 명단만 돌려주는
-    요청은 CoC 없이도 답해야 하기 때문이다. 현황을 청했는데 비어 있으면
-    require_profiles 가 뜻이 분명한 답으로 막는다.
+    요청은 CoC 없이도 답해야 하기 때문이다. 비어 있는데 CoC 가 필요한 일을
+    청하면 require_profiles·require_source 가 뜻이 분명한 답으로 막는다.
     """
     env = request.scope["env"]
     token = getattr(env, "COC_API_TOKEN", None)
     clan_tag = getattr(env, "CLAN_TAG", None)
     coc = CocApi(token=token, clan_tag=clan_tag) if token and clan_tag else None
-    return MemberService(repository=D1MemberRepository(env.DB), profiles=coc)
+    # CocApi 하나가 source 와 profiles 를 함께 맡는다. 둘 다 GET /clans/{tag} 한
+    # 요청에서 나오므로 클라이언트를 두 벌 만들 이유가 없다.
+    return MemberService(repository=D1MemberRepository(env.DB), source=coc, profiles=coc)
 
 
 MemberSvc = Annotated[MemberService, Depends(get_member_service)]
@@ -100,6 +102,20 @@ def require_profiles(service: MemberService) -> None:
         raise HTTPException(
             status_code=503,
             detail="CoC 자격 증명이 없어 현황을 받을 수 없습니다",
+        )
+
+
+def require_source(service: MemberService) -> None:
+    """명단을 받아 올 곳이 없으면 막는다.
+
+    require_profiles 와 같은 까닭이다. 그냥 두면 RuntimeError 가 올라 500 이
+    되는데, 500 은 "우리 잘못인데 무엇인지 모른다"는 뜻이라 설정이 빠졌다는
+    사실을 가린다.
+    """
+    if not service.can_sync:
+        raise HTTPException(
+            status_code=503,
+            detail="CoC 자격 증명이 없어 명단을 맞출 수 없습니다",
         )
 
 
@@ -237,3 +253,28 @@ async def update_member(
         require_profiles(service)
         profile = await service.read_profile(updated.external_id)
     return _to_schema(updated, chosen, profile)
+
+
+@admin_router.post("/members:sync")
+async def sync_members(service: MemberSvc) -> MemberSyncResult:
+    """CoC 클랜 명단을 받아 우리 명부를 맞춘다.
+
+    하는 일은 둘뿐이다 — 처음 보는 사람을 등록하고, 명단에서 사라진 사람을
+    INACTIVE 로 내린다. 값을 받아 적지 않으므로 CoC 호출은 한 번이다.
+
+    자동으로 도는 것은 예약 실행이 맡는다(TASK-29). 이 경로는 기다리지 않고
+    지금 맞추고 싶을 때 쓴다 — 클랜에 누가 막 들어왔을 때가 그렇다.
+
+    주소에 콜론이 붙은 까닭은 이것이 표준 메서드가 아니기 때문이다. 만들고·읽고·
+    고치고·지우는 넷에 맞지 않는 동작이라 그 사실을 숨기지 않는다.
+    """
+    require_source(service)
+
+    now = _now()
+    result = await service.sync(now=now)
+    return MemberSyncResult(
+        total=result.total,
+        added=result.added,
+        left=result.left,
+        syncedAt=now,
+    )

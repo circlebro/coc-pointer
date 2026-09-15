@@ -76,6 +76,15 @@ class MemberProfile(BaseModel):
     )
 
 
+class MemberSyncResult(BaseModel):
+    total: int = Field(..., description="CoC 클랜 명단에 있던 사람 수", examples=[49])
+    added: int = Field(..., description="처음 보아 새로 등록한 사람 수", examples=[1])
+    left: int = Field(..., description="명단에서 사라져 INACTIVE 로 내린 사람 수", examples=[1])
+    syncedAt: str = Field(
+        ..., description="맞춘 시각. ISO 8601(UTC)", examples=["2026-09-15T02:30:00Z"]
+    )
+
+
 class MemberUpdate(BaseModel):
     displayName: str | None = Field(
         None,

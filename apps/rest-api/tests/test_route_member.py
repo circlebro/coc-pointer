@@ -71,6 +71,11 @@ class FakeProfiles:
         self.player_calls.append(external_id)
         return self.in_clan.get(external_id) or self.elsewhere.get(external_id)
 
+    async def fetch_members(self) -> list[dict]:
+        """CoC 가 준 그대로의 명단. 실제 CocApi 가 그러듯 한 대역이 둘을 맡는다."""
+        self.clan_calls += 1
+        return [{"tag": tag, "name": p.name, "role": "member"} for tag, p in self.in_clan.items()]
+
 
 class FakeEnv:
     API_VERSION = "0.7.0"
@@ -95,7 +100,9 @@ def client(fake_db, profiles):
     env = FakeEnv(fake_db)
 
     def fake_service() -> MemberService:
-        return MemberService(repository=D1MemberRepository(fake_db), profiles=profiles)
+        return MemberService(
+            repository=D1MemberRepository(fake_db), source=profiles, profiles=profiles
+        )
 
     app.dependency_overrides[get_member_service] = fake_service
 
@@ -459,3 +466,70 @@ def test_공개_표면에는_고치는_경로가_없다():
             f"{path} 가 공개 표면에서 {sorted(writes)} 를 받는다."
             f" 고치는 일이면 /api/v1/admin 아래로 옮긴다."
         )
+
+
+# ------------------------------------------------------- 동기화 (운영 표면)
+
+
+def test_명단을_지금_맞춘다(client, fake_db, profiles):
+    _seed(fake_db, [_member("#A")])
+    profiles.in_clan = {"#A": _profile("#A", "도토리"), "#B": _profile("#B", "히로")}
+
+    response = client.post("/api/v1/admin/members:sync")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["total"] == 2
+    assert body["added"] == 1  # #B 가 처음이다
+    assert body["left"] == 0
+    assert body["syncedAt"] > NOW
+
+
+def test_명단에서_사라지면_내려간다(client, fake_db, profiles):
+    """지우지 않는다. 과거 기록에 그 사람이 남아 있기 때문이다."""
+    _seed(fake_db, [_member("#A"), _member("#B")])
+    profiles.in_clan = {"#A": _profile("#A", "도토리")}
+
+    body = client.post("/api/v1/admin/members:sync").json()
+
+    assert body["left"] == 1
+    gone = client.get("/api/v1/public/members/uuid-B").json()
+    assert gone["status"] == "INACTIVE"
+
+
+def test_동기화가_사람이_적은_값을_덮지_않는다(client, fake_db, profiles):
+    _seed(fake_db, [_member("#A", display_name="도토리형", warnings=2)])
+    profiles.in_clan = {"#A": _profile("#A", "바뀐이름")}
+
+    client.post("/api/v1/admin/members:sync")
+
+    after = client.get("/api/v1/public/members/uuid-A").json()
+    assert after["displayName"] == "도토리형"
+    assert after["warnings"] == 2
+
+
+def test_동기화는_공개_표면에_없다(client, fake_db):
+    """누구나 부르면 CoC 호출이 남발된다. 운영 표면에만 둔다."""
+    assert client.post("/api/v1/public/members:sync").status_code == 404
+
+
+def test_자격_증명이_없으면_동기화도_503(fake_db):
+    env = FakeEnv(fake_db)
+
+    def service_without_coc() -> MemberService:
+        return MemberService(repository=D1MemberRepository(fake_db))
+
+    app.dependency_overrides[get_member_service] = service_without_coc
+
+    async def with_env(scope, receive, send):
+        scope["env"] = env
+        await app(scope, receive, send)
+
+    try:
+        client = TestClient(with_env)
+        response = client.post("/api/v1/admin/members:sync")
+
+        assert response.status_code == 503
+        assert "자격 증명" in response.json()["detail"]
+    finally:
+        app.dependency_overrides.clear()
