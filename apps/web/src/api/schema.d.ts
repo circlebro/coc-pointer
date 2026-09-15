@@ -21,6 +21,34 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/members/{memberId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 우리 식별자. CoC 태그가 아니다 */
+                memberId: string;
+            };
+            cookie?: never;
+        };
+        /** 클랜원 한 명 */
+        get: operations["getMember"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * 클랜원의 우리 값 수정
+         * @description 우리가 정하는 값만 고친다. 이름·직책·트로피처럼 CoC 가 주인인 값은
+         *     여기서 고칠 수 없다. 고쳐 봐야 다음 동기화가 되돌린다.
+         *
+         *     보낸 필드만 바뀐다. 보내지 않은 필드는 그대로 두고, null 을 보내면
+         *     비운다.
+         */
+        patch: operations["updateMember"];
+        trace?: never;
+    };
     "/api/v1/clans": {
         parameters: {
             query?: never;
@@ -110,37 +138,155 @@ export interface components {
          * @enum {string}
          */
         MemberStatus: "ACTIVE" | "INACTIVE";
+        /**
+         * @description includes 로 고를 수 있는 덩어리 이름.
+         *
+         *     어휘는 둘로 정해져 있다.
+         *
+         *       profile  CoC 가 주인인 값 — 이름·직책·홀·트로피·기부
+         *       league   리그전 선발 — 이번 달 점수·순위·등급
+         *
+         *     league 는 늘 이번 달을 가리킨다. 지난 달을 고르는 방법은 아직 정하지
+         *     않았고, 응답에 month 를 함께 실어 어느 달 값인지 밝힌다.
+         *
+         *     league 는 아직 열거형에 없다. 그달 점수가 있어야 나오는데 클랜전 기록이
+         *     아직 들어오지 않았다. 그 티켓에서 더한다. 없는 것을 미리 적어 두면
+         *     부르는 쪽이 있다고 믿는다.
+         * @enum {string}
+         */
+        MemberInclude: "profile";
+        /**
+         * @description 클랜원 한 명. 게임 계정 하나를 가리키며 사람이 아니다.
+         *
+         *     여기 담는 것은 우리가 주인인 값뿐이다. DB 한 행을 읽으면 나오고, CoC 를
+         *     부르지도 무엇을 계산하지도 않는다. 명단만 필요한 요청에 그 비용을 얹지
+         *     않으려는 것이다.
+         *
+         *     id 는 우리 식별자이고 externalId 는 CoC 세계의 식별자다. 주소에서
+         *     '#' 을 인코딩하지 않으려고 따로 둔다. Clan 과 같은 규칙이다.
+         *
+         *     이름과 직책은 여기 없다. CoC 가 주인인 값이라 profile 로 내렸고, 우리는
+         *     사본조차 들고 있지 않다. 등급도 여기 없다. 이번 달 점수가 정하는 값이라
+         *     league 가 맡는다.
+         *
+         *     displayName 은 사람이 정한 표기이며 동기화가 채우지 않는다. 채우면 그
+         *     값이 사람이 정한 것인지 동기화가 써 넣은 것인지 구분할 수 없다. 비었을
+         *     때 무엇을 보여줄지는 화면이 정한다 — profile.name 으로 대신하는 것이
+         *     보통이다.
+         */
         Member: {
             /**
-             * Format: uuid
-             * @description 우리 식별자
+             * @description 우리 식별자(UUID 문자열)
+             * @example 3f2a1b4c-5d6e-4f70-8a91-b2c3d4e5f607
              */
             id: string;
             /**
-             * @description CoC 플레이어 태그
+             * @description CoC 플레이어 태그. 이 값으로 CoC API 를 부른다
              * @example #2ABC123
              */
-            tag: string;
+            externalId: string;
+            /**
+             * @description 사람이 정한 표기. 아무도 고치지 않았으면 null 이다
+             * @example 히로형
+             */
+            displayName?: string | null;
+            status: components["schemas"]["MemberStatus"];
+            /**
+             * @description 경고 횟수. 표시만 하고 점수에 영향을 주지 않는다
+             * @default 0
+             */
+            warnings: number;
+            /** @description 관리자 메모. 동기화가 덮어쓰지 않는다 */
+            description?: string | null;
+            /**
+             * @description 처음 본 시각. ISO 8601(UTC)
+             * @example 2026-09-11T07:18:57Z
+             */
+            createdAt: string;
+            /**
+             * @description 마지막으로 바뀐 시각. CoC 에서 받은 시각은 profile.fetchedAt 이다
+             * @example 2026-09-11T07:18:57Z
+             */
+            updatedAt: string;
+            /** @description 부르지 않으면 키가 없고, 불렀는데 null 이면 CoC 에서 볼 수 없다는 뜻이다 */
+            profile?: components["schemas"]["MemberProfile"] | null;
+        };
+        /**
+         * @description CoC 가 주인인 값. include=profile 로 부를 때만 실린다. 우리 DB 에는
+         *     없으며 부를 때마다 CoC 에 묻는다.
+         *
+         *     목록과 단건이 묻는 방법이 다르다. 목록은 GET /clans 한 번으로 클랜에
+         *     있는 사람 전부를 받는다. 그래서 클랜을 나간 사람은 profile 이 null 이
+         *     된다. 한 명씩 물으면 호출이 사람 수만큼 늘기 때문이다. 단건은 그 사람만
+         *     GET /players 로 묻기에 나간 사람도 나온다.
+         *
+         *     계정 자체가 사라지면 단건에서도 null 이다. 우리가 아는 것은 태그뿐이며
+         *     없는 이름을 지어내지 않는다.
+         *
+         *     fetchedAt 은 CoC 가 답한 시각이다. 사본이 아니라는 것을 밝히려고 함께
+         *     담는다.
+         */
+        MemberProfile: {
             name: string;
             role: components["schemas"]["ClanRole"];
-            status: components["schemas"]["MemberStatus"];
             townhall?: number | null;
             trophies?: number | null;
             donations?: number | null;
             donationsReceived?: number | null;
-            /** @description 관리자 메모. 동기화가 덮어쓰지 않는다 */
+            /**
+             * @description CoC 가 답한 시각. ISO 8601(UTC)
+             * @example 2026-09-14T09:00:00Z
+             */
+            fetchedAt: string;
+        };
+        /**
+         * @description 클랜원에게서 사람이 정하는 값. PATCH 의 본문이다.
+         *
+         *     전부 선택 사항이며, 보낸 것만 바뀐다. 값을 비우려면 null 을 보낸다.
+         *     하나도 보내지 않으면 고칠 것이 없으므로 거절한다.
+         *
+         *     등급은 여기 없다. 그달 점수가 정하는 값이라 사람이 고치지 않는다.
+         */
+        MemberUpdate: {
+            /**
+             * @description 사람이 정한 표기. null 을 보내면 지우고 화면은 CoC 이름으로 돌아간다
+             * @example 히로형
+             */
+            displayName?: string | null;
+            /** @description 경고 횟수 */
+            warnings?: number;
+            /** @description 관리자 메모 */
             description?: string | null;
-            /** Format: date-time */
-            createdAt: string;
-            /** Format: date-time */
-            updatedAt: string;
         };
         MemberListResponse: {
             members: components["schemas"]["Member"][];
         };
+        /**
+         * @description 요청을 받아들이지 못했을 때의 본문. FastAPI 가 HTTPException 을
+         *     내보내는 모양과 같다.
+         */
+        Error: {
+            /** @example 그 클랜원이 없습니다 */
+            detail: string;
+        };
     };
     responses: never;
-    parameters: never;
+    parameters: {
+        /**
+         * @description 기본 응답에 함께 실을 덩어리. 쉼표로 여럿 적는다.
+         *
+         *     기본 응답은 우리 DB 한 행만 읽는다. CoC 를 부르지도, 무엇을 계산하지도
+         *     않는다. 명단만 필요한 요청에 그 비용을 얹지 않으려는 것이다.
+         *
+         *     부르지 않은 덩어리는 키 자체가 없다. null 로 채우지 않는다. 묻지 않은
+         *     것과 값이 없는 것은 다르기 때문이다.
+         *
+         *       profile  CoC 가 주인인 값 — 이름·직책·홀·트로피·기부
+         *       league   리그전 선발 — 이번 달 점수·순위·등급
+         * @example profile
+         */
+        Includes: components["schemas"]["MemberInclude"][];
+    };
     requestBodies: never;
     headers: never;
     pathItems: never;
@@ -150,8 +296,22 @@ export interface operations {
     listMembers: {
         parameters: {
             query?: {
-                /** @description 플레이어 태그로 좁힌다. '#'을 포함해 넘긴다 */
-                tag?: string;
+                /** @description CoC 플레이어 태그로 좁힌다. '#'을 포함해 넘긴다 */
+                externalId?: string;
+                /**
+                 * @description 기본 응답에 함께 실을 덩어리. 쉼표로 여럿 적는다.
+                 *
+                 *     기본 응답은 우리 DB 한 행만 읽는다. CoC 를 부르지도, 무엇을 계산하지도
+                 *     않는다. 명단만 필요한 요청에 그 비용을 얹지 않으려는 것이다.
+                 *
+                 *     부르지 않은 덩어리는 키 자체가 없다. null 로 채우지 않는다. 묻지 않은
+                 *     것과 값이 없는 것은 다르기 때문이다.
+                 *
+                 *       profile  CoC 가 주인인 값 — 이름·직책·홀·트로피·기부
+                 *       league   리그전 선발 — 이번 달 점수·순위·등급
+                 * @example profile
+                 */
+                include?: components["parameters"]["Includes"];
             };
             header?: never;
             path?: never;
@@ -166,6 +326,101 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MemberListResponse"];
+                };
+            };
+        };
+    };
+    getMember: {
+        parameters: {
+            query?: {
+                /**
+                 * @description 기본 응답에 함께 실을 덩어리. 쉼표로 여럿 적는다.
+                 *
+                 *     기본 응답은 우리 DB 한 행만 읽는다. CoC 를 부르지도, 무엇을 계산하지도
+                 *     않는다. 명단만 필요한 요청에 그 비용을 얹지 않으려는 것이다.
+                 *
+                 *     부르지 않은 덩어리는 키 자체가 없다. null 로 채우지 않는다. 묻지 않은
+                 *     것과 값이 없는 것은 다르기 때문이다.
+                 *
+                 *       profile  CoC 가 주인인 값 — 이름·직책·홀·트로피·기부
+                 *       league   리그전 선발 — 이번 달 점수·순위·등급
+                 * @example profile
+                 */
+                include?: components["parameters"]["Includes"];
+            };
+            header?: never;
+            path: {
+                /** @description 우리 식별자. CoC 태그가 아니다 */
+                memberId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 클랜원 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Member"];
+                };
+            };
+            /** @description 그 식별자를 가진 클랜원이 없다 */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    updateMember: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 우리 식별자. CoC 태그가 아니다 */
+                memberId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MemberUpdate"];
+            };
+        };
+        responses: {
+            /** @description 고친 뒤의 클랜원 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Member"];
+                };
+            };
+            /**
+             * @description 본문이 규칙에 맞지 않다. 고칠 값을 하나도 보내지 않았거나,
+             *     비울 수 없는 값(warnings)에 null 을 보냈다
+             */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description 그 식별자를 가진 클랜원이 없다 */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
                 };
             };
         };

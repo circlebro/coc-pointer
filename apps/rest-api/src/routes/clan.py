@@ -1,13 +1,11 @@
 """클랜 조회 경로.
 
 응답 모양은 api/openapi.yaml 이 정하고, 여기서는 스펙에서 생성한 모델을
-그대로 쓴다. 클랜원 경로(routes/member.py)는 그러지 못하고 사전을 손수
-만드는데, 스펙이 id 를 format: uuid 로, 시각을 format: date-time 으로
-선언해 생성 모델이 UUID·AwareDatetime 이 되는 반면 도메인은 둘 다 문자열로
-다루기 때문이다. 클랜 스펙은 그 format 을 두지 않아 전부 str 로 생성된다.
+그대로 쓴다. 그러면 스펙을 고치고 다시 생성하는 것만으로 응답이 따라온다.
 
-모델을 쓰면 스펙을 고치고 다시 생성하는 것만으로 응답이 따라온다. 사전을
-손으로 만들면 그러지 않는다.
+식별자와 시각에는 format 을 두지 않는다. format: uuid 나 format: date-time 을
+적으면 생성 모델이 UUID·AwareDatetime 이 되는데, 도메인은 둘 다 문자열로
+다루므로 경로마다 변환을 끼워야 한다. 클랜원 스펙도 같은 규칙을 따른다.
 """
 
 from __future__ import annotations

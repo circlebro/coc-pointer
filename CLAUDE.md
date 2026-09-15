@@ -69,6 +69,11 @@ so any one of them could be split out and deployed on its own without the others
 - **The frontend is a stranger too.** Browsers cache old JavaScript, so a deployed frontend
   outlives the deploy that replaced it. That is why paths carry `/api/v1/` even though only
   our own page calls them. This repo has already been bitten once by a cached `style.css`.
+- **The backend opens capabilities; the product decides which ones to use.** The API may
+  serve a list of clans while the UI shows exactly one — that is the UI's choice, not a
+  gap in the API. Do not narrow a server endpoint because today's screen needs less;
+  narrowing it later costs a migration, and widening it later costs a redeploy the
+  frontend cannot wait for.
 - **The backend states facts; the frontend decides how they look.** The API returns
   `"role": "ADMIN"`, never `"장로"`. Putting display strings in a response drags i18n into
   the server and makes a copy change a backend deploy.
@@ -110,6 +115,21 @@ services ever diverge.
 2. Run `./apps/rest-api/deploy.sh`.
 3. Commit the `database_id` change in `apps/rest-api/wrangler.toml`. The script writes it after creating the D1 database. Skip this and the next clone or worktree creates a second database — data splits across two databases with no way to tell which is authoritative.
 4. Append `/api/health` to the printed URL and open it. Success looks like `coc_core: "ok"` and nine tables.
+
+**CoC credentials are Worker secrets, not `[vars]`.** `GET /api/v1/members?include=profile`
+asks CoC at request time, so the deployed Worker needs both `COC_API_TOKEN` and
+`CLAN_TAG`. Set them once, from `apps/rest-api/`:
+
+```bash
+npx wrangler@4 secret put COC_API_TOKEN
+npx wrangler@4 secret put CLAN_TAG
+```
+
+Each prompts for the value, so nothing lands in a file or a shell history. Secrets
+arrive on `env` exactly like `[vars]` do, so the reading code is identical — the
+difference is only that `wrangler.toml` is committed and secrets are not. Without
+them the endpoint answers `503` with a message naming the cause; the plain member
+list keeps working, which is the point of splitting `profile` off in the first place.
 
 **Redeploy:** `./apps/rest-api/deploy.sh` — one line. It re-copies `coc_core`, applies any
 migration D1 has not recorded yet, and deploys. Migrations that already ran are skipped,

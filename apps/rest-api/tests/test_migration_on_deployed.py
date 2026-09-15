@@ -27,23 +27,24 @@ SAMPLE_ROWS = {
         ("u1", "admin", "해시", "관리자", "admin", None, "2026-09-11T00:00:00Z", None),
     ),
     "clan_members": (
-        "INSERT INTO clan_members VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        # 열 이름을 적어 둔다. VALUES 만 쓰면 열이 늘 때마다 여기도 고쳐야 하고,
+        # 순서가 어긋나도 모른 채 지나간다.
+        "INSERT INTO clan_members"
+        " (id, external_id, display_name, status, warnings, description,"
+        " created_at, updated_at, synced_at)"
+        " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
         (
             "id1",
             "#A",
-            "도토리",
-            "MEMBER",
-            16,
-            4200,
-            100,
-            50,
-            "ACTIVE",
-            "2026-09-11T00:00:00Z",
-            "2026-09-11T00:00:00Z",
             None,
+            "ACTIVE",
+            0,
+            None,
+            "2026-09-11T00:00:00Z",
+            "2026-09-11T00:00:00Z",
+            "2026-09-11T00:00:00Z",
         ),
     ),
-    "settings": ("INSERT INTO settings VALUES (?, ?)", ("k", "v")),
 }
 
 

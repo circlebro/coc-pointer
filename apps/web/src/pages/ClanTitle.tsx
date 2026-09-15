@@ -26,11 +26,15 @@ export function ClanTitle({ page }: { page: string }) {
   // 이름을 못 받아 왔을 때는 페이지 이름만 크게 띄운다. 빈 줄을 남기거나
   // "불러오는 중" 같은 것을 두면 화면이 깨진 것처럼 보인다.
   if (clanName === null) {
-    return <h1>{page}</h1>;
+    return (
+      <header className="head">
+        <h1>{page}</h1>
+      </header>
+    );
   }
 
   return (
-    <header>
+    <header className="head">
       <h1>{clanName}</h1>
       <p>{page}</p>
     </header>
