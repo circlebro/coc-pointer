@@ -5,11 +5,16 @@ main = "src/worker.py"
 compatibility_date = "2026-09-01"
 compatibility_flags = ["python_workers"]
 
+# 여기 적는 값은 저장소에 남는다. 배포 환경마다 달라지는 값과 바깥에 알릴
+# 이유가 없는 값은 여기 두지 않고 비밀값으로 넣는다.
+#
+#   cd apps/rest-api
+#   npx wrangler@4 secret put COC_API_TOKEN
+#   npx wrangler@4 secret put CLAN_TAG
+#
+# 비밀값은 일반 변수와 같은 자리(env)에 붙으므로 읽는 코드는 달라지지 않는다.
 [vars]
 API_VERSION = "0.6.0"
-# 우리가 다루는 클랜. 게임 안에서 누구나 볼 수 있는 값이라 비밀이 아니다.
-# 토큰은 여기 두지 않는다. `wrangler secret put COC_API_TOKEN` 으로 넣는다.
-CLAN_TAG = "#2C8L822LQ"
 
 [[d1_databases]]
 binding = "DB"

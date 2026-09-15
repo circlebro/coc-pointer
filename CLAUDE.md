@@ -116,13 +116,20 @@ services ever diverge.
 3. Commit the `database_id` change in `apps/rest-api/wrangler.toml`. The script writes it after creating the D1 database. Skip this and the next clone or worktree creates a second database — data splits across two databases with no way to tell which is authoritative.
 4. Append `/api/health` to the printed URL and open it. Success looks like `coc_core: "ok"` and nine tables.
 
-**The CoC token must be a Worker secret.** `GET /api/v1/members?include=profile`
-asks CoC at request time, so the deployed Worker needs `COC_API_TOKEN`. Set it once
-with `npx wrangler@4 secret put COC_API_TOKEN` (run from `apps/rest-api/`; it prompts
-for the value, so the token never lands in a file or a command line). `CLAN_TAG` is
-not a secret — it sits in `wrangler.toml` under `[vars]`. Without the secret the
-endpoint answers `503` with a message naming the cause; the plain member list keeps
-working, which is the point of splitting `profile` off in the first place.
+**CoC credentials are Worker secrets, not `[vars]`.** `GET /api/v1/members?include=profile`
+asks CoC at request time, so the deployed Worker needs both `COC_API_TOKEN` and
+`CLAN_TAG`. Set them once, from `apps/rest-api/`:
+
+```bash
+npx wrangler@4 secret put COC_API_TOKEN
+npx wrangler@4 secret put CLAN_TAG
+```
+
+Each prompts for the value, so nothing lands in a file or a shell history. Secrets
+arrive on `env` exactly like `[vars]` do, so the reading code is identical — the
+difference is only that `wrangler.toml` is committed and secrets are not. Without
+them the endpoint answers `503` with a message naming the cause; the plain member
+list keeps working, which is the point of splitting `profile` off in the first place.
 
 **Redeploy:** `./apps/rest-api/deploy.sh` — one line. It re-copies `coc_core`, applies any
 migration D1 has not recorded yet, and deploys. Migrations that already ran are skipped,
