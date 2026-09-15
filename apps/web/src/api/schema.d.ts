@@ -165,8 +165,9 @@ export interface components {
          *     id 는 우리 식별자이고 externalId 는 CoC 세계의 식별자다. 주소에서
          *     '#' 을 인코딩하지 않으려고 따로 둔다. Clan 과 같은 규칙이다.
          *
-         *     이름과 직책은 여기 없다. CoC 가 주인인 값이라 profile 로 내렸다.
-         *     등급도 여기 없다. 이번 달 점수가 정하는 값이라 league 가 맡는다.
+         *     이름과 직책은 여기 없다. CoC 가 주인인 값이라 profile 로 내렸고, 우리는
+         *     사본조차 들고 있지 않다. 등급도 여기 없다. 이번 달 점수가 정하는 값이라
+         *     league 가 맡는다.
          *
          *     displayName 은 사람이 정한 표기이며 동기화가 채우지 않는다. 채우면 그
          *     값이 사람이 정한 것인지 동기화가 써 넣은 것인지 구분할 수 없다. 비었을
@@ -207,16 +208,23 @@ export interface components {
              * @example 2026-09-11T07:18:57Z
              */
             updatedAt: string;
-            profile?: components["schemas"]["MemberProfile"];
+            /** @description 부르지 않으면 키가 없고, 불렀는데 null 이면 CoC 에서 볼 수 없다는 뜻이다 */
+            profile?: components["schemas"]["MemberProfile"] | null;
         };
         /**
-         * @description CoC 가 주인인 값. includes=profile 로 부를 때만 실린다.
+         * @description CoC 가 주인인 값. include=profile 로 부를 때만 실린다. 우리 DB 에는
+         *     없으며 부를 때마다 CoC 에 묻는다.
          *
-         *     지금은 동기화가 받아 둔 사본을 읽는다. 앞으로 사본을 걷어내면 이 덩어리가
-         *     CoC 호출이 된다. 그때 부르는 쪽을 고치지 않아도 되도록 지금 갈라 둔다.
+         *     목록과 단건이 묻는 방법이 다르다. 목록은 GET /clans 한 번으로 클랜에
+         *     있는 사람 전부를 받는다. 그래서 클랜을 나간 사람은 profile 이 null 이
+         *     된다. 한 명씩 물으면 호출이 사람 수만큼 늘기 때문이다. 단건은 그 사람만
+         *     GET /players 로 묻기에 나간 사람도 나온다.
          *
-         *     fetchedAt 이 이 값들의 나이를 말해 준다. 30분마다 도는 동기화가 채우며,
-         *     아직 한 번도 동기화하지 않았으면 null 이다.
+         *     계정 자체가 사라지면 단건에서도 null 이다. 우리가 아는 것은 태그뿐이며
+         *     없는 이름을 지어내지 않는다.
+         *
+         *     fetchedAt 은 CoC 가 답한 시각이다. 사본이 아니라는 것을 밝히려고 함께
+         *     담는다.
          */
         MemberProfile: {
             name: string;
@@ -226,10 +234,10 @@ export interface components {
             donations?: number | null;
             donationsReceived?: number | null;
             /**
-             * @description CoC 가 준 값을 받아 적은 시각. ISO 8601(UTC)
+             * @description CoC 가 답한 시각. ISO 8601(UTC)
              * @example 2026-09-14T09:00:00Z
              */
-            fetchedAt?: string | null;
+            fetchedAt: string;
         };
         /**
          * @description 클랜원에게서 사람이 정하는 값. PATCH 의 본문이다.

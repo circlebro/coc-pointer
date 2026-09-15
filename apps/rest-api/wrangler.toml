@@ -7,6 +7,9 @@ compatibility_flags = ["python_workers"]
 
 [vars]
 API_VERSION = "0.6.0"
+# 우리가 다루는 클랜. 게임 안에서 누구나 볼 수 있는 값이라 비밀이 아니다.
+# 토큰은 여기 두지 않는다. `wrangler secret put COC_API_TOKEN` 으로 넣는다.
+CLAN_TAG = "#2C8L822LQ"
 
 [[d1_databases]]
 binding = "DB"

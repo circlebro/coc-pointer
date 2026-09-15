@@ -69,9 +69,9 @@ class MemberProfile(BaseModel):
     trophies: int | None = None
     donations: int | None = None
     donationsReceived: int | None = None
-    fetchedAt: str | None = Field(
-        None,
-        description="CoC 가 준 값을 받아 적은 시각. ISO 8601(UTC)",
+    fetchedAt: str = Field(
+        ...,
+        description="CoC 가 답한 시각. ISO 8601(UTC)",
         examples=["2026-09-14T09:00:00Z"],
     )
 
@@ -119,7 +119,10 @@ class Member(BaseModel):
         description="마지막으로 바뀐 시각. CoC 에서 받은 시각은 profile.fetchedAt 이다",
         examples=["2026-09-11T07:18:57Z"],
     )
-    profile: MemberProfile | None = None
+    profile: MemberProfile | None = Field(
+        None,
+        description="부르지 않으면 키가 없고, 불렀는데 null 이면 CoC 에서 볼 수 없다는 뜻이다",
+    )
 
 
 class MemberListResponse(BaseModel):

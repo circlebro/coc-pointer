@@ -55,7 +55,7 @@ async def test_동기화_결과를_돌려준다(fake_db):
 
     assert result.total == 2
     assert result.added == 2
-    assert result.unknown_roles == {"veteran": 1}
+    assert result.left == 0
 
 
 async def test_실제로_저장된다(fake_db):
@@ -68,12 +68,13 @@ async def test_실제로_저장된다(fake_db):
     )
 
     rows = await fake_db.prepare(
-        "SELECT external_id, name, role FROM clan_members ORDER BY external_id"
+        "SELECT external_id, status, synced_at FROM clan_members ORDER BY external_id"
     ).all()
 
-    assert [(r.external_id, r.name, r.role) for r in rows.results] == [
-        ("#A", "도토리", "ADMIN"),
-        ("#B", "히로", "UNKNOWN"),
+    # 이름과 직책은 담지 않는다. CoC 가 주인이라 물을 때마다 CoC 에 묻는다
+    assert [(r.external_id, r.status, r.synced_at) for r in rows.results] == [
+        ("#A", "ACTIVE", NOW),
+        ("#B", "ACTIVE", NOW),
     ]
 
 

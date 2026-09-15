@@ -13,7 +13,7 @@ export function Members() {
   const load = () => {
     setState({ kind: "loading" });
     // 이 표는 직책과 홀·트로피·기부를 보여주고, 표기가 비었을 때 CoC 이름으로
-    // 대신해야 하므로 profile 이 필요하다.
+    // 대신해야 하므로 profile 이 필요하다. 서버가 CoC 를 한 번 부른다.
     fetchMembers(["profile"])
       .then((body) =>
         setState({ kind: "ready", members: body.members as MemberWithProfile[] }),
@@ -58,15 +58,16 @@ export function Members() {
       <tbody>
         {state.members.map((member) => (
           <tr key={member.id}>
-            {/* 사람이 정한 표기가 없으면 CoC 이름으로 대신한다. 서버는 "없다"는
-                사실만 내보내고, 무엇을 대신 보여줄지는 화면이 정한다. */}
-            <td>{member.displayName ?? member.profile.name}</td>
+            {/* 사람이 정한 표기가 없으면 CoC 이름으로, 그것도 없으면 태그로
+                대신한다. 서버는 "없다"는 사실만 내보내고, 무엇을 대신 보여줄지는
+                화면이 정한다. 클랜을 나갔거나 계정이 사라지면 profile 이 없다. */}
+            <td>{member.displayName ?? member.profile?.name ?? member.externalId}</td>
             <td>{member.externalId}</td>
-            <td>{roleLabel(member.profile.role)}</td>
+            <td>{member.profile ? roleLabel(member.profile.role) : "-"}</td>
             <td>{statusLabel(member.status)}</td>
-            <td>{member.profile.townhall ?? "-"}</td>
-            <td>{member.profile.trophies ?? "-"}</td>
-            <td>{member.profile.donations ?? "-"}</td>
+            <td>{member.profile?.townhall ?? "-"}</td>
+            <td>{member.profile?.trophies ?? "-"}</td>
+            <td>{member.profile?.donations ?? "-"}</td>
           </tr>
         ))}
       </tbody>

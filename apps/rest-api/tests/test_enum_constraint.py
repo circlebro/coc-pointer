@@ -7,6 +7,9 @@
 - CHECK 에만 늘리면: 저장은 되는데 읽어 들일 때 그 행 때문에 조회가 죽는다
 
 둘 다 실제로 겪기 전에는 눈치채기 어려우므로 여기서 미리 맞춰 본다.
+
+직책(ClanRole)은 여기 없다. CoC 가 주인인 값이라 우리 표에 담지 않기 때문이다.
+모르는 직책은 어댑터가 경계에서 UNKNOWN 으로 바꾼다.
 """
 
 from __future__ import annotations
@@ -15,15 +18,12 @@ import sqlite3
 from pathlib import Path
 
 import pytest
-from coc_core.member.models import ClanRole, MemberStatus
+from coc_core.member.models import MemberStatus
 
 MIGRATIONS = Path(__file__).resolve().parent.parent / "database" / "migrations"
 
-_COLUMNS = (
-    "id, external_id, name, role, townhall, trophies, donations, donations_received, "
-    "status, created_at, updated_at, description"
-)
-_INSERT = f"INSERT INTO clan_members ({_COLUMNS}) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)"
+_COLUMNS = "id, external_id, display_name, status, warnings, description, created_at, updated_at"
+_INSERT = f"INSERT INTO clan_members ({_COLUMNS}) VALUES (?,?,?,?,?,?,?,?)"
 NOW = "2026-09-11T00:00:00Z"
 
 
@@ -36,36 +36,21 @@ def conn() -> sqlite3.Connection:
     return db
 
 
-def _insert(db: sqlite3.Connection, external_id: str, role: str, status: str) -> None:
-    db.execute(
-        _INSERT,
-        (f"id{external_id}", external_id, "아무개", role, 16, 4200, 0, 0, status, NOW, NOW, None),
-    )
-
-
-@pytest.mark.parametrize("role", [r.value for r in ClanRole])
-def test_도메인이_아는_직책은_모두_담긴다(conn: sqlite3.Connection, role: str) -> None:
-    _insert(conn, f"#{role}", role, "ACTIVE")
-
-    assert conn.execute("SELECT role FROM clan_members").fetchone()[0] == role
+def _insert(db: sqlite3.Connection, external_id: str, status: str) -> None:
+    db.execute(_INSERT, (f"id{external_id}", external_id, None, status, 0, None, NOW, NOW))
 
 
 @pytest.mark.parametrize("status", [s.value for s in MemberStatus])
 def test_도메인이_아는_상태는_모두_담긴다(conn: sqlite3.Connection, status: str) -> None:
-    _insert(conn, f"#{status}", "MEMBER", status)
+    _insert(conn, f"#{status}", status)
 
     assert conn.execute("SELECT status FROM clan_members").fetchone()[0] == status
 
 
-def test_도메인이_모르는_직책은_표가_거부한다(conn: sqlite3.Connection) -> None:
+def test_도메인이_모르는_상태는_표가_거부한다(conn: sqlite3.Connection) -> None:
     """읽어 들일 때 죽는 대신 넣을 때 막는다.
 
     막지 않으면 그 한 행 때문에 클랜원 목록 조회가 통째로 실패한다.
     """
     with pytest.raises(sqlite3.IntegrityError):
-        _insert(conn, "#X", "SUPER_LEADER", "ACTIVE")
-
-
-def test_도메인이_모르는_상태는_표가_거부한다(conn: sqlite3.Connection) -> None:
-    with pytest.raises(sqlite3.IntegrityError):
-        _insert(conn, "#Y", "MEMBER", "KICKED")
+        _insert(conn, "#Y", "KICKED")

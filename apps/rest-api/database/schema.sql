@@ -54,30 +54,6 @@ CREATE TABLE draws (
 );
 CREATE INDEX idx_wars_end_time ON wars(end_time);
 CREATE INDEX idx_monthly_scores_month ON monthly_scores(month);
-CREATE TABLE clan_members (
-  id                 TEXT PRIMARY KEY,
-  external_id                TEXT NOT NULL UNIQUE,
-  name               TEXT NOT NULL,
-
-  -- CoC API 가 채운다
-  role               TEXT NOT NULL  -- ClanRole 과 함께 고친다
-                     CHECK (role IN ('LEADER', 'COLEADER', 'ADMIN', 'MEMBER', 'UNKNOWN')),
-  townhall           INTEGER,
-  trophies           INTEGER,
-  donations          INTEGER,
-  donations_received INTEGER,
-
-  -- 우리가 판정한다
-  status             TEXT NOT NULL DEFAULT 'ACTIVE'  -- MemberStatus 와 함께 고친다
-                     CHECK (status IN ('ACTIVE', 'INACTIVE')),
-  created_at         TEXT NOT NULL,
-  updated_at         TEXT NOT NULL,
-
-  -- 관리자가 적는다. 동기화가 덮어쓰지 않는다
-  description        TEXT
-, grade TEXT NOT NULL DEFAULT 'COMPETING'
-  CHECK (grade IN ('FIXED', 'COMPETING', 'EXCLUDED')), grade_reason TEXT, warnings INTEGER NOT NULL DEFAULT 0, synced_at TEXT, display_name TEXT);
-CREATE INDEX idx_clan_members_status ON clan_members(status);
 CREATE TABLE users (
   id            TEXT PRIMARY KEY,
   login_id      TEXT NOT NULL UNIQUE,
@@ -111,4 +87,31 @@ CREATE TABLE clans (
   updated_at    TEXT NOT NULL
 );
 CREATE INDEX idx_clans_status ON clans(status);
-CREATE INDEX idx_clan_members_grade ON clan_members(grade);
+CREATE TABLE IF NOT EXISTS "clan_members" (
+  id            TEXT PRIMARY KEY,
+
+  -- CoC 에 물을 열쇠. 게임에서 이름을 바꿔도 이 값은 바뀌지 않는다
+  external_id   TEXT NOT NULL UNIQUE,
+
+  -- 사람이 정한 표기. 아무도 고치지 않았으면 NULL 이다.
+  -- 동기화가 채우지 않는다. 채우면 사람이 정한 것인지 동기화가 써 넣은
+  -- 것인지 나중에 구분할 수 없다. 비었을 때 무엇을 보여줄지는 화면이 정한다
+  display_name  TEXT,
+
+  -- 우리가 판정한다. CoC 는 "나갔다"를 알려주지 않으므로 명단에서 사라진 것을
+  -- 보고 우리가 내린다
+  status        TEXT NOT NULL DEFAULT 'ACTIVE'  -- MemberStatus 와 함께 고친다
+                CHECK (status IN ('ACTIVE', 'INACTIVE')),
+
+  -- 사람이 적는다. 동기화가 덮어쓰지 않는다
+  warnings      INTEGER NOT NULL DEFAULT 0,
+  description   TEXT,
+
+  created_at    TEXT NOT NULL,
+
+  -- updated_at 은 이 행이 마지막으로 바뀐 시각이라 메모를 고쳐도 올라가고,
+  -- synced_at 은 CoC 명단에서 마지막으로 본 시각이라 동기화만 올린다
+  updated_at    TEXT NOT NULL,
+  synced_at     TEXT
+);
+CREATE INDEX idx_clan_members_status ON clan_members(status);

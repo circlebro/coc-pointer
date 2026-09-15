@@ -7,7 +7,7 @@
 from __future__ import annotations
 
 import pytest
-from coc_core.member.models import ClanMember, ClanRole, MemberGrade, MemberStatus
+from coc_core.member.models import ClanMember, MemberStatus
 
 from adapters.member_repository import D1MemberRepository
 
@@ -15,21 +15,13 @@ NOW = "2026-09-10T05:30:00Z"
 LATER = "2026-09-11T05:30:00Z"
 
 
-def _member(external_id: str, name: str, **overrides) -> ClanMember:
+def _member(external_id: str, **overrides) -> ClanMember:
     base = {
         "id": f"uuid-{external_id.lstrip('#')}",
         "external_id": external_id,
         "display_name": None,
-        "name": name,
-        "role": ClanRole.MEMBER,
         "status": MemberStatus.ACTIVE,
-        "grade": MemberGrade.COMPETING,
-        "grade_reason": None,
         "warnings": 0,
-        "townhall": 16,
-        "trophies": 4200,
-        "donations": 100,
-        "donations_received": 50,
         "description": None,
         "created_at": NOW,
         "updated_at": NOW,
@@ -39,155 +31,105 @@ def _member(external_id: str, name: str, **overrides) -> ClanMember:
     return ClanMember(**base)
 
 
-async def test_넣고_모두_읽는다(fake_db):
+async def test_등록하고_모두_읽는다(fake_db):
     repository = D1MemberRepository(fake_db)
 
-    added = await repository.upsert_many([_member("#A", "도토리"), _member("#B", "히로")])
+    added = await repository.register_many([_member("#A"), _member("#B")])
 
     assert added == 2
     rows = await repository.find_all()
-    assert sorted(m.name for m in rows) == ["도토리", "히로"]
+    assert sorted(m.external_id for m in rows) == ["#A", "#B"]
 
 
 async def test_자료형이_그대로_돌아온다(fake_db):
+    """열거형이 문자열이 아니라 우리 자료형으로 돌아와야 한다."""
     repository = D1MemberRepository(fake_db)
-    await repository.upsert_many([_member("#A", "도토리", role=ClanRole.ADMIN)])
+    await repository.register_many([_member("#A", display_name="도토리형", warnings=2)])
 
     found = await repository.find_by_external_id("#A")
 
     assert found is not None
-    assert found.role is ClanRole.ADMIN
     assert found.status is MemberStatus.ACTIVE
-    assert found.townhall == 16
+    assert found.display_name == "도토리형"
+    assert found.warnings == 2
+    assert found.synced_at == NOW
 
 
-async def test_없는_태그는_None(fake_db):
+async def test_다시_등록하면_새로_센_수는_0(fake_db):
     repository = D1MemberRepository(fake_db)
+    await repository.register_many([_member("#A")])
 
-    assert await repository.find_by_external_id("#없음") is None
-
-
-async def test_다시_넣으면_갱신하고_새로_센_수는_0(fake_db):
-    repository = D1MemberRepository(fake_db)
-    await repository.upsert_many([_member("#A", "도토리")])
-
-    added = await repository.upsert_many([_member("#A", "도토리2", updated_at=LATER)])
+    added = await repository.register_many([_member("#A", updated_at=LATER, synced_at=LATER)])
 
     assert added == 0
     found = await repository.find_by_external_id("#A")
     assert found is not None
-    assert found.name == "도토리2"
-    assert found.updated_at == LATER
+    assert found.synced_at == LATER
 
 
-async def test_관리자_메모와_처음_본_시각은_지켜진다(fake_db):
+async def test_동기화는_사람이_적은_값을_덮지_않는다(fake_db):
+    """표기·경고·메모와 처음 본 시각은 동기화가 건드리면 안 된다."""
     repository = D1MemberRepository(fake_db)
-    await repository.upsert_many([_member("#A", "도토리", description="추방 예정")])
+    await repository.register_many([_member("#A")])
+    await repository.update_managed(
+        _member("#A", display_name="도토리형", warnings=2, description="메모", updated_at=LATER)
+    )
 
-    await repository.upsert_many([_member("#A", "도토리", description=None, created_at=LATER)])
+    await repository.register_many(
+        [_member("#A", display_name=None, warnings=0, description=None, created_at=LATER)]
+    )
 
     found = await repository.find_by_external_id("#A")
     assert found is not None
-    assert found.description == "추방 예정"
+    assert found.display_name == "도토리형"
+    assert found.warnings == 2
+    assert found.description == "메모"
     assert found.created_at == NOW
 
 
 async def test_INACTIVE_로_내린다(fake_db):
     repository = D1MemberRepository(fake_db)
-    await repository.upsert_many([_member("#A", "도토리"), _member("#B", "히로")])
+    await repository.register_many([_member("#A")])
 
-    count = await repository.mark_inactive(["#A"], LATER)
+    left = await repository.mark_inactive(["#A"], LATER)
 
-    assert count == 1
-    by_tag = {m.external_id: m for m in await repository.find_all()}
-    assert by_tag["#A"].status is MemberStatus.INACTIVE
-    assert by_tag["#A"].updated_at == LATER
-    assert by_tag["#B"].status is MemberStatus.ACTIVE
-
-
-async def test_모르는_직책도_담긴다(fake_db):
-    repository = D1MemberRepository(fake_db)
-    await repository.upsert_many([_member("#A", "도토리", role=ClanRole.UNKNOWN)])
-
-    found = await repository.find_by_external_id("#A")
-
-    assert found is not None
-    assert found.role is ClanRole.UNKNOWN
-
-
-async def test_등급과_사유와_경고는_갱신하지_않는다(fake_db):
-    """운영진이 매긴 값이라 동기화가 덮으면 안 된다.
-
-    서비스도 같은 판단을 하지만 여기서 한 번 더 막는다. 저장소를 직접 부르는
-    자리(관리 화면, 일회성 스크립트)가 생겨도 값이 지켜져야 한다.
-    """
-    repository = D1MemberRepository(fake_db)
-    await repository.upsert_many(
-        [_member("#A", "도토리", grade=MemberGrade.FIXED, grade_reason="길드장", warnings=2)]
-    )
-
-    # 동기화가 기본값을 들고 다시 들어온다
-    await repository.upsert_many(
-        [_member("#A", "도토리2", grade=MemberGrade.COMPETING, grade_reason=None, warnings=0)]
-    )
-
+    assert left == 1
     found = await repository.find_by_external_id("#A")
     assert found is not None
-    assert found.name == "도토리2"  # 이름은 갱신된다
-    assert found.grade is MemberGrade.FIXED  # 등급은 지켜진다
-    assert found.grade_reason == "길드장"
-    assert found.warnings == 2
-
-
-async def test_아무것도_매기지_않으면_경쟁으로_담긴다(fake_db):
-    repository = D1MemberRepository(fake_db)
-
-    await repository.upsert_many([_member("#B", "히로")])
-
-    found = await repository.find_by_external_id("#B")
-    assert found is not None
-    assert found.grade is MemberGrade.COMPETING
-
-
-async def test_모르는_등급은_표가_거부한다(fake_db):
-    """읽을 때 죽는 대신 넣을 때 막는다. 예비를 담으려 해도 걸린다."""
-    repository = D1MemberRepository(fake_db)
-
-    with pytest.raises(Exception, match="CHECK|constraint"):
-        await repository.upsert_many([_member("#C", "아무개", grade="RESERVE")])  # type: ignore[arg-type]
+    assert found.status is MemberStatus.INACTIVE
 
 
 async def test_우리_식별자로_찾는다(fake_db):
     repository = D1MemberRepository(fake_db)
-    await repository.upsert_many([_member("#A", "도토리"), _member("#B", "히로")])
+    await repository.register_many([_member("#A"), _member("#B")])
 
     found = await repository.find_by_id("uuid-B")
 
     assert found is not None
-    assert found.name == "히로"
+    assert found.external_id == "#B"
 
 
 async def test_없는_식별자면_None(fake_db):
     repository = D1MemberRepository(fake_db)
-    await repository.upsert_many([_member("#A", "도토리")])
+    await repository.register_many([_member("#A")])
 
     assert await repository.find_by_id("uuid-없음") is None
 
 
 async def test_사람이_정하는_값만_덮는다(fake_db):
-    """수정이 이름과 트로피까지 덮으면 동기화와 같은 열을 두 자리에서 쓰게 된다."""
+    """수정이 status 나 synced_at 까지 덮으면 동기화와 같은 열을 두 자리에서 쓴다."""
     repository = D1MemberRepository(fake_db)
-    await repository.upsert_many([_member("#A", "도토리")])
+    await repository.register_many([_member("#A")])
 
     await repository.update_managed(
         _member(
             "#A",
-            "바뀐이름",
             display_name="도토리형",
             warnings=3,
             description="메모",
-            trophies=9999,
+            status=MemberStatus.INACTIVE,
             updated_at=LATER,
+            synced_at=LATER,
         )
     )
 
@@ -197,33 +139,31 @@ async def test_사람이_정하는_값만_덮는다(fake_db):
     assert found.warnings == 3
     assert found.description == "메모"
     assert found.updated_at == LATER
-    assert found.name == "도토리"  # CoC 가 주인인 값은 그대로다
-    assert found.trophies == 4200
+    assert found.status is MemberStatus.ACTIVE  # 동기화가 맡는 값은 그대로다
+    assert found.synced_at == NOW
 
 
-async def test_수정은_등급을_건드리지_않는다(fake_db):
-    """등급은 그달 점수가 정하는 값이라 수정 경로에 자리가 없다."""
+async def test_모르는_상태는_표가_거부한다(fake_db):
+    """읽을 때 죽는 대신 넣을 때 막는다."""
     repository = D1MemberRepository(fake_db)
-    await repository.upsert_many([_member("#A", "도토리", grade=MemberGrade.FIXED)])
 
-    await repository.update_managed(
-        _member("#A", "도토리", grade=MemberGrade.EXCLUDED, warnings=1, updated_at=LATER)
-    )
-
-    found = await repository.find_by_external_id("#A")
-    assert found is not None
-    assert found.warnings == 1
-    assert found.grade is MemberGrade.FIXED
+    with pytest.raises(Exception, match="CHECK|constraint"):
+        await repository.register_many([_member("#C", status="GONE")])  # type: ignore[arg-type]
 
 
-async def test_동기화는_사람이_정한_표기를_덮지_않는다(fake_db):
-    repository = D1MemberRepository(fake_db)
-    await repository.upsert_many([_member("#A", "도토리")])
-    await repository.update_managed(_member("#A", "도토리", display_name="도토리형"))
+async def test_CoC_가_주인인_열은_표에_없다(fake_db):
+    """사본을 들면 두 곳에서 관리하게 되고 언젠가 어긋난다."""
+    rows = await fake_db.prepare("PRAGMA table_info(clan_members)").all()
+    columns = {row.name for row in rows.results}
 
-    await repository.upsert_many([_member("#A", "바뀐이름", display_name=None)])
-
-    found = await repository.find_by_external_id("#A")
-    assert found is not None
-    assert found.display_name == "도토리형"
-    assert found.name == "바뀐이름"
+    assert columns == {
+        "id",
+        "external_id",
+        "display_name",
+        "status",
+        "warnings",
+        "description",
+        "created_at",
+        "updated_at",
+        "synced_at",
+    }

@@ -4,10 +4,10 @@ export type Member = components["schemas"]["Member"];
 export type MemberInclude = components["schemas"]["MemberInclude"];
 export type MemberListResponse = components["schemas"]["MemberListResponse"];
 
-// profile 을 부른 응답. 부르지 않으면 키가 아예 없으므로, 화면이 이름이나 직책을
-// 쓰려면 이 자료형으로 받아야 한다.
+// profile 을 부른 응답. 부르지 않으면 키가 아예 없고, 불렀는데 null 이면 지금
+// CoC 에서 볼 수 없다는 뜻이다(클랜을 나갔거나 계정이 사라졌다).
 export type MemberWithProfile = Member & {
-  profile: NonNullable<Member["profile"]>;
+  profile: Member["profile"] | null;
 };
 export type Clan = components["schemas"]["Clan"];
 export type ClanListResponse = components["schemas"]["ClanListResponse"];
@@ -28,8 +28,8 @@ async function get<T>(path: string): Promise<T> {
   return response.json();
 }
 
-// 기본 응답은 우리 DB 값만 담는다. 이름·직책·홀·트로피는 CoC 가 주인이라
-// include=profile 로 따로 청해야 실려 온다.
+// 기본 응답은 우리 DB 값만 담는다. 이름·직책·홀·트로피는 우리 DB 에 없으며
+// include=profile 로 청할 때 서버가 CoC 에 묻는다.
 export async function fetchMembers(
   includes: MemberInclude[] = [],
 ): Promise<MemberListResponse> {
