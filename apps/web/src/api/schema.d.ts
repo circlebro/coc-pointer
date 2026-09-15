@@ -38,6 +38,25 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/members/{memberId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 우리 식별자. CoC 태그가 아니다 */
+                memberId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
         /**
          * 클랜원의 우리 값 수정
          * @description 우리가 정하는 값만 고친다. 이름·직책·트로피처럼 CoC 가 주인인 값은
@@ -379,7 +398,22 @@ export interface operations {
     };
     updateMember: {
         parameters: {
-            query?: never;
+            query?: {
+                /**
+                 * @description 기본 응답에 함께 실을 덩어리. 쉼표로 여럿 적는다.
+                 *
+                 *     기본 응답은 우리 DB 한 행만 읽는다. CoC 를 부르지도, 무엇을 계산하지도
+                 *     않는다. 명단만 필요한 요청에 그 비용을 얹지 않으려는 것이다.
+                 *
+                 *     부르지 않은 덩어리는 키 자체가 없다. null 로 채우지 않는다. 묻지 않은
+                 *     것과 값이 없는 것은 다르기 때문이다.
+                 *
+                 *       profile  CoC 가 주인인 값 — 이름·직책·홀·트로피·기부
+                 *       league   리그전 선발 — 이번 달 점수·순위·등급
+                 * @example profile
+                 */
+                include?: components["parameters"]["Includes"];
+            };
             header?: never;
             path: {
                 /** @description 우리 식별자. CoC 태그가 아니다 */

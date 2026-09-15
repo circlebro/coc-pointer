@@ -8,6 +8,10 @@ info:
     이 파일이 API 스펙이다. 서버 모델과 프론트 타입은 여기서 생성하며
     손으로 고치지 않는다. scripts/generate-from-spec.sh 참고.
 
+    경로를 표면으로 가른다. /api/v1/ 은 클랜원 누구나 부르고, /api/v1/admin/ 은
+    운영진만 부른다. 운영 표면에 검사를 한 번에 걸기 위해서다. 규칙은
+    docs/api-guide.md 에 있다.
+
 servers:
   - url: https://coc-api.coc-api.workers.dev
     description: 운영
@@ -62,6 +66,14 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+  /api/v1/admin/members/{memberId}:
+    parameters:
+      - name: memberId
+        in: path
+        required: true
+        description: 우리 식별자. CoC 태그가 아니다
+        schema:
+          type: string
     patch:
       operationId: updateMember
       summary: 클랜원의 우리 값 수정
@@ -71,7 +83,9 @@ paths:
 
         보낸 필드만 바뀐다. 보내지 않은 필드는 그대로 두고, null 을 보내면
         비운다.
-      tags: [members]
+      tags: [admin]
+      parameters:
+        - $ref: "#/components/parameters/Includes"
       requestBody:
         required: true
         content:

@@ -9,6 +9,11 @@
 
 고칠 수 있는 값은 사람이 정하는 셋뿐이다(표기·경고 횟수·메모). 이름이나 직책은
 CoC 가 주인이라 여기서 받지 않고, 등급은 이번 달 점수가 정하는 값이라 받지 않는다.
+
+라우터가 둘이다. ``router`` 는 클랜원 누구나 부르는 공개 표면이고,
+``admin_router`` 는 운영진만 부르는 운영 표면이다. 둘이 같은 도우미를 쓰므로 한
+파일에 둔다. 운영 표면에 검사를 다는 일은 worker.py 가 한 자리에서 하며,
+경로마다 붙이면 하나 빠뜨려도 조용하기 때문이다. 규칙은 docs/api-guide.md 11번.
 """
 
 from __future__ import annotations
@@ -27,6 +32,10 @@ from schemas import MemberInclude, MemberListResponse, MemberUpdate
 from schemas import MemberProfile as MemberProfileSchema
 
 router = APIRouter(prefix="/api/v1", tags=["members"])
+
+# 접두사를 붙이지 않는다. worker.py 가 /api/v1/admin 아래에 끼우면서 검사를
+# 함께 단다.
+admin_router = APIRouter(tags=["admin"])
 
 
 def get_member_service(request: Request) -> MemberService:
@@ -188,7 +197,7 @@ async def get_member(
     return _to_schema(found, chosen, profile)
 
 
-@router.patch("/members/{memberId}", response_model_exclude_unset=True)
+@admin_router.patch("/members/{memberId}", response_model_exclude_unset=True)
 async def update_member(
     memberId: str,
     body: MemberUpdate,

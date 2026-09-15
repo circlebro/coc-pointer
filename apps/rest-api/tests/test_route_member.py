@@ -284,14 +284,14 @@ def test_없는_식별자면_404(client, fake_db):
     assert "detail" in response.json()
 
 
-# ---------------------------------------------------------------- 수정
+# ------------------------------------------------------- 수정 (운영 표면)
 
 
 def test_표기를_고친다(client, fake_db):
     _seed(fake_db, [_member("#A")])
 
     response = client.patch(
-        "/api/v1/members/uuid-A",
+        "/api/v1/admin/members/uuid-A",
         json={"displayName": "도토리형", "description": "부캐 아님"},
     )
 
@@ -305,7 +305,7 @@ def test_표기를_고친다(client, fake_db):
 def test_보내지_않은_값은_그대로다(client, fake_db):
     _seed(fake_db, [_member("#A", description="부캐 아님")])
 
-    body = client.patch("/api/v1/members/uuid-A", json={"warnings": 2}).json()
+    body = client.patch("/api/v1/admin/members/uuid-A", json={"warnings": 2}).json()
 
     assert body["warnings"] == 2
     assert body["description"] == "부캐 아님"
@@ -315,7 +315,7 @@ def test_null_을_보내면_비운다(client, fake_db):
     """표기를 지우면 화면은 CoC 이름으로 돌아간다."""
     _seed(fake_db, [_member("#A", display_name="도토리형")])
 
-    body = client.patch("/api/v1/members/uuid-A", json={"displayName": None}).json()
+    body = client.patch("/api/v1/admin/members/uuid-A", json={"displayName": None}).json()
 
     assert body["displayName"] is None
 
@@ -323,7 +323,7 @@ def test_null_을_보내면_비운다(client, fake_db):
 def test_고친_뒤_갱신_시각이_올라간다(client, fake_db):
     _seed(fake_db, [_member("#A")])
 
-    body = client.patch("/api/v1/members/uuid-A", json={"warnings": 1}).json()
+    body = client.patch("/api/v1/admin/members/uuid-A", json={"warnings": 1}).json()
 
     assert body["updatedAt"] > NOW
     assert body["createdAt"] == NOW
@@ -335,7 +335,7 @@ def test_CoC_가_주인인_값은_고칠_수_없다(client, fake_db, profiles):
     profiles.in_clan = {"#A": _profile("#A", "도토리")}
 
     body = client.patch(
-        "/api/v1/members/uuid-A",
+        "/api/v1/admin/members/uuid-A",
         params={"include": "profile"},
         json={"warnings": 1, "name": "바뀐이름"},
     ).json()
@@ -351,38 +351,40 @@ def test_등급은_고칠_수_없다(client, fake_db):
     """
     _seed(fake_db, [_member("#A")])
 
-    assert client.patch("/api/v1/members/uuid-A", json={"grade": "FIXED"}).status_code == 400
+    assert client.patch("/api/v1/admin/members/uuid-A", json={"grade": "FIXED"}).status_code == 400
 
 
 def test_아는_값이_하나도_없으면_400(client, fake_db):
     _seed(fake_db, [_member("#A")])
 
-    assert client.patch("/api/v1/members/uuid-A", json={"name": "바뀐이름"}).status_code == 400
+    response = client.patch("/api/v1/admin/members/uuid-A", json={"name": "바뀐이름"})
+
+    assert response.status_code == 400
 
 
 def test_고칠_값을_하나도_안_보내면_400(client, fake_db):
     _seed(fake_db, [_member("#A")])
 
-    assert client.patch("/api/v1/members/uuid-A", json={}).status_code == 400
+    assert client.patch("/api/v1/admin/members/uuid-A", json={}).status_code == 400
 
 
 def test_비울_수_없는_값에_null_을_보내면_400(client, fake_db):
     _seed(fake_db, [_member("#A")])
 
-    assert client.patch("/api/v1/members/uuid-A", json={"warnings": None}).status_code == 400
+    assert client.patch("/api/v1/admin/members/uuid-A", json={"warnings": None}).status_code == 400
 
 
 def test_경고_횟수가_음수면_422(client, fake_db):
     """스펙이 minimum: 0 이라 생성 모델이 먼저 거른다."""
     _seed(fake_db, [_member("#A")])
 
-    assert client.patch("/api/v1/members/uuid-A", json={"warnings": -1}).status_code == 422
+    assert client.patch("/api/v1/admin/members/uuid-A", json={"warnings": -1}).status_code == 422
 
 
 def test_없는_사람을_고치면_404(client, fake_db):
     _seed(fake_db, [_member("#A")])
 
-    response = client.patch("/api/v1/members/uuid-없음", json={"warnings": 1})
+    response = client.patch("/api/v1/admin/members/uuid-없음", json={"warnings": 1})
 
     assert response.status_code == 404
 
@@ -411,3 +413,40 @@ def test_자격_증명이_없으면_현황_요청은_503(fake_db):
         assert "자격 증명" in response.json()["detail"]
     finally:
         app.dependency_overrides.clear()
+
+
+# ------------------------------------------------------------ 표면이 갈렸나
+
+
+def test_공개_표면에는_고치는_길이_없다(client, fake_db):
+    """고치는 일은 운영 표면에만 있다. 옛 주소가 남아 있으면 검사를 피해 간다."""
+    _seed(fake_db, [_member("#A")])
+
+    response = client.patch("/api/v1/members/uuid-A", json={"warnings": 1})
+
+    assert response.status_code == 405  # 그 주소는 읽기만 받는다
+
+
+def test_공개_표면에는_고치는_경로가_없다():
+    """검사를 걸 자리가 하나여야 한다. 흩어지면 하나 빠뜨려도 조용하다.
+
+    ``app.routes`` 를 직접 훑지 않는다. 끼워 넣은 라우터가 FastAPI 안쪽 자료형으로
+    담겨 있어, 그것을 파고들면 판올림에 깨진다. ``app.openapi()`` 는 공개 메서드라
+    같은 답을 안전하게 준다. 워커가 이 명세를 주소로 내놓지 않는 것과는 별개다 —
+    스펙은 api/openapi.yaml 한 벌이어야 하므로 내놓지 않을 뿐, 여기서 물어보는
+    것은 막지 않는다.
+    """
+    paths = app.openapi()["paths"]
+
+    admin = [p for p in paths if p.startswith("/api/v1/admin")]
+    assert admin, "운영 경로가 하나도 없다"
+
+    WRITE = {"post", "put", "patch", "delete"}
+    for path, operations in paths.items():
+        if not path.startswith("/api/v1/") or path.startswith("/api/v1/admin"):
+            continue
+        writes = WRITE & set(operations)
+        assert not writes, (
+            f"{path} 가 공개 표면에서 {sorted(writes)} 를 받는다."
+            f" 고치는 일이면 /api/v1/admin 아래로 옮긴다."
+        )

@@ -14,11 +14,12 @@ import sys
 from datetime import datetime
 from typing import Annotated, Any
 
-from fastapi import Depends, FastAPI, Path, Request
+from fastapi import APIRouter, Depends, FastAPI, Path, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 import db
 from routes.clan import router as clan_router
+from routes.member import admin_router as member_admin_router
 from routes.member import router as member_router
 
 # 명세를 스스로 발행하지 않는다. API 스펙은 api/openapi.yaml 한 벌뿐이고
@@ -42,6 +43,18 @@ app.add_middleware(
 
 app.include_router(member_router)
 app.include_router(clan_router)
+
+# 운영 표면. 클랜원 누구나 부르는 /api/v1/ 과 갈라 둔다.
+#
+# 가르는 값어치는 하나다 — 검사를 여기 한 줄로 걸 수 있다. 경로마다 붙이면
+# 하나 빠뜨려도 조용하다. 아직 로그인이 없어 검사가 비어 있지만, 생기면
+# dependencies=[Depends(require_admin)] 를 이 자리에 단다.
+#
+# 경로가 막아 주는 것은 아니다. 주소에 admin 이 적혀 있다고 서버가 막지 않는다.
+# 막는 것은 여전히 검사이고, 이 자리는 그 검사를 모으는 곳일 뿐이다.
+admin_router = APIRouter(prefix="/api/v1/admin")
+admin_router.include_router(member_admin_router)
+app.include_router(admin_router)
 
 
 def get_env(request: Request) -> Any:
