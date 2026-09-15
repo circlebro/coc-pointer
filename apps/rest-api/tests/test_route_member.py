@@ -115,14 +115,14 @@ def _seed(fake_db, members):
 
 
 def test_아무도_없으면_빈_목록(client):
-    assert client.get("/api/v1/members").json() == {"members": []}
+    assert client.get("/api/v1/public/members").json() == {"members": []}
 
 
 def test_기본_응답은_우리_값만_준다(client, fake_db, profiles):
     """키 자체가 없어야 한다. null 로 채우면 묻지 않은 것과 값이 없는 것이 같아 보인다."""
     _seed(fake_db, [_member("#A")])
 
-    member = client.get("/api/v1/members").json()["members"][0]
+    member = client.get("/api/v1/public/members").json()["members"][0]
 
     assert set(member) == {
         "id",
@@ -140,7 +140,7 @@ def test_기본_응답은_우리_값만_준다(client, fake_db, profiles):
 def test_스펙대로_캐멀케이스로_준다(client, fake_db):
     _seed(fake_db, [_member("#A", display_name="도토리형")])
 
-    member = client.get("/api/v1/members").json()["members"][0]
+    member = client.get("/api/v1/public/members").json()["members"][0]
 
     assert member["externalId"] == "#A"
     assert member["displayName"] == "도토리형"
@@ -152,7 +152,7 @@ def test_스펙대로_캐멀케이스로_준다(client, fake_db):
 def test_외부_식별자로_좁힌다(client, fake_db):
     _seed(fake_db, [_member("#A"), _member("#B")])
 
-    body = client.get("/api/v1/members", params={"externalId": "#B"}).json()
+    body = client.get("/api/v1/public/members", params={"externalId": "#B"}).json()
 
     assert [m["externalId"] for m in body["members"]] == ["#B"]
 
@@ -160,7 +160,7 @@ def test_외부_식별자로_좁힌다(client, fake_db):
 def test_없는_식별자면_빈_목록(client, fake_db):
     _seed(fake_db, [_member("#A")])
 
-    body = client.get("/api/v1/members", params={"externalId": "#없음"}).json()
+    body = client.get("/api/v1/public/members", params={"externalId": "#없음"}).json()
 
     assert body == {"members": []}
 
@@ -177,7 +177,7 @@ def test_목록에서_현황을_청하면_CoC_를_한_번만_부른다(client, f
         "#C": _profile("#C", "빡곰"),
     }
 
-    body = client.get("/api/v1/members", params={"include": "profile"}).json()
+    body = client.get("/api/v1/public/members", params={"include": "profile"}).json()
 
     assert profiles.clan_calls == 1
     assert profiles.player_calls == []
@@ -188,7 +188,8 @@ def test_현황은_스펙이_정한_모양으로_온다(client, fake_db, profile
     _seed(fake_db, [_member("#A")])
     profiles.in_clan = {"#A": _profile("#A", "도토리", ClanRole.ADMIN)}
 
-    member = client.get("/api/v1/members", params={"include": "profile"}).json()["members"][0]
+    body = client.get("/api/v1/public/members", params={"include": "profile"}).json()
+    member = body["members"][0]
 
     assert member["profile"] == {
         "name": "도토리",
@@ -207,7 +208,7 @@ def test_목록에서_클랜에_없는_사람은_현황이_null(client, fake_db,
     profiles.in_clan = {"#A": _profile("#A", "도토리")}
     profiles.elsewhere = {"#B": _profile("#B", "히로")}
 
-    body = client.get("/api/v1/members", params={"include": "profile"}).json()
+    body = client.get("/api/v1/public/members", params={"include": "profile"}).json()
 
     by_tag = {m["externalId"]: m for m in body["members"]}
     assert by_tag["#A"]["profile"]["name"] == "도토리"
@@ -220,7 +221,7 @@ def test_한_명은_클랜을_나갔어도_현황이_온다(client, fake_db, pro
     _seed(fake_db, [_member("#B", status=MemberStatus.INACTIVE)])
     profiles.elsewhere = {"#B": _profile("#B", "히로")}
 
-    body = client.get("/api/v1/members/uuid-B", params={"include": "profile"}).json()
+    body = client.get("/api/v1/public/members/uuid-B", params={"include": "profile"}).json()
 
     assert body["profile"]["name"] == "히로"
     assert profiles.player_calls == ["#B"]
@@ -230,7 +231,7 @@ def test_계정이_사라졌으면_현황이_null(client, fake_db, profiles):
     """우리가 아는 것은 태그뿐이며 없는 이름을 지어내지 않는다."""
     _seed(fake_db, [_member("#B", status=MemberStatus.INACTIVE)])
 
-    body = client.get("/api/v1/members/uuid-B", params={"include": "profile"}).json()
+    body = client.get("/api/v1/public/members/uuid-B", params={"include": "profile"}).json()
 
     assert body["externalId"] == "#B"
     assert body["profile"] is None
@@ -239,7 +240,7 @@ def test_계정이_사라졌으면_현황이_null(client, fake_db, profiles):
 def test_청하지_않으면_단건도_CoC_를_부르지_않는다(client, fake_db, profiles):
     _seed(fake_db, [_member("#A")])
 
-    body = client.get("/api/v1/members/uuid-A").json()
+    body = client.get("/api/v1/public/members/uuid-A").json()
 
     assert "profile" not in body
     assert profiles.player_calls == []
@@ -249,7 +250,7 @@ def test_모르는_include_는_400(client, fake_db):
     """조용히 버리면 오타인지 값이 없는 것인지 부르는 쪽이 알 수 없다."""
     _seed(fake_db, [_member("#A")])
 
-    response = client.get("/api/v1/members", params={"include": "league"})
+    response = client.get("/api/v1/public/members", params={"include": "league"})
 
     assert response.status_code == 400
     assert "league" in response.json()["detail"]
@@ -258,7 +259,7 @@ def test_모르는_include_는_400(client, fake_db):
 def test_빈_include_는_기본_응답과_같다(client, fake_db):
     _seed(fake_db, [_member("#A")])
 
-    body = client.get("/api/v1/members", params={"include": ""}).json()
+    body = client.get("/api/v1/public/members", params={"include": ""}).json()
 
     assert "profile" not in body["members"][0]
 
@@ -269,7 +270,7 @@ def test_빈_include_는_기본_응답과_같다(client, fake_db):
 def test_우리_식별자로_한_명을_준다(client, fake_db):
     _seed(fake_db, [_member("#A"), _member("#B")])
 
-    response = client.get("/api/v1/members/uuid-B")
+    response = client.get("/api/v1/public/members/uuid-B")
 
     assert response.status_code == 200
     assert response.json()["externalId"] == "#B"
@@ -278,7 +279,7 @@ def test_우리_식별자로_한_명을_준다(client, fake_db):
 def test_없는_식별자면_404(client, fake_db):
     _seed(fake_db, [_member("#A")])
 
-    response = client.get("/api/v1/members/uuid-없음")
+    response = client.get("/api/v1/public/members/uuid-없음")
 
     assert response.status_code == 404
     assert "detail" in response.json()
@@ -299,7 +300,7 @@ def test_표기를_고친다(client, fake_db):
     body = response.json()
     assert body["displayName"] == "도토리형"
     assert body["description"] == "부캐 아님"
-    assert client.get("/api/v1/members/uuid-A").json()["displayName"] == "도토리형"
+    assert client.get("/api/v1/public/members/uuid-A").json()["displayName"] == "도토리형"
 
 
 def test_보내지_않은_값은_그대로다(client, fake_db):
@@ -406,8 +407,8 @@ def test_자격_증명이_없으면_현황_요청은_503(fake_db):
         client = TestClient(with_env)
         _seed(fake_db, [_member("#A")])
 
-        assert client.get("/api/v1/members").status_code == 200  # 명단은 답한다
-        response = client.get("/api/v1/members", params={"include": "profile"})
+        assert client.get("/api/v1/public/members").status_code == 200  # 명단은 답한다
+        response = client.get("/api/v1/public/members", params={"include": "profile"})
 
         assert response.status_code == 503
         assert "자격 증명" in response.json()["detail"]
@@ -422,7 +423,7 @@ def test_공개_표면에는_고치는_길이_없다(client, fake_db):
     """고치는 일은 운영 표면에만 있다. 옛 주소가 남아 있으면 검사를 피해 간다."""
     _seed(fake_db, [_member("#A")])
 
-    response = client.patch("/api/v1/members/uuid-A", json={"warnings": 1})
+    response = client.patch("/api/v1/public/members/uuid-A", json={"warnings": 1})
 
     assert response.status_code == 405  # 그 주소는 읽기만 받는다
 
@@ -438,12 +439,20 @@ def test_공개_표면에는_고치는_경로가_없다():
     """
     paths = app.openapi()["paths"]
 
-    admin = [p for p in paths if p.startswith("/api/v1/admin")]
-    assert admin, "운영 경로가 하나도 없다"
+    assert [p for p in paths if p.startswith("/api/v1/admin")], "운영 경로가 하나도 없다"
+
+    # /api/v1/ 아래는 두 표면 가운데 하나에 속해야 한다. 접두사를 안 붙이면
+    # 여기서 걸리므로 분류를 잊을 수 없다.
+    for path in paths:
+        if not path.startswith("/api/v1/"):
+            continue
+        assert path.startswith(("/api/v1/public/", "/api/v1/admin/")), (
+            f"{path} 가 어느 표면에도 속하지 않는다. /api/v1/public 이나 /api/v1/admin 아래에 둔다."
+        )
 
     WRITE = {"post", "put", "patch", "delete"}
     for path, operations in paths.items():
-        if not path.startswith("/api/v1/") or path.startswith("/api/v1/admin"):
+        if not path.startswith("/api/v1/public/"):
             continue
         writes = WRITE & set(operations)
         assert not writes, (

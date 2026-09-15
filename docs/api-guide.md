@@ -33,9 +33,9 @@
 ### 자원을 가리킨다
 
 ```
-GET  /api/v1/members                 클랜원 목록
-GET  /api/v1/members/{memberId}      클랜원 한 명
-PATCH /api/v1/members/{memberId}     그 한 명을 고친다
+GET   /api/v1/public/members                클랜원 목록
+GET   /api/v1/public/members/{memberId}     클랜원 한 명
+PATCH /api/v1/admin/members/{memberId}      그 한 명을 고친다
 ```
 
 주소는 **무엇**을 가리키고, 무엇을 할지는 메서드가 말한다.
@@ -60,7 +60,7 @@ PATCH /api/v1/members/{memberId}     그 한 명을 고친다
 바깥 식별자로 찾아야 하면 쿼리로 좁힌다.
 
 ```
-GET /api/v1/members?externalId=%23R2LLCUUL
+GET /api/v1/public/members?externalId=%23R2LLCUUL
 ```
 
 ---
@@ -94,9 +94,9 @@ POST /api/v1/wars:sync        클랜전 기록을 지금 받아 온다
 ## 4. 응답은 덩어리로 나누고 부르는 쪽이 고른다
 
 ```
-GET /api/v1/members                              우리 값만. DB 한 행 읽기
-GET /api/v1/members?include=profile              + CoC 현황. CoC 호출
-GET /api/v1/members?include=profile,league       + 이번 달 점수·순위·등급
+GET /api/v1/public/members                          우리 값만. DB 한 행 읽기
+GET /api/v1/public/members?include=profile          + CoC 현황. CoC 호출
+GET /api/v1/public/members?include=profile,league   + 이번 달 점수·순위·등급
 ```
 
 기본 응답은 **가장 싼 것**만 담는다. 비싼 것은 청할 때만 싣는다.
@@ -125,13 +125,13 @@ GET /api/v1/members?include=profile,league       + 이번 달 점수·순위·�
 ### 부르지 않은 덩어리는 키 자체가 없다
 
 ```json
-GET /api/v1/members
+GET /api/v1/public/members
 { "id": "...", "externalId": "#R2LL..." }              profile 키가 없다
 
-GET /api/v1/members?include=profile
+GET /api/v1/public/members?include=profile
 { "id": "...", "profile": { "name": "히로", ... } }     실려 온다
 
-GET /api/v1/members/{id}?include=profile
+GET /api/v1/public/members/{id}?include=profile
 { "id": "...", "profile": null }                        물었지만 CoC 에 없다
 ```
 
@@ -162,7 +162,7 @@ FastAPI 에서는 경로에 `response_model_exclude_unset=True` 를 주고, 고�
 ## 6. 부분 수정 — 보낸 것만 바뀐다
 
 ```json
-PATCH /api/v1/members/{memberId}
+PATCH /api/v1/admin/members/{memberId}
 { "warnings": 2 }
 ```
 
@@ -267,18 +267,26 @@ API 가 클랜 목록을 주는데 화면이 하나만 보여 준다면, 그것�
 ## 11. 경로를 표면으로 가른다
 
 ```
-/api/v1/           공개 표면 — 클랜원 누구나 부른다
-/api/v1/admin/     운영 표면 — 운영진만 부른다
+/api/v1/public/    클랜원 누구나 부른다. 로그인하지 않은 사람도
+/api/v1/admin/     운영진만 부른다
 ```
 
 | | 어디에 |
 |---|---|
-| `GET /api/v1/members` | 공개 |
-| `GET /api/v1/members/{memberId}` | 공개 |
+| `GET /api/v1/public/members` | 공개 |
+| `GET /api/v1/public/members/{memberId}` | 공개 |
 | `PATCH /api/v1/admin/members/{memberId}` | 운영 |
 | `POST /api/v1/admin/members:sync` | 운영 |
 
-**왜.** 운영 표면 전체에 검사를 한 번에 걸 수 있다.
+**양쪽 다 이름을 붙인다.** 접두사 없는 쪽을 기본으로 두면, 분류를 잊은 경로가
+조용히 공개 표면에 놓인다. 둘 다 이름이 있으면 **안 붙인 경로는 아예 안 걸리므로
+잊을 수 없다.**
+
+`public` 이지 `user` 가 아니다. 곧 `users` 자원이 생기는데
+(`/api/v1/admin/users`) 한 글자 차이로 뜻이 전혀 달라 읽는 사람이 헷갈린다.
+그리고 이 표면은 로그인 안 한 사람도 부르므로 "user" 보다 "public" 이 맞다.
+
+**왜 가르나.** 표면 전체에 검사를 한 번에 걸 수 있다.
 
 ```python
 app.include_router(admin_router, dependencies=[Depends(require_admin)])
@@ -291,9 +299,21 @@ app.include_router(admin_router, dependencies=[Depends(require_admin)])
 않는다. 아무나 `POST /api/v1/admin/members:sync` 를 부를 수 있고, 막는 것은
 여전히 서버의 검사다. 경로는 그 검사를 **한곳에 모으는 자리**일 뿐이다.
 
-**치르는 값.** 한 자원에 주소가 둘이 된다. `GET /members/{id}` 와
+**치르는 값.** 한 자원에 주소가 둘이 된다. `GET /public/members/{id}` 와
 `PATCH /admin/members/{id}` 가 같은 사람을 가리킨다. 자원을 가리키는 주소가
 하나여야 한다는 원칙을 여기서는 포기한다 — 검사를 빠뜨리지 않는 쪽을 택했다.
+
+**접두사는 라우터에 적지 않는다.** `worker.py` 가 한 자리에서 끼운다. 경로
+파일마다 접두사를 적으면 표면이 코드 여기저기에 흩어지고, 검사를 걸 자리도
+함께 흩어진다.
+
+```python
+public_router = APIRouter(prefix="/api/v1/public")
+public_router.include_router(member_router)
+
+admin_router = APIRouter(prefix="/api/v1/admin")
+admin_router.include_router(member_admin_router)
+```
 
 **무엇이 어디로 가나.** 읽기는 대개 공개, 고치기는 대개 운영이다. 다만
 메서드로 가르지 않는다. 클랜원이 제 메모를 고치는 일이 생기면 그것은 `PATCH`

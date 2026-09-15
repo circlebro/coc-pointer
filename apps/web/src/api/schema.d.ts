@@ -4,7 +4,7 @@
  */
 
 export interface paths {
-    "/api/v1/members": {
+    "/api/v1/public/members": {
         parameters: {
             query?: never;
             header?: never;
@@ -21,7 +21,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/members/{memberId}": {
+    "/api/v1/public/members/{memberId}": {
         parameters: {
             query?: never;
             header?: never;
@@ -68,7 +68,7 @@ export interface paths {
         patch: operations["updateMember"];
         trace?: never;
     };
-    "/api/v1/clans": {
+    "/api/v1/public/clans": {
         parameters: {
             query?: never;
             header?: never;

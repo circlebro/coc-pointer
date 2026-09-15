@@ -59,7 +59,7 @@ def _seed(fake_db, clans):
 
 
 def test_아무것도_없으면_빈_목록(client):
-    body = client.get("/api/v1/clans").json()
+    body = client.get("/api/v1/public/clans").json()
 
     assert body == {"clans": []}
 
@@ -67,7 +67,7 @@ def test_아무것도_없으면_빈_목록(client):
 def test_스펙대로_캐멀케이스로_준다(client, fake_db):
     _seed(fake_db, [_clan()])
 
-    clan = client.get("/api/v1/clans").json()["clans"][0]
+    clan = client.get("/api/v1/public/clans").json()["clans"][0]
 
     assert clan["externalId"] == "#2C8L822LQ"
     assert clan["displayName"] == "미니언즈"
@@ -86,7 +86,7 @@ def test_응답이_스펙_모델을_그대로_통과한다(client, fake_db):
     """
     _seed(fake_db, [_clan()])
 
-    body = client.get("/api/v1/clans").json()
+    body = client.get("/api/v1/public/clans").json()
 
     parsed = ClanListResponse.model_validate(body)  # 어긋나면 여기서 터진다
     assert parsed.clans[0].externalId == "#2C8L822LQ"
@@ -95,7 +95,7 @@ def test_응답이_스펙_모델을_그대로_통과한다(client, fake_db):
 def test_이름이_없어도_준다(client, fake_db):
     _seed(fake_db, [_clan(display_name=None)])
 
-    clan = client.get("/api/v1/clans").json()["clans"][0]
+    clan = client.get("/api/v1/public/clans").json()["clans"][0]
 
     assert clan["displayName"] is None
     ClanSchema.model_validate(clan)  # 스펙이 nullable 로 허용한다
@@ -114,7 +114,7 @@ def test_CoC_가_주는_값은_응답에도_없다(client, fake_db):
     """
     _seed(fake_db, [_clan()])
 
-    clan = client.get("/api/v1/clans").json()["clans"][0]
+    clan = client.get("/api/v1/public/clans").json()["clans"][0]
 
     for leaked in ("badgeUrls", "clanLevel", "clanPoints", "warWins", "memberList"):
         assert leaked not in clan, f"{leaked} 가 응답에 새어 나왔습니다"

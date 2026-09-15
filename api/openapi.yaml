@@ -8,20 +8,21 @@ info:
     이 파일이 API 스펙이다. 서버 모델과 프론트 타입은 여기서 생성하며
     손으로 고치지 않는다. scripts/generate-from-spec.sh 참고.
 
-    경로를 표면으로 가른다. /api/v1/ 은 클랜원 누구나 부르고, /api/v1/admin/ 은
-    운영진만 부른다. 운영 표면에 검사를 한 번에 걸기 위해서다. 규칙은
-    docs/api-guide.md 에 있다.
+    경로를 표면으로 가른다. /api/v1/public/ 은 클랜원 누구나 부르고,
+    /api/v1/admin/ 은 운영진만 부른다. 표면마다 검사를 한 번에 걸기 위해서이며,
+    접두사를 안 붙이면 아예 안 걸리므로 분류를 잊을 수 없다. 규칙은
+    docs/api-guide.md 11번에 있다.
 
 servers:
   - url: https://coc-api.coc-api.workers.dev
     description: 운영
 
 paths:
-  /api/v1/members:
+  /api/v1/public/members:
     get:
       operationId: listMembers
       summary: 클랜원 목록
-      tags: [members]
+      tags: [public]
       parameters:
         - name: externalId
           in: query
@@ -39,7 +40,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/MemberListResponse"
 
-  /api/v1/members/{memberId}:
+  /api/v1/public/members/{memberId}:
     parameters:
       - name: memberId
         in: path
@@ -50,7 +51,7 @@ paths:
     get:
       operationId: getMember
       summary: 클랜원 한 명
-      tags: [members]
+      tags: [public]
       parameters:
         - $ref: "#/components/parameters/Includes"
       responses:
@@ -114,7 +115,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
-  /api/v1/clans:
+  /api/v1/public/clans:
     get:
       operationId: listClans
       summary: 클랜 목록
@@ -124,7 +125,7 @@ paths:
         마크·레벨·점수·전적은 담지 않는다. CoC 가 주인인 값이라 우리가
         사본을 들고 있으면 두 곳에서 관리하게 되고 언젠가 어긋난다.
         필요하면 external_id 로 CoC 에 물으면 된다.
-      tags: [clans]
+      tags: [public]
       responses:
         "200":
           description: 클랜 목록

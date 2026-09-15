@@ -10,10 +10,12 @@
 고칠 수 있는 값은 사람이 정하는 셋뿐이다(표기·경고 횟수·메모). 이름이나 직책은
 CoC 가 주인이라 여기서 받지 않고, 등급은 이번 달 점수가 정하는 값이라 받지 않는다.
 
-라우터가 둘이다. ``router`` 는 클랜원 누구나 부르는 공개 표면이고,
-``admin_router`` 는 운영진만 부르는 운영 표면이다. 둘이 같은 도우미를 쓰므로 한
-파일에 둔다. 운영 표면에 검사를 다는 일은 worker.py 가 한 자리에서 하며,
-경로마다 붙이면 하나 빠뜨려도 조용하기 때문이다. 규칙은 docs/api-guide.md 11번.
+라우터가 둘이다. ``router`` 는 클랜원 누구나 부르는 공개 표면(/api/v1/public)에
+놓이고, ``admin_router`` 는 운영진만 부르는 운영 표면(/api/v1/admin)에 놓인다.
+둘이 같은 도우미를 쓰므로 한 파일에 둔다.
+
+어느 표면에 놓일지는 worker.py 가 정한다. 여기서 접두사를 붙이면 표면이 코드
+여기저기에 흩어지고, 검사를 걸 자리도 흩어진다. 규칙은 docs/api-guide.md 11번.
 """
 
 from __future__ import annotations
@@ -31,10 +33,9 @@ from schemas import Member as MemberSchema
 from schemas import MemberInclude, MemberListResponse, MemberUpdate
 from schemas import MemberProfile as MemberProfileSchema
 
-router = APIRouter(prefix="/api/v1", tags=["members"])
-
-# 접두사를 붙이지 않는다. worker.py 가 /api/v1/admin 아래에 끼우면서 검사를
-# 함께 단다.
+# 접두사를 붙이지 않는다. 어느 표면에 놓일지는 worker.py 가 한 자리에서 정하고,
+# 표면마다 붙일 검사도 거기서 단다.
+router = APIRouter(tags=["public"])
 admin_router = APIRouter(tags=["admin"])
 
 
