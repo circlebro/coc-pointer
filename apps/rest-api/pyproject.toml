@@ -16,6 +16,13 @@ requires-python = ">=3.13"
 # 있어 같은 .venv 에 이미 설치되어 있기 때문이다.
 dependencies = [
     "fastapi>=0.115",
+    # 요청을 처리하는 중에 CoC 를 부른다. include=profile 이 그 길이다.
+    # 개발 의존성에만 두었다가 배포가 "No module named 'httpx'" 로 막혔다.
+    # Workers 는 비동기 클라이언트만 쓸 수 있으므로 requests 는 대안이 아니다.
+    "httpx>=0.28.1",
+    # schemas.py 가 직접 들여온다. fastapi 를 따라 딸려 오기는 하지만, 직접
+    # 부르는 것은 직접 선언한다. 그래야 fastapi 가 언젠가 갈아타도 안 깨진다.
+    "pydantic>=2.0",
     # coc_core 가 쓰는 것을 여기에 대신 적는다. 위 주석대로 coc_core 자체는
     # 의존성으로 넣지 않고 deploy.sh 가 소스를 복사하므로, 그 안에서 무엇을
     # 부르는지 pywrangler 가 알 방법이 없다. 그래서 번들에 실리지 않고

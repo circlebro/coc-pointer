@@ -12,6 +12,10 @@ dependencies 만 읽으므로, 복사해 넣은 coc_core 가 안에서 무엇을
 
 로컬에서는 드러나지 않는다. 워크스페이스의 다른 앱이 coc_core 를 의존성으로
 갖고 있어 같은 가상환경에 이미 설치되어 있기 때문이다. 그래서 여기서 본다.
+
+같은 구멍이 apps/rest-api 자신의 코드에도 있다. dev 그룹에만 적어 둔 꾸러미는
+테스트에서 잘 돌지만 번들에는 실리지 않는다. httpx 가 그렇게 빠져 배포가
+"No module named 'httpx'" 로 막힌 적이 있다. 그래서 src 도 함께 훑는다.
 """
 
 from __future__ import annotations
@@ -26,6 +30,16 @@ import pytest
 HERE = Path(__file__).resolve().parent
 API_PYPROJECT = HERE.parent / "pyproject.toml"
 CORE_SRC = HERE.parent.parent.parent / "packages" / "core" / "src" / "coc_core"
+API_SRC = HERE.parent / "src"
+
+# apps/rest-api/src 안에서 서로를 부르는 이름들. 바깥 꾸러미가 아니다.
+# src 가 sys.path 에 얹혀 돌기 때문에 최상위 이름으로 보인다.
+OWN_MODULES = {"adapters", "routes", "schemas", "db", "worker", "cli", "coc_core"}
+
+# Workers 런타임이 직접 쥐여 주는 것들. PyPI 에 없으므로 선언할 수도 없고,
+# 선언하면 오히려 설치를 시도하다 실패한다. worker.py 가 sys.platform 을 보고
+# emscripten 일 때만 들여오는 까닭도 그래서다.
+RUNTIME_PROVIDED = {"asgi", "js"}
 
 # 꾸러미 이름과 들여오는 이름이 다른 것들
 DISTRIBUTION_NAME = {"yaml": "pyyaml"}
@@ -37,9 +51,17 @@ NEEDS_DATA_PACKAGE = {"zoneinfo": "tzdata"}
 
 
 def _imported_packages() -> set[str]:
-    """coc_core 가 부르는 바깥 꾸러미 이름."""
+    """배포 번들 안의 코드가 부르는 바깥 꾸러미 이름.
+
+    coc_core 와 apps/rest-api/src 를 둘 다 훑는다. 앞은 deploy.sh 가 복사해
+    넣는 것이고 뒤는 워커 본체다. 어느 쪽이든 번들에 없으면 첫 요청에서 죽는다.
+    """
     found: set[str] = set()
-    for path in sorted(CORE_SRC.rglob("*.py")):
+    sources = [*CORE_SRC.rglob("*.py"), *API_SRC.rglob("*.py")]
+    for path in sorted(sources):
+        # deploy.sh 가 만드는 배포용 사본이라 원본을 두 번 세게 된다
+        if "src/coc_core/" in path.as_posix():
+            continue
         tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
         for node in ast.walk(tree):
             if isinstance(node, ast.Import):
@@ -49,7 +71,8 @@ def _imported_packages() -> set[str]:
     return {
         name
         for name in found
-        if name != "coc_core"
+        if name not in OWN_MODULES
+        and name not in RUNTIME_PROVIDED
         and (name not in sys.stdlib_module_names or name in NEEDS_DATA_PACKAGE)
     }
 
@@ -64,12 +87,13 @@ def _declared() -> set[str]:
 
 
 @pytest.mark.parametrize("module", sorted(_imported_packages()))
-def test_coc_core_가_쓰는_것이_번들에_들어간다(module: str) -> None:
+def test_배포_코드가_쓰는_것이_번들에_들어간다(module: str) -> None:
     wanted = NEEDS_DATA_PACKAGE.get(module) or DISTRIBUTION_NAME.get(module, module)
     wanted = wanted.lower()
 
     assert wanted in _declared(), (
-        f"coc_core 가 {module} 을 부르는데 apps/rest-api/pyproject.toml 의 dependencies 에"
-        f" {wanted} 가 없습니다. 이대로 배포하면 번들에 실리지 않아 첫 요청에서"
+        f"배포되는 코드가 {module} 을 부르는데 apps/rest-api/pyproject.toml 의"
+        f" dependencies 에 {wanted} 가 없습니다. dev 그룹에만 있으면 테스트는"
+        f" 통과하지만 번들에는 실리지 않아, 배포가 막히거나 첫 요청에서"
         f" ModuleNotFoundError 로 죽습니다."
     )
