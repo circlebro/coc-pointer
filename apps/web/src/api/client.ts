@@ -29,11 +29,11 @@ async function get<T>(path: string): Promise<T> {
 }
 
 // 기본 응답은 우리 DB 값만 담는다. 이름·직책·홀·트로피는 CoC 가 주인이라
-// includes=profile 로 따로 청해야 실려 온다.
+// include=profile 로 따로 청해야 실려 온다.
 export async function fetchMembers(
   includes: MemberInclude[] = [],
 ): Promise<MemberListResponse> {
-  const query = includes.length > 0 ? `?includes=${includes.join(",")}` : "";
+  const query = includes.length > 0 ? `?include=${includes.join(",")}` : "";
   return get<MemberListResponse>(`${MEMBERS}${query}`);
 }
 

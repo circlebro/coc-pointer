@@ -72,7 +72,7 @@ def test_아무도_없으면_빈_목록(client):
 def test_이름_순으로_돌려준다(client, fake_db):
     _seed(fake_db, [_member("#B", "히로"), _member("#A", "도토리")])
 
-    body = client.get("/api/v1/members", params={"includes": "profile"}).json()
+    body = client.get("/api/v1/members", params={"include": "profile"}).json()
 
     assert [m["profile"]["name"] for m in body["members"]] == ["도토리", "히로"]
 
@@ -80,7 +80,7 @@ def test_이름_순으로_돌려준다(client, fake_db):
 def test_스펙대로_캐멀케이스로_준다(client, fake_db):
     _seed(fake_db, [_member("#A", "도토리", role=ClanRole.ADMIN)])
 
-    member = client.get("/api/v1/members", params={"includes": "profile"}).json()["members"][0]
+    member = client.get("/api/v1/members", params={"include": "profile"}).json()["members"][0]
 
     assert member["externalId"] == "#A"
     assert member["status"] == "ACTIVE"
@@ -172,7 +172,7 @@ def test_CoC_가_주인인_값은_고칠_수_없다(client, fake_db):
 
     body = client.patch(
         "/api/v1/members/uuid-A",
-        params={"includes": "profile"},
+        params={"include": "profile"},
         json={"warnings": 1, "name": "바뀐이름"},
     ).json()
 
@@ -246,7 +246,7 @@ def test_기본_응답에는_profile_이_없다(client, fake_db):
 def test_profile_을_부르면_CoC_값이_실린다(client, fake_db):
     _seed(fake_db, [_member("#A", "도토리", role=ClanRole.ADMIN)])
 
-    member = client.get("/api/v1/members", params={"includes": "profile"}).json()["members"][0]
+    member = client.get("/api/v1/members", params={"include": "profile"}).json()["members"][0]
 
     assert member["profile"] == {
         "name": "도토리",
@@ -263,7 +263,7 @@ def test_한_명을_부를_때도_profile_을_고른다(client, fake_db):
     _seed(fake_db, [_member("#A", "도토리")])
 
     without = client.get("/api/v1/members/uuid-A").json()
-    with_profile = client.get("/api/v1/members/uuid-A", params={"includes": "profile"}).json()
+    with_profile = client.get("/api/v1/members/uuid-A", params={"include": "profile"}).json()
 
     assert "profile" not in without
     assert with_profile["profile"]["name"] == "도토리"
@@ -274,7 +274,7 @@ def test_고친_뒤에도_profile_을_고른다(client, fake_db):
 
     body = client.patch(
         "/api/v1/members/uuid-A",
-        params={"includes": "profile"},
+        params={"include": "profile"},
         json={"displayName": "도토리형"},
     ).json()
 
@@ -282,20 +282,20 @@ def test_고친_뒤에도_profile_을_고른다(client, fake_db):
     assert body["profile"]["name"] == "도토리"
 
 
-def test_모르는_includes_는_400(client, fake_db):
+def test_모르는_include_는_400(client, fake_db):
     """조용히 버리면 오타인지 값이 없는 것인지 부르는 쪽이 알 수 없다."""
     _seed(fake_db, [_member("#A", "도토리")])
 
-    response = client.get("/api/v1/members", params={"includes": "standing"})
+    response = client.get("/api/v1/members", params={"include": "standing"})
 
     assert response.status_code == 400
     assert "standing" in response.json()["detail"]
 
 
-def test_빈_includes_는_기본_응답과_같다(client, fake_db):
+def test_빈_include_는_기본_응답과_같다(client, fake_db):
     _seed(fake_db, [_member("#A", "도토리")])
 
-    body = client.get("/api/v1/members", params={"includes": ""}).json()
+    body = client.get("/api/v1/members", params={"include": ""}).json()
 
     assert "profile" not in body["members"][0]
 
@@ -306,7 +306,7 @@ def test_동기화_시각과_갱신_시각은_따로_움직인다(client, fake_d
 
     body = client.patch(
         "/api/v1/members/uuid-A",
-        params={"includes": "profile"},
+        params={"include": "profile"},
         json={"warnings": 1},
     ).json()
 

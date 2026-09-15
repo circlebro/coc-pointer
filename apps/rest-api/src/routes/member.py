@@ -4,7 +4,7 @@
 그대로 쓴다. 도메인 자료형을 그 모양으로 옮기는 일만 한다.
 
 기본 응답은 우리 DB 한 행만 읽는다. CoC 가 주인인 값(이름·직책·홀·트로피·기부)은
-``includes=profile`` 로 부를 때만 실린다. 명단만 필요한 요청에 그 비용을 얹지
+``include=profile`` 로 부를 때만 실린다. 명단만 필요한 요청에 그 비용을 얹지
 않으려는 것이며, 앞으로 사본을 걷어내면 그 덩어리가 진짜 CoC 호출이 된다.
 
 고칠 수 있는 값은 사람이 정하는 셋뿐이다(표기·경고 횟수·메모). 이름이나 직책은
@@ -39,18 +39,18 @@ def get_member_service(request: Request) -> MemberService:
 
 MemberSvc = Annotated[MemberService, Depends(get_member_service)]
 
-IncludesQuery = Annotated[
+IncludeQuery = Annotated[
     str | None,
     Query(
-        alias="includes",
+        alias="include",
         description="함께 실을 덩어리. 쉼표로 여럿 적는다. 지금은 profile 하나뿐이다",
         examples=["profile"],
     ),
 ]
 
 
-def parse_includes(raw: str | None) -> set[MemberInclude]:
-    """``?includes=profile`` 을 갈라 읽는다.
+def parse_include(raw: str | None) -> set[MemberInclude]:
+    """``?include=profile`` 을 갈라 읽는다.
 
     스펙이 style: form, explode: false 로 적혀 있어 쉼표로 이어 온다. 모르는
     이름은 400 으로 거절한다. 조용히 버리면 부르는 쪽은 덩어리가 빠진 것을
@@ -69,7 +69,7 @@ def parse_includes(raw: str | None) -> set[MemberInclude]:
             allowed = ", ".join(sorted(m.value for m in MemberInclude))
             raise HTTPException(
                 status_code=400,
-                detail=f"모르는 includes 값입니다: {name} (쓸 수 있는 값: {allowed})",
+                detail=f"모르는 include 값입니다: {name} (쓸 수 있는 값: {allowed})",
             ) from None
     return chosen
 
@@ -92,7 +92,7 @@ def _to_profile(member: ClanMember) -> MemberProfile:
     )
 
 
-def _to_schema(member: ClanMember, includes: set[MemberInclude]) -> MemberSchema:
+def _to_schema(member: ClanMember, chosen: set[MemberInclude]) -> MemberSchema:
     """도메인 자료형을 스펙이 정한 모양으로.
 
     고르지 않은 덩어리는 아예 넘기지 않는다. 경로가
@@ -109,7 +109,7 @@ def _to_schema(member: ClanMember, includes: set[MemberInclude]) -> MemberSchema
         "createdAt": member.created_at,
         "updatedAt": member.updated_at,
     }
-    if MemberInclude.profile in includes:
+    if MemberInclude.profile in chosen:
         fields["profile"] = _to_profile(member)
     return MemberSchema(**fields)
 
@@ -117,11 +117,11 @@ def _to_schema(member: ClanMember, includes: set[MemberInclude]) -> MemberSchema
 @router.get("/members", response_model_exclude_unset=True)
 async def list_members(
     service: MemberSvc,
-    includes: IncludesQuery = None,
+    include: IncludeQuery = None,
     externalId: Annotated[str | None, Query(description="CoC 플레이어 태그로 좁힌다")] = None,
 ) -> MemberListResponse:
     """클랜원 목록. 나간 사람(INACTIVE)도 포함한다."""
-    chosen = parse_includes(includes)
+    chosen = parse_include(include)
     if externalId is not None:
         found = await service.find_by_external_id(externalId)
         return MemberListResponse(members=[_to_schema(found, chosen)] if found else [])
@@ -130,10 +130,10 @@ async def list_members(
 
 @router.get("/members/{memberId}", response_model_exclude_unset=True)
 async def get_member(
-    memberId: str, service: MemberSvc, includes: IncludesQuery = None
+    memberId: str, service: MemberSvc, include: IncludeQuery = None
 ) -> MemberSchema:
     """클랜원 한 명. 우리 식별자로 찾는다."""
-    chosen = parse_includes(includes)
+    chosen = parse_include(include)
     found = await service.find_by_id(memberId)
     if found is None:
         raise HTTPException(status_code=404, detail="그 클랜원이 없습니다")
@@ -145,7 +145,7 @@ async def update_member(
     memberId: str,
     body: MemberUpdate,
     service: MemberSvc,
-    includes: IncludesQuery = None,
+    include: IncludeQuery = None,
 ) -> MemberSchema:
     """우리가 정하는 값을 고친다.
 
@@ -153,7 +153,7 @@ async def update_member(
     알려주므로, "안 보냈다"와 "null 을 보냈다"를 가릴 수 있다. 앞은 그대로 두라는
     뜻이고 뒤는 비우라는 뜻이라 서로 다르다.
     """
-    chosen = parse_includes(includes)
+    chosen = parse_include(include)
     sent = body.model_fields_set
     if not sent:
         raise HTTPException(status_code=400, detail="고칠 값을 하나 이상 보내야 합니다")

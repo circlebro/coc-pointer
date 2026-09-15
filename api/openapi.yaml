@@ -122,7 +122,7 @@ paths:
 components:
   parameters:
     Includes:
-      name: includes
+      name: include
       in: query
       required: false
       description: |
@@ -135,6 +135,7 @@ components:
         것과 값이 없는 것은 다르기 때문이다.
 
           profile  CoC 가 주인인 값 — 이름·직책·홀·트로피·기부
+          league   리그전 선발 — 이번 달 점수·순위·등급
       schema:
         type: array
         items:
@@ -226,10 +227,13 @@ components:
         어휘는 둘로 정해져 있다.
 
           profile  CoC 가 주인인 값 — 이름·직책·홀·트로피·기부
-          league   리그전 관련 — 그달 등급·점수·순위
+          league   리그전 선발 — 이번 달 점수·순위·등급
 
-        league 는 아직 여기 없다. 그달 점수가 있어야 나오는데 클랜전 기록이
-        아직 들어오지 않았다. 그 티켓에서 값을 더한다. 없는 것을 미리 적어 두면
+        league 는 늘 이번 달을 가리킨다. 지난 달을 고르는 방법은 아직 정하지
+        않았고, 응답에 month 를 함께 실어 어느 달 값인지 밝힌다.
+
+        league 는 아직 열거형에 없다. 그달 점수가 있어야 나오는데 클랜전 기록이
+        아직 들어오지 않았다. 그 티켓에서 더한다. 없는 것을 미리 적어 두면
         부르는 쪽이 있다고 믿는다.
       enum: [profile]
 
@@ -246,7 +250,7 @@ components:
         '#' 을 인코딩하지 않으려고 따로 둔다. Clan 과 같은 규칙이다.
 
         이름과 직책은 여기 없다. CoC 가 주인인 값이라 profile 로 내렸다.
-        등급도 여기 없다. 그달 점수가 정하는 값이라 league 가 맡는다.
+        등급도 여기 없다. 이번 달 점수가 정하는 값이라 league 가 맡는다.
 
         displayName 은 사람이 정한 표기이며 동기화가 채우지 않는다. 채우면 그
         값이 사람이 정한 것인지 동기화가 써 넣은 것인지 구분할 수 없다. 비었을
