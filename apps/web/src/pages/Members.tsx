@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { fetchMembers, type MemberWithProfile } from "../api/client";
+import { SyncButton } from "../components/SyncButton";
 import { roleLabel, statusLabel } from "../labels";
 
 type State =
@@ -16,7 +17,7 @@ function nameOf(member: MemberWithProfile): string {
   return member.displayName ?? member.profile?.name ?? member.externalId;
 }
 
-export function Members() {
+export function Members({ onMessage }: { onMessage: (text: string) => void }) {
   const [state, setState] = useState<State>({ kind: "loading" });
 
   const load = () => {
@@ -37,6 +38,7 @@ export function Members() {
       <div className="bar">
         <h2>클랜원</h2>
         {state.kind === "ready" && <span className="meta">{state.members.length}명</span>}
+        <SyncButton onDone={load} onMessage={onMessage} />
       </div>
       <Body state={state} onRetry={load} />
       <div className="foot">

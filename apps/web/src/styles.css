@@ -215,6 +215,58 @@ tr.dim td {
   font-weight: 600;
 }
 
+/* ── 명단 맞추기 ────────────────────────────────────────── */
+
+.bar .meta + button,
+.bar .meta + form {
+  margin-left: 0;
+}
+
+button.ghost {
+  font: inherit;
+  font-size: 12.5px;
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--paper);
+  color: var(--ink);
+  cursor: pointer;
+}
+button.ghost:hover:not(:disabled) {
+  border-color: var(--muted);
+}
+
+.sync {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.sync input {
+  font: inherit;
+  font-size: 13px;
+  padding: 6px 10px;
+  width: 150px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--paper);
+  color: var(--ink);
+}
+.sync button[type="submit"] {
+  font: inherit;
+  font-size: 12.5px;
+  padding: 6px 12px;
+  border: 1px solid var(--ink);
+  border-radius: 4px;
+  background: var(--ink);
+  color: var(--paper);
+  cursor: pointer;
+}
+.sync button:disabled,
+button.ghost:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
 /* ── 상태 ───────────────────────────────────────────────── */
 
 .state {

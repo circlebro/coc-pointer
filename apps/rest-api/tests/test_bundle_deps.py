@@ -34,7 +34,7 @@ API_SRC = HERE.parent / "src"
 
 # apps/rest-api/src 안에서 서로를 부르는 이름들. 바깥 꾸러미가 아니다.
 # src 가 sys.path 에 얹혀 돌기 때문에 최상위 이름으로 보인다.
-OWN_MODULES = {"adapters", "routes", "schemas", "db", "worker", "cli", "coc_core"}
+OWN_MODULES = {"adapters", "routes", "schemas", "db", "worker", "cli", "auth", "coc_core"}
 
 # Workers 런타임이 직접 쥐여 주는 것들. PyPI 에 없으므로 선언할 수도 없고,
 # 선언하면 오히려 설치를 시도하다 실패한다. worker.py 가 sys.platform 을 보고

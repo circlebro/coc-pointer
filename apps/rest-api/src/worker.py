@@ -14,11 +14,13 @@ import sys
 from datetime import datetime
 from typing import Annotated, Any
 
-from fastapi import Depends, FastAPI, Path, Request
+from fastapi import APIRouter, Depends, FastAPI, Path, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 import db
+from auth import require_admin
 from routes.clan import router as clan_router
+from routes.member import admin_router as member_admin_router
 from routes.member import router as member_router
 
 # 명세를 스스로 발행하지 않는다. API 스펙은 api/openapi.yaml 한 벌뿐이고
@@ -37,11 +39,27 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=["https://circlebro.github.io", "http://localhost:8000"],
     allow_methods=["GET", "POST", "PATCH", "OPTIONS"],
-    allow_headers=["Content-Type", "Authorization"],
+    allow_headers=["Content-Type", "Authorization", "X-Admin-Password"],
 )
 
-app.include_router(member_router)
-app.include_router(clan_router)
+# 표면을 둘로 가른다. 양쪽 다 이름을 붙이는 까닭은, 접두사를 안 붙이면 아예
+# 안 걸려서 분류를 잊을 수 없기 때문이다. 접두사 없는 쪽을 기본으로 두면 잊은
+# 경로가 조용히 공개 표면에 놓인다.
+#
+# 검사도 여기 한 자리에서 단다. 경로마다 붙이면 하나 빠뜨려도 조용하다.
+# require_admin 은 임시 조치이며 제대로 된 로그인은 TASK-23 이 맡는다. 그때
+# auth.py 만 갈아 끼우면 되고 이 줄은 그대로다.
+#
+# 경로가 막아 주는 것은 아니다. 주소에 admin 이 적혀 있다고 서버가 막지 않는다.
+# 막는 것은 여전히 검사이고, 이 자리는 그 검사를 모으는 곳일 뿐이다.
+#
+# 규칙은 docs/api-guide.md 11번.
+public_router = APIRouter(prefix="/api/v1/public")
+public_router.include_router(member_router)
+public_router.include_router(clan_router)
+
+admin_router = APIRouter(prefix="/api/v1/admin", dependencies=[Depends(require_admin)])
+admin_router.include_router(member_admin_router)
 
 
 def get_env(request: Request) -> Any:
@@ -131,19 +149,25 @@ async def health_crypto() -> dict:
     return result
 
 
-@app.get("/api/v1/scores/{month}")
+@public_router.get("/scores/{month}")
 async def get_scores(month: Month, database: Db) -> dict:
     """그달 점수표. 수집할 때 미리 계산해 둔 것을 읽기만 한다."""
     return {"month": month, "members": await db.get_monthly_scores(database, month)}
 
 
-@app.get("/api/v1/draws/{month}")
+@public_router.get("/draws/{month}")
 async def get_draw(month: Month, database: Db) -> dict:
     """그달 추첨 결과. 아직 뽑지 않았으면 ``drawn`` 이 거짓이다."""
     drawn = await db.get_draw(database, month)
     if drawn is None:
         return {"month": month, "drawn": False}
     return {"drawn": True, **drawn}
+
+
+# 경로를 다 단 뒤에 끼운다. FastAPI 는 끼우는 순간의 라우터를 베껴 가므로,
+# 이 줄보다 아래에서 더한 경로는 실리지 않는다.
+app.include_router(public_router)
+app.include_router(admin_router)
 
 
 if sys.platform == "emscripten":

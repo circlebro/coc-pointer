@@ -4,7 +4,7 @@
  */
 
 export interface paths {
-    "/api/v1/members": {
+    "/api/v1/public/members": {
         parameters: {
             query?: never;
             header?: never;
@@ -21,7 +21,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/members/{memberId}": {
+    "/api/v1/public/members/{memberId}": {
         parameters: {
             query?: never;
             header?: never;
@@ -38,6 +38,25 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/members/{memberId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 우리 식별자. CoC 태그가 아니다 */
+                memberId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
         /**
          * 클랜원의 우리 값 수정
          * @description 우리가 정하는 값만 고친다. 이름·직책·트로피처럼 CoC 가 주인인 값은
@@ -49,7 +68,35 @@ export interface paths {
         patch: operations["updateMember"];
         trace?: never;
     };
-    "/api/v1/clans": {
+    "/api/v1/admin/members:sync": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 클랜 명단을 지금 맞춘다
+         * @description CoC 클랜 명단을 받아 우리 명부를 맞춘다. 하는 일은 둘뿐이다 — 처음 보는
+         *     사람을 등록하고, 명단에서 사라진 사람을 INACTIVE 로 내린다.
+         *
+         *     이름·직책·트로피를 받아 적지 않는다. CoC 가 주인인 값이라 사본을 들면 두
+         *     곳에서 관리하게 된다. 현황이 필요하면 include=profile 로 청한다.
+         *
+         *     주소에 콜론이 붙은 까닭은 이것이 표준 메서드가 아니기 때문이다. 만들고·
+         *     읽고·고치고·지우는 넷에 맞지 않는 동작이라 그 사실을 드러낸다. 규칙은
+         *     docs/api-guide.md 3번.
+         */
+        post: operations["syncMembers"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/clans": {
         parameters: {
             query?: never;
             header?: never;
@@ -240,6 +287,32 @@ export interface components {
             fetchedAt: string;
         };
         /**
+         * @description 동기화가 무엇을 했는지. 무슨 일이 있었는지 남기지 않으면 사람이 통째로
+         *     사라져도 아무도 모른다.
+         */
+        MemberSyncResult: {
+            /**
+             * @description CoC 클랜 명단에 있던 사람 수
+             * @example 49
+             */
+            total: number;
+            /**
+             * @description 처음 보아 새로 등록한 사람 수
+             * @example 1
+             */
+            added: number;
+            /**
+             * @description 명단에서 사라져 INACTIVE 로 내린 사람 수
+             * @example 1
+             */
+            left: number;
+            /**
+             * @description 맞춘 시각. ISO 8601(UTC)
+             * @example 2026-09-15T02:30:00Z
+             */
+            syncedAt: string;
+        };
+        /**
          * @description 클랜원에게서 사람이 정하는 값. PATCH 의 본문이다.
          *
          *     전부 선택 사항이며, 보낸 것만 바뀐다. 값을 비우려면 null 을 보낸다.
@@ -379,7 +452,22 @@ export interface operations {
     };
     updateMember: {
         parameters: {
-            query?: never;
+            query?: {
+                /**
+                 * @description 기본 응답에 함께 실을 덩어리. 쉼표로 여럿 적는다.
+                 *
+                 *     기본 응답은 우리 DB 한 행만 읽는다. CoC 를 부르지도, 무엇을 계산하지도
+                 *     않는다. 명단만 필요한 요청에 그 비용을 얹지 않으려는 것이다.
+                 *
+                 *     부르지 않은 덩어리는 키 자체가 없다. null 로 채우지 않는다. 묻지 않은
+                 *     것과 값이 없는 것은 다르기 때문이다.
+                 *
+                 *       profile  CoC 가 주인인 값 — 이름·직책·홀·트로피·기부
+                 *       league   리그전 선발 — 이번 달 점수·순위·등급
+                 * @example profile
+                 */
+                include?: components["parameters"]["Includes"];
+            };
             header?: never;
             path: {
                 /** @description 우리 식별자. CoC 태그가 아니다 */
@@ -414,8 +502,64 @@ export interface operations {
                     "application/json": components["schemas"]["Error"];
                 };
             };
+            /** @description 비밀번호가 맞지 않다 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
             /** @description 그 식별자를 가진 클랜원이 없다 */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description 운영 비밀번호가 설정되지 않았다 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    syncMembers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 무엇이 달라졌는지 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemberSyncResult"];
+                };
+            };
+            /** @description 비밀번호가 맞지 않다 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description CoC 자격 증명이 없거나 CoC 가 답하지 않는다 */
+            503: {
                 headers: {
                     [name: string]: unknown;
                 };

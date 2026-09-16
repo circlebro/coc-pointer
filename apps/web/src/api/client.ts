@@ -17,8 +17,8 @@ const BASE_URL = "https://coc-api.coc-api.workers.dev";
 // satisfies 로 적어 두면 스펙에 없는 주소를 부를 때 빌드가 걸린다. 그냥
 // 문자열로 두면 스펙에서 주소를 바꾸고 타입을 다시 생성해도 여기는 따라오지
 // 않고, 화면이 띄워진 뒤에야 404 로 드러난다.
-const MEMBERS = "/api/v1/members" satisfies keyof paths;
-const CLANS = "/api/v1/clans" satisfies keyof paths;
+const MEMBERS = "/api/v1/public/members" satisfies keyof paths;
+const CLANS = "/api/v1/public/clans" satisfies keyof paths;
 
 async function get<T>(path: string): Promise<T> {
   const response = await fetch(`${BASE_URL}${path}`);
@@ -39,4 +39,40 @@ export async function fetchMembers(
 
 export async function fetchClans(): Promise<ClanListResponse> {
   return get<ClanListResponse>(CLANS);
+}
+
+export type MemberSyncResult = components["schemas"]["MemberSyncResult"];
+
+const MEMBERS_SYNC = "/api/v1/admin/members:sync" satisfies keyof paths;
+
+/** 비밀번호가 맞지 않을 때. 화면이 다른 실패와 갈라 다루려고 따로 둔다. */
+export class UnauthorizedError extends Error {
+  constructor() {
+    super("비밀번호가 맞지 않습니다");
+    this.name = "UnauthorizedError";
+  }
+}
+
+/** 클랜 명단을 지금 맞춘다. 운영 표면이라 비밀번호가 필요하다.
+ *
+ * 비밀번호는 어디에도 저장하지 않는다. 부르는 쪽이 들고 있다가 넘기고, 화면을
+ * 새로 고치면 사라진다. 임시 조치이며 제대로 된 로그인이 오면 갈아 끼운다.
+ */
+export async function syncMembers(password: string): Promise<MemberSyncResult> {
+  // HTTP 헤더는 ASCII 만 담는다. 한글이 섞이면 fetch 가 그 자리에서 터지는데,
+  // 그 오류 문구로는 무엇이 잘못됐는지 알 수 없다.
+  if (!/^[\x20-\x7E]+$/.test(password)) {
+    throw new Error("비밀번호에는 영문·숫자·기호만 쓸 수 있습니다");
+  }
+  const response = await fetch(`${BASE_URL}${MEMBERS_SYNC}`, {
+    method: "POST",
+    headers: { "X-Admin-Password": password },
+  });
+  if (response.status === 401) {
+    throw new UnauthorizedError();
+  }
+  if (!response.ok) {
+    throw new Error(`서버가 ${response.status} 로 답했습니다`);
+  }
+  return response.json();
 }

@@ -20,7 +20,8 @@ from adapters.clan_repository import D1ClanRepository
 from schemas import Clan as ClanSchema
 from schemas import ClanListResponse
 
-router = APIRouter(prefix="/api/v1", tags=["clans"])
+# 접두사는 worker.py 가 붙인다. docs/api-guide.md 11번.
+router = APIRouter(tags=["public"])
 
 
 def get_clan_service(request: Request) -> ClanService:
