@@ -1,0 +1,100 @@
+# 검사. 올릴 때마다 돈다.
+#
+# 이 저장소는 방어선을 여럿 만들어 두었다. 스펙과 응답이 어긋나면 걸리고, 공용
+# 코드에 새 꾸러미를 들이면 걸리고, 서버가 새 직책을 내려보내면 빌드가 걸린다.
+# 그런데 그 전부가 사람이 손으로 돌릴 때만 돌았다.
+#
+# 2026-09-16 하루에 두 번 물렸다. 아침에 httpx 가 번들에 없어 배포가 막혔고,
+# 오후에 커밋에서 빠진 코드가 그대로 머지됐다. 둘 다 여기서 걸렸을 일이다.
+#
+# collect.yml 과 나눈다. 저쪽은 30분마다 돌지만 검사는 올릴 때만 돌면 된다.
+name: check
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  # 같은 브랜치에 연달아 올리면 앞의 것은 멈춘다. 마지막 것만 알면 된다.
+  group: check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  python:
+    name: 파이썬
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: 설치
+        run: uv sync --frozen
+
+      - name: 테스트
+        run: uv run pytest -q
+
+      - name: 서식과 규칙
+        run: |
+          uv run ruff check .
+          uv run ruff format --check .
+
+  web:
+    name: 화면
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+
+      - name: 빌드
+        working-directory: apps/web
+        run: |
+          npm ci
+          npm run build
+
+  generated:
+    name: 생성물
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: 설치
+        run: uv sync --frozen
+
+      # 스펙을 고치고 모델·타입을 다시 만들지 않으면 여기서 걸린다. 손으로
+      # 고친 생성물도 마찬가지다. 두 스크립트 다 몇 번을 돌려도 결과가 같아야
+      # 한다.
+      - name: 스펙에서 다시 만든다
+        run: ./scripts/generate-from-spec.sh
+
+      - name: 마이그레이션에서 스키마를 다시 뜬다
+        run: ./scripts/dump-schema.sh
+
+      - name: 차이가 없어야 한다
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "✘ 생성물이 저장소와 다릅니다. 아래를 돌리고 함께 커밋하세요."
+            echo "    ./scripts/generate-from-spec.sh"
+            echo "    ./scripts/dump-schema.sh"
+            echo
+            git status --short
+            git --no-pager diff
+            exit 1
+          fi
+          echo "✔ 생성물이 저장소와 같습니다."
