@@ -6,6 +6,9 @@
 # 2. API 를 먼저, 화면을 나중에 올린다. 응답 모양이 바뀌면 화면이 먼저 올라갈 때
 #    표가 빈다 — 옛 API 가 주는 응답에 새 필드가 없기 때문이다
 #
+# 작업 아이디(jobs 아래 열쇠)는 ASCII 여야 한다. 한글로 적으면 GitHub 이 파일을
+# 아예 못 읽고 0초 만에 실패한다. 화면에 보일 이름은 name: 으로 따로 준다.
+#
 # 사람이 누르는 단계는 두지 않았다. 승인을 두면 누군가 눌러야 하고, 안 누르면
 # 배포가 멈춘다. 지금은 배포가 느려지는 손해가 사고 위험보다 크다고 보았다.
 # 사고가 한 번 나면 그 균형이 뒤집히고, 그때 GitHub Environment 승인을 붙인다.
@@ -36,7 +39,8 @@ permissions:
 jobs:
   # 검사를 여기서 한 번 더 돌린다. check.yml 이 PR 에서 이미 돌았지만, 머지
   # 커밋은 그때와 다른 코드다 — 다른 PR 이 먼저 들어갔을 수 있다.
-  검사:
+  check:
+    name: 검사
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -57,7 +61,8 @@ jobs:
           uv run ruff format --check .
 
   api:
-    needs: 검사
+    name: API
+    needs: check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -96,7 +101,8 @@ jobs:
             exit 1
           }
 
-  화면:
+  web:
+    name: 화면
     needs: api
     runs-on: ubuntu-latest
     # collect.yml 도 Pages 에 올린다. 둘이 같은 순간에 겹치면 뒤엣것이 실패하므로
