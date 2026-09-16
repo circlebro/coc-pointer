@@ -17,6 +17,11 @@ concurrency:
 jobs:
   collect-and-deploy:
     runs-on: ubuntu-latest
+    # deploy.yml 의 화면 작업도 Pages 에 올린다. 둘이 같은 순간에 겹치면
+    # 뒤엣것이 실패하므로 한 줄로 세운다.
+    concurrency:
+      group: pages
+      cancel-in-progress: false
     environment:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}

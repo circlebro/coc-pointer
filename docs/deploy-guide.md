@@ -30,11 +30,14 @@ Obsidian 금고의 `Circle/Project/Toy/COC/프로세스.md` 에 있다.
 |---|---|---|
 | **검사** | PR 마다 자동 | GitHub Actions (`check.yml`) |
 | **클랜전 수집** | 30분마다 자동 | GitHub Actions (`collect.yml`) |
-| **화면 배포** | 수집이 끝나면 자동, 또는 손으로 | GitHub Actions → GitHub Pages |
-| **API 배포** | 머지되면 자동 (예정) | GitHub Actions → Cloudflare Workers |
+| **배포** | **머지되면 자동** | GitHub Actions (`deploy.yml`) |
 
-API 배포를 자동으로 바꾸는 일은 `TASK-36` 이 맡는다. 그 전까지는 사람이
-`./apps/rest-api/deploy.sh` 를 친다. 아래 9번 참고.
+배포는 `main` 에 들어가면 저절로 돈다. 손으로 부를 수도 있다 — 되돌릴 때나 배포만
+다시 하고 싶을 때다.
+
+```bash
+gh workflow run deploy --ref main
+```
 
 ---
 
@@ -42,9 +45,10 @@ API 배포를 자동으로 바꾸는 일은 `TASK-36` 이 맡는다. 그 전까�
 
 ### API 를 먼저, 화면을 나중에
 
-```bash
-./apps/rest-api/deploy.sh                    # 1. API
-gh workflow run collect --ref main           # 2. 화면
+`deploy.yml` 이 세 단계를 차례로 돈다.
+
+```
+검사  →  api  →  화면
 ```
 
 **왜 이 순서인가.** 응답 모양이 바뀌면 화면이 먼저 올라갈 때 표가 빈다. 옛 API 가
@@ -63,11 +67,10 @@ gh workflow run collect --ref main           # 2. 화면
 
 ### 배포 뒤 확인
 
-```bash
-curl https://coc-api.coc-api.workers.dev/api/health
-```
+워크플로가 `/api/health` 를 스스로 불러 `coc_core: "ok"` 인지 본다. 배포가 성공한
+것처럼 끝나고 첫 요청에서 죽은 적이 있어서다(`pyyaml` 이 번들에서 빠졌을 때).
 
-`coc_core: "ok"` 와 표 아홉 개가 보이면 올라간 것이다. 그다음 릴리즈 노트의
+사람이 볼 것은 릴리즈 노트의
 **"배포 뒤 확인할 것"** 을 하나씩 짚는다. 각 티켓에서 모아 둔 목록이다.
 
 **여기서 걸리면 릴리즈는 아직 안 끝났다.**
@@ -209,16 +212,24 @@ gh release create v0.7.0 --notes "..."
 ## 9. 머지하면 배포한다 (CD)
 
 ```
-PR 머지  →  main 에 들어감  →  배포 워크플로가 돎  →  운영에 올라감
+PR 머지  →  main 에 들어감  →  deploy.yml 이 돎  →  운영에 올라감
 ```
 
 **A안 — 머지하면 바로 배포.** 지금 이것으로 간다.
 
-```yaml
-on:
-  push:
-    branches: [main]
 ```
+검사  →  api  →  화면
+```
+
+**검사를 한 번 더 돈다.** `check.yml` 이 PR 에서 이미 돌았지만, 머지 커밋은 그때와
+다른 코드다 — 다른 PR 이 먼저 들어갔을 수 있다.
+
+**Pages 배포를 한 줄로 세운다.** `collect.yml` 도 Pages 에 올리므로 둘이 같은
+순간에 겹치면 뒤엣것이 실패한다. `concurrency: pages` 로 묶어 두었다.
+
+**자료 커밋으로는 돌지 않는다.** `collect.yml` 이 30분마다 `main` 에 자료를
+커밋하지만, `GITHUB_TOKEN` 으로 민 푸시는 다른 워크플로를 부르지 않는다는 것이
+GitHub 의 규칙이다.
 
 **왜 이것부터인가.** 승인을 두는 값어치는 "실수가 운영에 바로 가는 것을 막는 것"
 인데, CI 가 붙어 **깨진 코드는 이미 머지되지 않는다.** 그러면 남는 위험이
