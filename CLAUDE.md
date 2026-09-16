@@ -183,6 +183,27 @@ The body explains what changed and why, as Korean bullets, so `git log` alone sh
 feature was built. PRs are squash-merged, so the PR title follows the same format — it
 becomes the commit on `main`. Keep the `Co-Authored-By` and `Claude-Session` trailers.
 
+## Tickets vs. releases
+
+These are different things, and conflating them has already caused one false "done".
+
+**A ticket is closed when code and tests are finished — not when it ships.** The bar is:
+code in, automated tests covering the behaviour and passing, `ruff` / `tsc` / `vite build`
+clean, generators idempotent, and the ticket note updated with what was decided and why.
+Deployment is not part of it.
+
+**Anything automated tests cannot cover goes in the ticket under "배포 뒤 확인할 것"** —
+a real CoC call, something that only surfaces on Workers, a path behind the admin password.
+Say plainly what is proven and what is not; never let "deployed" quietly become "works".
+
+**A release is opened before the work, not written after it.** Create the release note in
+the Obsidian vault with `상태: 준비중`, set each ticket's `버전` property to that version,
+and that list is the scope. Deploy only once every ticket in it is closed; then bump the
+five version fields, deploy API before frontend, walk the release note's post-deploy
+checklist, tag, and finally mark the note `배포됨`.
+
+Full process: `Circle/Project/Toy/COC/프로세스.md` in the Obsidian vault.
+
 ## Releases
 
 Every deploy that is worth naming gets a git tag and a GitHub release, so it is clear which

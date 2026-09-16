@@ -115,6 +115,11 @@ class MemberService:
         return await self._repository.find_by_external_id(external_id)
 
     @property
+    def can_sync(self) -> bool:
+        """명단을 받아 올 곳이 있는가. can_read_profiles 와 같은 까닭으로 둔다."""
+        return self._source is not None
+
+    @property
     def can_read_profiles(self) -> bool:
         """현황을 물을 수 있는가.
 
