@@ -259,9 +259,37 @@ brew install actionlint && actionlint
 
 ### 필요한 것
 
-`CLOUDFLARE_API_TOKEN` 하나를 GitHub 비밀값으로 넣는다. 권한 셋이 필요하다 —
-Workers Scripts(Edit), D1(Edit), Account Settings(Read).
+`CLOUDFLARE_API_TOKEN` 하나를 GitHub 비밀값으로 넣는다.
 dash.cloudflare.com/profile/api-tokens 에서 만든다.
+
+| 종류 | 항목 | 권한 |
+|---|---|---|
+| Account | Workers Scripts | Edit |
+| Account | D1 | Edit |
+| Account | Account Settings | Read |
+| **User** | **User Details** | **Read** |
+| **User** | **Memberships** | **Read** |
+
+**User 쪽 둘을 빠뜨리기 쉽다.** "Edit Cloudflare Workers" 라는 미리 만들어진 틀에
+그 둘이 들어 있지 않아, 틀만 고르면 배포가 마지막 단계에서 막힌다.
+
+```
+Authentication error [code: 10000]
+Are you missing the `User->User Details->Read` permission?
+```
+
+**마이그레이션까지는 지나고 그다음에 막힌다.** 표는 이미 바뀐 상태이므로, 권한을
+고쳐 다시 돌리면 그 단계는 건너뛰고 배포만 다시 한다.
+
+권한만 고치는 것이면 토큰 값은 바뀌지 않으므로 GitHub 비밀값을 다시 넣지 않아도
+된다.
+
+토큰을 GitHub 에 넣을 때는 `gh` 를 쓴다. `wrangler secret put` 과 달리 Claude Code
+안에서도 입력을 제대로 받는다.
+
+```bash
+gh secret set CLOUDFLARE_API_TOKEN
+```
 
 ### 순서를 지킨다
 
