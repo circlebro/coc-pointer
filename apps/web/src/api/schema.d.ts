@@ -502,8 +502,26 @@ export interface operations {
                     "application/json": components["schemas"]["Error"];
                 };
             };
+            /** @description 비밀번호가 맞지 않다 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
             /** @description 그 식별자를 가진 클랜원이 없다 */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description 운영 비밀번호가 설정되지 않았다 */
+            503: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -529,6 +547,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MemberSyncResult"];
+                };
+            };
+            /** @description 비밀번호가 맞지 않다 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
                 };
             };
             /** @description CoC 자격 증명이 없거나 CoC 가 답하지 않는다 */

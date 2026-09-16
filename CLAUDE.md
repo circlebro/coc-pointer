@@ -126,6 +126,7 @@ asks CoC at request time, so the deployed Worker needs both `COC_API_TOKEN` and
 ```bash
 npx wrangler@4 secret put COC_API_TOKEN
 npx wrangler@4 secret put CLAN_TAG
+npx wrangler@4 secret put ADMIN_PASSWORD   # ASCII only — it travels as an HTTP header
 ```
 
 Each prompts for the value, so nothing lands in a file or a shell history. Secrets
@@ -133,6 +134,12 @@ arrive on `env` exactly like `[vars]` do, so the reading code is identical — t
 difference is only that `wrangler.toml` is committed and secrets are not. Without
 them the endpoint answers `503` with a message naming the cause; the plain member
 list keeps working, which is the point of splitting `profile` off in the first place.
+
+`ADMIN_PASSWORD` guards everything under `/api/v1/admin/`. It is a stopgap until real
+login lands; `docs/api-guide.md` §12 says what it does and does not protect. It must be
+ASCII — it travels in an HTTP header, and a non-ASCII value fails in the browser before
+the request is even sent. Without the secret the admin surface answers `503` for every
+call, which is deliberate: failing open would silently publish it.
 
 **Redeploy:** `./apps/rest-api/deploy.sh` — one line. It re-copies `coc_core`, applies any
 migration D1 has not recorded yet, and deploys. Migrations that already ran are skipped,

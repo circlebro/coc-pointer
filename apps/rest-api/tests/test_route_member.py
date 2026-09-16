@@ -77,10 +77,14 @@ class FakeProfiles:
         return [{"tag": tag, "name": p.name, "role": "member"} for tag, p in self.in_clan.items()]
 
 
+ADMIN_PASSWORD = "test-password"  # 테스트 값. 실제 값은 Worker 비밀값에 있다
+
+
 class FakeEnv:
     API_VERSION = "0.7.0"
     COC_API_TOKEN = "test-token"
     CLAN_TAG = "#2C8L822LQ"
+    ADMIN_PASSWORD = ADMIN_PASSWORD
 
     def __init__(self, db) -> None:
         self.DB = db
@@ -110,7 +114,9 @@ def client(fake_db, profiles):
         scope["env"] = env
         await app(scope, receive, send)
 
-    yield TestClient(with_env)
+    # 비밀번호를 늘 달고 부른다. 검사 자체는 test_auth.py 가 따로 보므로,
+    # 여기서는 경로가 무엇을 하는지에만 집중한다.
+    yield TestClient(with_env, headers={"X-Admin-Password": ADMIN_PASSWORD})
     app.dependency_overrides.clear()
 
 
@@ -411,7 +417,7 @@ def test_자격_증명이_없으면_현황_요청은_503(fake_db):
         await app(scope, receive, send)
 
     try:
-        client = TestClient(with_env)
+        client = TestClient(with_env, headers={"X-Admin-Password": ADMIN_PASSWORD})
         _seed(fake_db, [_member("#A")])
 
         assert client.get("/api/v1/public/members").status_code == 200  # 명단은 답한다
@@ -526,7 +532,7 @@ def test_자격_증명이_없으면_동기화도_503(fake_db):
         await app(scope, receive, send)
 
     try:
-        client = TestClient(with_env)
+        client = TestClient(with_env, headers={"X-Admin-Password": ADMIN_PASSWORD})
         response = client.post("/api/v1/admin/members:sync")
 
         assert response.status_code == 503

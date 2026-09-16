@@ -18,6 +18,7 @@ from fastapi import APIRouter, Depends, FastAPI, Path, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 import db
+from auth import require_admin
 from routes.clan import router as clan_router
 from routes.member import admin_router as member_admin_router
 from routes.member import router as member_router
@@ -38,16 +39,16 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=["https://circlebro.github.io", "http://localhost:8000"],
     allow_methods=["GET", "POST", "PATCH", "OPTIONS"],
-    allow_headers=["Content-Type", "Authorization"],
+    allow_headers=["Content-Type", "Authorization", "X-Admin-Password"],
 )
 
 # 표면을 둘로 가른다. 양쪽 다 이름을 붙이는 까닭은, 접두사를 안 붙이면 아예
 # 안 걸려서 분류를 잊을 수 없기 때문이다. 접두사 없는 쪽을 기본으로 두면 잊은
 # 경로가 조용히 공개 표면에 놓인다.
 #
-# 검사도 여기 한 자리에서 단다. 경로마다 붙이면 하나 빠뜨려도 조용하다. 아직
-# 로그인이 없어 운영 표면의 검사가 비어 있지만, 생기면
-# dependencies=[Depends(require_admin)] 를 아래 한 줄에 단다.
+# 검사도 여기 한 자리에서 단다. 경로마다 붙이면 하나 빠뜨려도 조용하다.
+# require_admin 은 임시 조치이며 제대로 된 로그인은 TASK-23 이 맡는다. 그때
+# auth.py 만 갈아 끼우면 되고 이 줄은 그대로다.
 #
 # 경로가 막아 주는 것은 아니다. 주소에 admin 이 적혀 있다고 서버가 막지 않는다.
 # 막는 것은 여전히 검사이고, 이 자리는 그 검사를 모으는 곳일 뿐이다.
@@ -57,7 +58,7 @@ public_router = APIRouter(prefix="/api/v1/public")
 public_router.include_router(member_router)
 public_router.include_router(clan_router)
 
-admin_router = APIRouter(prefix="/api/v1/admin")
+admin_router = APIRouter(prefix="/api/v1/admin", dependencies=[Depends(require_admin)])
 admin_router.include_router(member_admin_router)
 
 
