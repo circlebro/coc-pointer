@@ -203,6 +203,9 @@ five version fields, deploy API before frontend, walk the release note's post-de
 checklist, tag, and finally mark the note `배포됨`.
 
 Full process: `Circle/Project/Toy/COC/프로세스.md` in the Obsidian vault.
+Deployment itself — order, secrets, migrations, local real testing, what is and is not
+automated — is in `docs/deploy-guide.md`. Read it before deploying, and add to it
+whenever a new rule gets decided.
 
 ## Releases
 
