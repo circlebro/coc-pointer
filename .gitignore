@@ -12,3 +12,8 @@ apps/rest-api/src/coc_core/
 node_modules/
 apps/rest-api/.venv-workers/
 apps/rest-api/python_modules/
+
+# 로컬에서 `pywrangler dev` 로 실테스트할 때 쓰는 값들. 배포되는 비밀값과
+# 별개이며 저장소에 남으면 안 된다. 만드는 방법은 프로세스 문서에 있다.
+.dev.vars
+.wrangler/
