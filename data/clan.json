@@ -1,133 +1,97 @@
 {
-  "fetched_at": "2026-09-08T12:14:22Z",
+  "fetched_at": "2026-10-31T13:42:38Z",
   "name": "미니언즈",
   "tag": "#2C8L822LQ",
   "members": [
     {
-      "tag": "#GQGCCV8RR",
-      "name": "빡곰",
-      "role": "member",
+      "tag": "#Q2R82VYG0",
+      "name": "미친개",
+      "role": "coLeader",
       "townhall": 18,
-      "trophies": 252,
-      "donations": 287,
-      "donations_received": 391
+      "trophies": 483,
+      "donations": 4489,
+      "donations_received": 269
     },
     {
       "tag": "#GRG8GCGRV",
       "name": "도토리",
       "role": "leader",
       "townhall": 18,
-      "trophies": 10,
-      "donations": 2116,
-      "donations_received": 89
-    },
-    {
-      "tag": "#Q2R82VYG0",
-      "name": "미친개",
-      "role": "coLeader",
-      "townhall": 18,
-      "trophies": 0,
-      "donations": 337,
-      "donations_received": 0
+      "trophies": 211,
+      "donations": 12314,
+      "donations_received": 2082
     },
     {
       "tag": "#2YP22YJGL",
       "name": "p.j.h",
       "role": "member",
       "townhall": 18,
-      "trophies": 856,
-      "donations": 700,
-      "donations_received": 419
-    },
-    {
-      "tag": "#GR9UGPQVJ",
-      "name": "청사과",
-      "role": "coLeader",
-      "townhall": 18,
-      "trophies": 489,
-      "donations": 755,
-      "donations_received": 826
-    },
-    {
-      "tag": "#R2LLCUUL",
-      "name": "히로",
-      "role": "admin",
-      "townhall": 18,
-      "trophies": 158,
-      "donations": 1077,
-      "donations_received": 345
-    },
-    {
-      "tag": "#LGVL8L2JC",
-      "name": "✨Mad✨",
-      "role": "member",
-      "townhall": 18,
-      "trophies": 0,
-      "donations": 817,
-      "donations_received": 297
+      "trophies": 1079,
+      "donations": 2029,
+      "donations_received": 973
     },
     {
       "tag": "#GCVGV992U",
       "name": "완두콩",
       "role": "admin",
       "townhall": 18,
-      "trophies": 312,
-      "donations": 422,
-      "donations_received": 872
+      "trophies": 965,
+      "donations": 3312,
+      "donations_received": 5280
     },
     {
-      "tag": "#L292PLUPP",
-      "name": "엘지트윈스",
-      "role": "member",
-      "townhall": 17,
-      "trophies": 0,
-      "donations": 33,
-      "donations_received": 0
-    },
-    {
-      "tag": "#GUGCV2LLR",
-      "name": "조운",
+      "tag": "#PQL8PG0V",
+      "name": "Love",
       "role": "member",
       "townhall": 18,
-      "trophies": 234,
-      "donations": 129,
-      "donations_received": 742
+      "trophies": 912,
+      "donations": 9825,
+      "donations_received": 6356
     },
     {
-      "tag": "#GV2JJ08JG",
-      "name": "미르",
+      "tag": "#LGVL8L2JC",
+      "name": "✨Mad✨",
       "role": "member",
       "townhall": 18,
-      "trophies": 120,
-      "donations": 29,
-      "donations_received": 609
+      "trophies": 911,
+      "donations": 8764,
+      "donations_received": 5725
+    },
+    {
+      "tag": "#GR9UGPQVJ",
+      "name": "청사과",
+      "role": "admin",
+      "townhall": 18,
+      "trophies": 352,
+      "donations": 3090,
+      "donations_received": 4139
     },
     {
       "tag": "#9Q90UL29",
       "name": "군밤",
       "role": "admin",
       "townhall": 18,
-      "trophies": 19,
-      "donations": 279,
-      "donations_received": 88
+      "trophies": 122,
+      "donations": 6367,
+      "donations_received": 2600
+    },
+    {
+      "tag": "#LQY0G90U0",
+      "name": "Love2",
+      "role": "member",
+      "townhall": 17,
+      "trophies": 735,
+      "donations": 10236,
+      "donations_received": 15180
     },
     {
       "tag": "#R929LVJRP",
       "name": "라이프세이버",
       "role": "coLeader",
       "townhall": 18,
-      "trophies": 0,
-      "donations": 92,
-      "donations_received": 1
-    },
-    {
-      "tag": "#GVJU0G8GC",
-      "name": "띵수",
-      "role": "admin",
-      "townhall": 16,
-      "trophies": 0,
-      "donations": 172,
-      "donations_received": 306
+      "trophies": 33,
+      "donations": 7899,
+      "donations_received": 6448
     },
     {
       "tag": "#22VR8LP99",
@@ -135,125 +99,143 @@
       "role": "member",
       "townhall": 18,
       "trophies": 0,
-      "donations": 60,
-      "donations_received": 57
-    },
-    {
-      "tag": "#GJP8RGY9Q",
-      "name": "짜노리",
-      "role": "member",
-      "townhall": 16,
-      "trophies": 277,
-      "donations": 437,
-      "donations_received": 1254
-    },
-    {
-      "tag": "#LQY0G90U0",
-      "name": "Love2",
-      "role": "member",
-      "townhall": 17,
-      "trophies": 128,
-      "donations": 311,
-      "donations_received": 1203
-    },
-    {
-      "tag": "#YC9QLYY98",
-      "name": "아아",
-      "role": "member",
-      "townhall": 16,
-      "trophies": 14,
-      "donations": 55,
-      "donations_received": 0
-    },
-    {
-      "tag": "#GCV2GRPCP",
-      "name": "마늘배미",
-      "role": "member",
-      "townhall": 17,
-      "trophies": 0,
-      "donations": 83,
-      "donations_received": 0
-    },
-    {
-      "tag": "#22YCJ08VC",
-      "name": "대표이사",
-      "role": "member",
-      "townhall": 18,
-      "trophies": 219,
-      "donations": 0,
-      "donations_received": 118
-    },
-    {
-      "tag": "#GCCLLUPCG",
-      "name": "제니남편",
-      "role": "member",
-      "townhall": 16,
-      "trophies": 102,
-      "donations": 54,
-      "donations_received": 331
+      "donations": 2360,
+      "donations_received": 1310
     },
     {
       "tag": "#PQ2J28LRQ",
       "name": "즐거운민달팽이",
       "role": "member",
       "townhall": 17,
-      "trophies": 18,
-      "donations": 40,
-      "donations_received": 0
+      "trophies": 757,
+      "donations": 1761,
+      "donations_received": 1053
     },
     {
-      "tag": "#QJC9P90QV",
-      "name": "Aura",
+      "tag": "#YC9QLYY98",
+      "name": "아아",
       "role": "member",
+      "townhall": 17,
+      "trophies": 668,
+      "donations": 1957,
+      "donations_received": 4150
+    },
+    {
+      "tag": "#GJP8RGY9Q",
+      "name": "짜노리",
+      "role": "admin",
       "townhall": 16,
-      "trophies": 0,
-      "donations": 0,
-      "donations_received": 0
+      "trophies": 639,
+      "donations": 3378,
+      "donations_received": 7655
     },
     {
       "tag": "#GURVCV0CU",
       "name": "Taimanin",
       "role": "member",
-      "townhall": 17,
-      "trophies": 0,
-      "donations": 90,
-      "donations_received": 85
+      "townhall": 18,
+      "trophies": 240,
+      "donations": 3588,
+      "donations_received": 7462
     },
     {
-      "tag": "#GVGYCY029",
-      "name": "쌈탉",
+      "tag": "#UJCV02GJ",
+      "name": "원형",
       "role": "admin",
       "townhall": 18,
-      "trophies": 292,
-      "donations": 802,
-      "donations_received": 590
+      "trophies": 41,
+      "donations": 2406,
+      "donations_received": 3790
     },
     {
-      "tag": "#RR28RJQU",
-      "name": "영국물리치료사",
-      "role": "member",
-      "townhall": 16,
-      "trophies": 44,
-      "donations": 271,
-      "donations_received": 193
-    },
-    {
-      "tag": "#GJUP88LGY",
-      "name": "공작원",
+      "tag": "#L292PLUPP",
+      "name": "엘지트윈스",
       "role": "member",
       "townhall": 18,
-      "trophies": 8,
-      "donations": 0,
-      "donations_received": 0
+      "trophies": 19,
+      "donations": 1129,
+      "donations_received": 3304
     },
     {
       "tag": "#20Y9Q022P",
       "name": "광개토대왕",
       "role": "member",
+      "townhall": 18,
+      "trophies": 618,
+      "donations": 4209,
+      "donations_received": 430
+    },
+    {
+      "tag": "#R0VCVQQ2G",
+      "name": "또가스",
+      "role": "member",
       "townhall": 17,
+      "trophies": 575,
+      "donations": 461,
+      "donations_received": 1445
+    },
+    {
+      "tag": "#RR28RJQU",
+      "name": "영국물리치료사",
+      "role": "member",
+      "townhall": 17,
+      "trophies": 43,
+      "donations": 4019,
+      "donations_received": 3696
+    },
+    {
+      "tag": "#GCV2GRPCP",
+      "name": "마늘배미",
+      "role": "member",
+      "townhall": 17,
+      "trophies": 670,
+      "donations": 6272,
+      "donations_received": 2401
+    },
+    {
+      "tag": "#GVVPR2GQJ",
+      "name": "따뚜",
+      "role": "member",
+      "townhall": 18,
+      "trophies": 570,
+      "donations": 1010,
+      "donations_received": 2522
+    },
+    {
+      "tag": "#R029PG2G8",
+      "name": "물정령",
+      "role": "member",
+      "townhall": 18,
+      "trophies": 322,
+      "donations": 50,
+      "donations_received": 3974
+    },
+    {
+      "tag": "#G0PRGR2V2",
+      "name": "Best",
+      "role": "member",
+      "townhall": 17,
+      "trophies": 175,
+      "donations": 345,
+      "donations_received": 874
+    },
+    {
+      "tag": "#Q0P8CUCV9",
+      "name": "냉면",
+      "role": "member",
+      "townhall": 17,
+      "trophies": 114,
+      "donations": 0,
+      "donations_received": 786
+    },
+    {
+      "tag": "#28U2CYLLL",
+      "name": "찹쌀떡",
+      "role": "member",
+      "townhall": 18,
       "trophies": 0,
-      "donations": 85,
-      "donations_received": 0
+      "donations": 0,
+      "donations_received": 56
     },
     {
       "tag": "#GJ0QYQY0Y",
@@ -261,70 +243,70 @@
       "role": "member",
       "townhall": 16,
       "trophies": 0,
-      "donations": 203,
-      "donations_received": 140
+      "donations": 2287,
+      "donations_received": 1347
     },
     {
-      "tag": "#8J09V0828",
-      "name": "킬러왕짱킹",
+      "tag": "#G28UG0JCC",
+      "name": "호이",
+      "role": "member",
+      "townhall": 17,
+      "trophies": 361,
+      "donations": 903,
+      "donations_received": 8943
+    },
+    {
+      "tag": "#22YCJ08VC",
+      "name": "대표이사",
+      "role": "member",
+      "townhall": 18,
+      "trophies": 351,
+      "donations": 205,
+      "donations_received": 817
+    },
+    {
+      "tag": "#GCCLLUPCG",
+      "name": "제니남편",
       "role": "member",
       "townhall": 16,
-      "trophies": 98,
-      "donations": 18,
-      "donations_received": 136
+      "trophies": 322,
+      "donations": 707,
+      "donations_received": 2800
     },
     {
-      "tag": "#G0PRGR2V2",
-      "name": "Best",
+      "tag": "#GJJUQLC82",
+      "name": "움직이는포리",
       "role": "member",
-      "townhall": 16,
-      "trophies": 26,
-      "donations": 0,
-      "donations_received": 0
+      "townhall": 18,
+      "trophies": 224,
+      "donations": 3701,
+      "donations_received": 359
     },
     {
-      "tag": "#GRGQCPP2Q",
-      "name": "Jelfish",
+      "tag": "#QLGRCVPPU",
+      "name": "국대포차",
+      "role": "member",
+      "townhall": 18,
+      "trophies": 62,
+      "donations": 67,
+      "donations_received": 2372
+    },
+    {
+      "tag": "#Q9CJPY2QR",
+      "name": "캘빈16",
       "role": "member",
       "townhall": 18,
       "trophies": 0,
-      "donations": 187,
-      "donations_received": 86
-    },
-    {
-      "tag": "#Q0P8CUCV9",
-      "name": "냉면",
-      "role": "member",
-      "townhall": 16,
-      "trophies": 500,
       "donations": 0,
       "donations_received": 0
     },
     {
-      "tag": "#GVVPR2GQJ",
-      "name": "따뚜",
+      "tag": "#LQJ99U9JJ",
+      "name": "쌍검하우스",
       "role": "member",
-      "townhall": 17,
-      "trophies": 88,
-      "donations": 0,
-      "donations_received": 161
-    },
-    {
-      "tag": "#UJCV02GJ",
-      "name": "원형",
-      "role": "member",
-      "townhall": 17,
-      "trophies": 67,
-      "donations": 237,
-      "donations_received": 255
-    },
-    {
-      "tag": "#G9Y99CGV9",
-      "name": "qualities09",
-      "role": "member",
-      "townhall": 17,
-      "trophies": 0,
-      "donations": 0,
+      "townhall": 18,
+      "trophies": 338,
+      "donations": 97,
       "donations_received": 0
     },
     {
@@ -332,90 +314,135 @@
       "name": "뚱냥이",
       "role": "member",
       "townhall": 17,
+      "trophies": 179,
+      "donations": 492,
+      "donations_received": 55
+    },
+    {
+      "tag": "#GRGQCPP2Q",
+      "name": "Jelfish",
+      "role": "member",
+      "townhall": 18,
+      "trophies": 71,
+      "donations": 5519,
+      "donations_received": 4056
+    },
+    {
+      "tag": "#GVGYCY029",
+      "name": "쌈탉",
+      "role": "member",
+      "townhall": 18,
       "trophies": 0,
-      "donations": 97,
+      "donations": 2884,
       "donations_received": 0
     },
     {
-      "tag": "#R0VCVQQ2G",
-      "name": "또가스",
+      "tag": "#28V0JV9RQ",
+      "name": "서정민",
       "role": "member",
-      "townhall": 16,
-      "trophies": 160,
+      "townhall": 17,
+      "trophies": 470,
       "donations": 0,
-      "donations_received": 249
+      "donations_received": 602
+    },
+    {
+      "tag": "#GVJPU90U9",
+      "name": "에스프리",
+      "role": "coLeader",
+      "townhall": 16,
+      "trophies": 476,
+      "donations": 353,
+      "donations_received": 1004
+    },
+    {
+      "tag": "#YL9VGY9P",
+      "name": "뭘바",
+      "role": "member",
+      "townhall": 17,
+      "trophies": 399,
+      "donations": 58,
+      "donations_received": 0
+    },
+    {
+      "tag": "#9CCYJ0QCL",
+      "name": "데니스",
+      "role": "member",
+      "townhall": 17,
+      "trophies": 300,
+      "donations": 490,
+      "donations_received": 0
     },
     {
       "tag": "#L9RYGLJRP",
       "name": "치느님",
       "role": "member",
       "townhall": 17,
-      "trophies": 40,
-      "donations": 79,
-      "donations_received": 264
-    },
-    {
-      "tag": "#R029PG2G8",
-      "name": "물정령",
-      "role": "member",
-      "townhall": 17,
-      "trophies": 0,
-      "donations": 0,
-      "donations_received": 0
-    },
-    {
-      "tag": "#GVJPU90U9",
-      "name": "에스프리",
-      "role": "member",
-      "townhall": 16,
-      "trophies": 185,
-      "donations": 0,
-      "donations_received": 0
+      "trophies": 595,
+      "donations": 1705,
+      "donations_received": 1698
     },
     {
       "tag": "#QJPCRCG2L",
       "name": "삐삐",
       "role": "member",
       "townhall": 16,
+      "trophies": 107,
+      "donations": 188,
+      "donations_received": 784
+    },
+    {
+      "tag": "#LVR29G8PC",
+      "name": "duct",
+      "role": "member",
+      "townhall": 17,
       "trophies": 0,
-      "donations": 96,
-      "donations_received": 103
+      "donations": 523,
+      "donations_received": 167
     },
     {
       "tag": "#GGPVQYPRV",
       "name": "Luckyky",
       "role": "member",
-      "townhall": 16,
-      "trophies": 83,
-      "donations": 88,
-      "donations_received": 196
+      "townhall": 17,
+      "trophies": 140,
+      "donations": 1125,
+      "donations_received": 2003
     },
     {
       "tag": "#LCCC89JRQ",
       "name": "나이프건",
       "role": "member",
-      "townhall": 14,
+      "townhall": 16,
       "trophies": 0,
-      "donations": 0,
-      "donations_received": 0
+      "donations": 142,
+      "donations_received": 300
     },
     {
       "tag": "#RPJ2PR2LR",
       "name": "새우살탱탱",
       "role": "member",
-      "townhall": 9,
-      "trophies": 229,
-      "donations": 0,
-      "donations_received": 31
+      "townhall": 11,
+      "trophies": 25,
+      "donations": 10,
+      "donations_received": 328
     },
     {
       "tag": "#R88G08P90",
       "name": "휴지살탱탱",
       "role": "member",
-      "townhall": 9,
+      "townhall": 11,
       "trophies": 0,
       "donations": 0,
-      "donations_received": 101
+      "donations_received": 945
+    },
+    {
+      "tag": "#GJUP88LGY",
+      "name": "공작원",
+      "role": "member",
+      "townhall": 18,
+      "trophies": 0,
+      "donations": 0,
+      "donations_received": 59
     }
   ]
 }
